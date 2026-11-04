@@ -17,7 +17,6 @@ import { copyText, errorMessage, useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS } from "@/lib/kvk";
 import { AdminDay } from "./admin-day";
 import { AdminPlayers } from "./admin-players";
-import { KvkNav } from "./kvk-nav";
 
 export type Dashboard = NonNullable<FunctionReturnType<typeof api.kvk.admin.dashboard>>;
 
@@ -26,7 +25,6 @@ export function KvkAdmin() {
 
   return (
     <>
-      <KvkNav />
       <PageHeader eyebrow="Admin" title="KvK control room" description="Run sign-ups, assign turns and publish the schedule.">
         {password && (
           <Button variant="outline" onClick={() => setPassword(null)}>
@@ -242,11 +240,11 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
           />
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button variant="outline" className="h-10" onClick={() => copyText(link("/kvk"), "Player link copied")}>
+          <Button variant="outline" className="h-10" onClick={() => copyText(link("/"), "Player link copied")}>
             <Copy data-icon="inline-start" />
             Copy player link
           </Button>
-          <Button variant="outline" className="h-10" onClick={() => copyText(link("/kvk/schedule"), "Schedule link copied")}>
+          <Button variant="outline" className="h-10" onClick={() => copyText(link("/schedule"), "Schedule link copied")}>
             <Copy data-icon="inline-start" />
             Copy schedule link
           </Button>

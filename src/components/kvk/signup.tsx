@@ -24,7 +24,6 @@ import {
   type DayKey,
 } from "@/lib/kvk";
 import { DurationInput } from "./duration-input";
-import { KvkNav } from "./kvk-nav";
 import { SlotGrid } from "./slot-grid";
 
 type Entry = {
@@ -69,7 +68,6 @@ export function KvkSignup() {
 
   return (
     <>
-      <KvkNav />
       <PageHeader
         eyebrow={settings?.eventName ?? "KvK"}
         title="Appointment sign-up"

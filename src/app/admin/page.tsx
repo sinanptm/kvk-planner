@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { KvkAdmin } from "@/components/tools/kvk/admin";
+import { KvkAdmin } from "@/components/kvk/admin";
 
-export const metadata: Metadata = { title: "KvK admin", robots: { index: false } };
+export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
-export default function KvkAdminPage() {
+export default function AdminPage() {
   return <KvkAdmin />;
 }

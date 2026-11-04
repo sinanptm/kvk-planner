@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Kingshot Tools", template: "%s · Kingshot Tools" },
-  description: "Tools for our Kingshot alliance.",
+  title: { default: "KvK Planner", template: "%s · KvK Planner" },
+  description: "Sign up for Kingshot KvK appointment turns and see the schedule.",
 };
 
 export const viewport: Viewport = {

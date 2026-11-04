@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/kvk", label: "Sign up", icon: ClipboardPen },
-  { href: "/kvk/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/admin/kvk", label: "Admin", icon: ShieldCheck },
+  { href: "/", label: "Sign up", icon: ClipboardPen },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/admin", label: "Admin", icon: ShieldCheck },
 ];
 
-// Switches between the KvK planner's pages.
-export function KvkNav() {
+// Links to every page of the planner.
+export function SiteNav() {
   const pathname = usePathname();
   return (
     <nav className="flex gap-1 rounded-xl bg-muted p-1">
@@ -24,11 +24,11 @@ export function KvkNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex-none",
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm whitespace-nowrap font-medium text-muted-foreground transition-colors hover:text-foreground sm:px-3",
               active && "bg-background text-foreground shadow-sm",
             )}
           >
-            <Icon className="size-4" />
+            <Icon className="hidden size-4 sm:block" />
             {label}
           </Link>
         );

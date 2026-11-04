@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS, formatSlotLocal, localTimeZone, slotRangeUtc, useToday } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
-import { KvkNav } from "./kvk-nav";
 
 export function PublicSchedule() {
   const schedule = useQuery(api.kvk.schedule.published);
@@ -28,7 +27,6 @@ export function PublicSchedule() {
 
   return (
     <>
-      <KvkNav />
       <PageHeader
         eyebrow={schedule?.eventName ?? "KvK"}
         title="Appointment schedule"

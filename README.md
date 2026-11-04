@@ -1,12 +1,14 @@
-# Kingshot Tools
+# KvK Appointment Planner
 
-Web tools for our Kingshot alliance. Next.js (App Router) + Tailwind + shadcn/ui, with Convex for the database and server functions.
+KvK appointment sign-ups and schedule for our Kingshot alliance. Next.js (App Router) + Tailwind + shadcn/ui, with Convex for the database and server functions.
 
-## Tools
+## Pages
 
-| Tool | Player page | Admin |
-| --- | --- | --- |
-| KvK Appointment Planner | `/kvk` (sign-up), `/kvk/schedule` (public schedule) | `/admin/kvk` |
+| Page | Path |
+| --- | --- |
+| Sign-up (home) | `/` |
+| Public schedule | `/schedule` |
+| Admin | `/admin` |
 
 ## Development
 
@@ -24,13 +26,10 @@ pnpm convex env set ADMIN_PASSWORD 'your-password'
 
 ## Layout
 
-- `src/lib/tools.ts` — tools registry shown on the home page
-- `src/app/<tool>/` — routes for each tool
-- `src/components/tools/<tool>/` — UI for each tool
-- `convex/<tool>/` — Convex functions for each tool; `convex/schema.ts` holds all tables
+- `src/app/` — routes (`/`, `/schedule`, `/admin`)
+- `src/components/kvk/` — planner UI; `src/components/site-nav.tsx` links every page
+- `convex/kvk/` — Convex functions; `convex/schema.ts` holds all tables
 - `convex/lib/kvk.ts` — ranking and auto-assign logic (shared with the browser)
-
-To add a tool: add an entry to `src/lib/tools.ts`, a route folder under `src/app/`, its components, and its Convex functions.
 
 ## Deploying (Vercel)
 
