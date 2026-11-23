@@ -30,7 +30,8 @@ export default defineSchema({
   // Single row.
   settings: defineTable({
     eventName: v.string(),
-    submissionsOpen: v.boolean(),
+    // No longer used: sign-ups are always open. Kept optional so rows written before the removal stay valid.
+    submissionsOpen: v.optional(v.boolean()),
     schedulePublished: v.boolean(),
   }),
 });

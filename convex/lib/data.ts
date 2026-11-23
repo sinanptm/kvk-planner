@@ -1,7 +1,7 @@
-import { ConvexError } from "convex/values";
+import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import type { DayKey } from "./kvk";
+import { isValidSlot, type DayKey } from "./kvk";
 
 // Upper bounds for reads. A kingdom never has anywhere near this many players.
 export const MAX_PLAYERS = 2000;
@@ -9,7 +9,6 @@ const MAX_TURNS = 200;
 
 export const DEFAULT_SETTINGS = {
   eventName: "KvK",
-  submissionsOpen: true,
   schedulePublished: false,
 };
 
@@ -18,8 +17,8 @@ export type Settings = typeof DEFAULT_SETTINGS;
 export async function readSettings(ctx: QueryCtx): Promise<Settings> {
   const row = await ctx.db.query("settings").first();
   if (!row) return DEFAULT_SETTINGS;
-  const { eventName, submissionsOpen, schedulePublished } = row;
-  return { eventName, submissionsOpen, schedulePublished };
+  const { eventName, schedulePublished } = row;
+  return { eventName, schedulePublished };
 }
 
 export async function settingsRow(ctx: MutationCtx): Promise<Doc<"settings">> {
@@ -53,3 +52,40 @@ export const turnAt = (ctx: QueryCtx, day: DayKey, slot: number) =>
     .query("assignments")
     .withIndex("by_day_and_slot", (q) => q.eq("day", day).eq("slot", slot))
     .first();
+
+// What a player (or an admin on their behalf) fills in. The game ID is passed separately.
+const entryValidator = v.object({
+  name: v.string(),
+  alliance: v.string(),
+  d1Construction: v.number(),
+  d1Research: v.number(),
+  d1General: v.number(),
+  d4Training: v.number(),
+  d4General: v.number(),
+  d1Slots: v.array(v.number()),
+  d4Slots: v.array(v.number()),
+});
+
+export const entryFields = entryValidator.fields;
+
+const cleanMinutes = (n: number) => (Number.isFinite(n) ? Math.min(Math.max(Math.round(n), 0), 10_000_000) : 0);
+
+const cleanSlots = (slots: number[]) => [...new Set(slots.filter(isValidSlot))].sort((a, b) => a - b);
+
+export function cleanEntry(args: Infer<typeof entryValidator>) {
+  const name = args.name.trim();
+  if (!name || name.length > 40) throw new ConvexError("Enter the in-game name (max 40 characters).");
+  const alliance = args.alliance.trim();
+  if (alliance.length > 10) throw new ConvexError("Alliance tag is too long.");
+  return {
+    name,
+    alliance,
+    d1Construction: cleanMinutes(args.d1Construction),
+    d1Research: cleanMinutes(args.d1Research),
+    d1General: cleanMinutes(args.d1General),
+    d4Training: cleanMinutes(args.d4Training),
+    d4General: cleanMinutes(args.d4General),
+    d1Slots: cleanSlots(args.d1Slots),
+    d4Slots: cleanSlots(args.d4Slots),
+  };
+}

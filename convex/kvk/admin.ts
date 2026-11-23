@@ -2,6 +2,8 @@ import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { dayValidator } from "../schema";
 import {
+  cleanEntry,
+  entryFields,
   isAdmin,
   listAllTurns,
   listPlayers,
@@ -42,15 +44,17 @@ export const updateSettings = mutation({
   args: {
     password: v.string(),
     eventName: v.optional(v.string()),
-    submissionsOpen: v.optional(v.boolean()),
     schedulePublished: v.optional(v.boolean()),
   },
-  handler: async (ctx, { password, eventName, ...toggles }) => {
+  handler: async (ctx, { password, eventName, schedulePublished }) => {
     requireAdmin(password);
     const row = await settingsRow(ctx);
     const name = eventName?.trim();
     if (name !== undefined && (!name || name.length > 60)) throw new ConvexError("Event name must be 1–60 characters.");
-    await ctx.db.patch("settings", row._id, { ...toggles, ...(name !== undefined && { eventName: name }) });
+    await ctx.db.patch("settings", row._id, {
+      ...(schedulePublished !== undefined && { schedulePublished }),
+      ...(name !== undefined && { eventName: name }),
+    });
   },
 });
 
@@ -113,6 +117,22 @@ export const clearDay = mutation({
   },
 });
 
+// Players cannot edit their own entry after signing up; this is the only way to change one.
+// Turns the player already has are kept.
+export const updatePlayer = mutation({
+  args: { password: v.string(), gameId: v.string(), ...entryFields },
+  handler: async (ctx, { password, gameId, ...args }) => {
+    requireAdmin(password);
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_gameId", (q) => q.eq("gameId", gameId))
+      .unique();
+    if (!player) throw new ConvexError("Player not found.");
+    await ctx.db.patch("players", player._id, cleanEntry(args));
+    return null;
+  },
+});
+
 export const deletePlayer = mutation({
   args: { password: v.string(), gameId: v.string() },
   handler: async (ctx, { password, gameId }) => {
@@ -130,7 +150,7 @@ export const deletePlayer = mutation({
   },
 });
 
-// Start a new KvK: wipes players and turns, reopens sign-ups and unpublishes the schedule.
+// Start a new KvK: wipes players and turns and unpublishes the schedule.
 export const resetEvent = mutation({
   args: { password: v.string(), confirm: v.string() },
   handler: async (ctx, { password, confirm }) => {
@@ -139,6 +159,6 @@ export const resetEvent = mutation({
     for (const t of await listAllTurns(ctx)) await ctx.db.delete("assignments", t._id);
     for (const p of await listPlayers(ctx)) await ctx.db.delete("players", p._id);
     const row = await settingsRow(ctx);
-    await ctx.db.patch("settings", row._id, { submissionsOpen: true, schedulePublished: false });
+    await ctx.db.patch("settings", row._id, { schedulePublished: false });
   },
 });

@@ -2,18 +2,38 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ClipboardCopy, Lock, LockOpen, Sparkles, Trash2 } from "lucide-react";
+import { ArrowRight, Check, Lock, LockOpen, Sparkles, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { copyText, errorMessage } from "@/lib/client";
+import { errorMessage } from "@/lib/client";
 import {
   DAYS,
   SLOTS,
+  assignDay,
   dayScore,
   formatDuration,
   formatSlotLocal,
@@ -36,6 +56,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
   const setLocked = useMutation(api.kvk.admin.setLocked);
   const clearDay = useMutation(api.kvk.admin.clearDay);
   const [assigning, setAssigning] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const today = useToday();
 
   const { players, turns } = data;
@@ -44,16 +65,58 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
   const turnOf = useMemo(() => new Map([...bySlot.values()].map((t) => [t.gameId, t.slot])), [bySlot]);
   const ranked = useMemo(() => rankPlayers(players, day), [players, day]);
 
-  // Everyone can be placed by hand, highest speedups first.
-  const options = useMemo(
-    () => [
-      { value: EMPTY, label: "— Empty —" },
-      ...[...players]
-        .sort((a, b) => dayScore(b, day) - dayScore(a, day) || a._creationTime - b._creationTime)
-        .map((p) => ({ value: p.gameId, label: `${playerLabel(p)} · ${formatDuration(dayScore(p, day))}` })),
-    ],
+  // Highest speedups for this day first; earlier sign-up wins ties.
+  const sorted = useMemo(
+    () => [...players].sort((a, b) => dayScore(b, day) - dayScore(a, day) || a._creationTime - b._creationTime),
     [players, day],
   );
+
+  // For each turn, the players who picked that time, in the order above.
+  const pickedBy = useMemo(() => {
+    const map = new Map<number, typeof sorted>(SLOTS.map((slot) => [slot, []]));
+    for (const p of sorted) for (const slot of day === "d1" ? p.d1Slots : p.d4Slots) map.get(slot)?.push(p);
+    return map;
+  }, [sorted, day]);
+
+  // Labels the closed dropdown shows for the selected value.
+  const options = useMemo(
+    () => [{ value: EMPTY, label: "— Empty —" }, ...sorted.map((p) => ({ value: p.gameId, label: playerLabel(p) }))],
+    [sorted],
+  );
+
+  // One dropdown row: name, speedups for this day, and the turn they already hold (picking them moves them).
+  const optionItem = (p: (typeof sorted)[number], slot: number) => {
+    const held = turnOf.get(p.gameId);
+    return (
+      <SelectItem key={p.gameId} value={p.gameId}>
+        <span className="truncate">{playerLabel(p)}</span>
+        <span className="font-mono text-xs text-muted-foreground">{formatDuration(dayScore(p, day))}</span>
+        {held !== undefined && held !== slot && (
+          <span className="text-xs text-warning">has {slotUtc(held)}</span>
+        )}
+      </SelectItem>
+    );
+  };
+
+  // What auto-assign would do right now, computed with the same logic the server runs.
+  // Only turns whose player would change are listed.
+  const plan = useMemo(() => {
+    const locked = [...bySlot.values()].filter((t) => t.locked);
+    const { turns: next, waitlist } = assignDay(players, day, locked);
+    const nextBySlot = new Map(next.map((t) => [t.slot, t.gameId]));
+    const changes = SLOTS.flatMap((slot) => {
+      const from = bySlot.get(slot)?.gameId;
+      const to = nextBySlot.get(slot);
+      return from === to ? [] : [{ slot, from, to }];
+    });
+    return { changes, filled: next.length, waitlist };
+  }, [players, day, bySlot]);
+
+  const nameOf = (gameId: string | undefined) => {
+    if (gameId === undefined) return null;
+    const p = byId.get(gameId);
+    return p ? playerLabel(p) : "Unknown";
+  };
 
   const run = async (fn: () => Promise<unknown>, done?: string) => {
     try {
@@ -71,16 +134,8 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
       toast.success(`${res.filled}/${SLOTS.length} turns filled · ${res.waitlisted} on waitlist`);
     });
     setAssigning(false);
+    setPreviewing(false);
   };
-
-  const chatText = () =>
-    [
-      `${data.settings.eventName} — ${DAYS[day].label} · ${DAYS[day].position} (UTC)`,
-      ...SLOTS.flatMap((slot) => {
-        const p = bySlot.get(slot) && byId.get(bySlot.get(slot)!.gameId);
-        return p ? [`${slotUtc(slot)} ${playerLabel(p)}`] : [];
-      }),
-    ].join("\n");
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,14 +149,17 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        <Button className="col-span-2 h-10 sm:col-span-1" onClick={runAutoAssign} disabled={assigning}>
-          <Sparkles data-icon="inline-start" />
-          {assigning ? "Assigning…" : "Auto-assign"}
-        </Button>
-        <Button variant="outline" className="h-10" onClick={() => copyText(chatText(), "Schedule copied for alliance chat")}>
-          <ClipboardCopy data-icon="inline-start" />
-          Copy for chat
-        </Button>
+        {plan.changes.length > 0 ? (
+          <Button className="col-span-2 h-10 sm:col-span-1" onClick={() => setPreviewing(true)}>
+            <Sparkles data-icon="inline-start" />
+            Auto-assign · {plan.changes.length} {plan.changes.length === 1 ? "change" : "changes"}
+          </Button>
+        ) : (
+          <Button variant="outline" className="col-span-2 h-10 sm:col-span-1" disabled>
+            <Check data-icon="inline-start" />
+            Auto-assign · nothing to change
+          </Button>
+        )}
         <ConfirmButton
           title={`Clear ${DAYS[day].label}?`}
           description="Removes every turn on this day, including locked ones. Players stay signed up."
@@ -114,12 +172,48 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </ConfirmButton>
       </div>
 
+      <AlertDialog open={previewing} onOpenChange={setPreviewing}>
+        <AlertDialogContent className="data-[size=default]:sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Auto-assign {DAYS[day].label}: {plan.changes.length} {plan.changes.length === 1 ? "change" : "changes"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Nothing is saved until you apply. After this, {plan.filled}/{SLOTS.length} turns are filled and{" "}
+              {plan.waitlist.length} {plan.waitlist.length === 1 ? "player is" : "players are"} on the waitlist. Locked
+              turns stay as they are.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="flex max-h-72 flex-col divide-y overflow-y-auto rounded-lg border text-sm">
+            {plan.changes.map(({ slot, from, to }) => (
+              <li key={slot} className="flex items-center gap-2 px-3 py-2">
+                <span className="w-12 shrink-0 font-mono font-semibold">{slotUtc(slot)}</span>
+                <span className={cn("min-w-0 flex-1 truncate", from ? "line-through opacity-60" : "text-muted-foreground")}>
+                  {nameOf(from) ?? "Empty"}
+                </span>
+                <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className={cn("min-w-0 flex-1 truncate", to ? "font-medium text-primary" : "text-muted-foreground")}>
+                  {nameOf(to) ?? "Empty"}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={assigning} onClick={runAutoAssign}>
+              {assigning ? "Assigning…" : "Apply changes"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Card>
         <CardHeader>
           <CardTitle>Turns</CardTitle>
           <CardDescription>
-            Auto-assign keeps locked turns. Picking a player by hand locks the turn and moves them off any other turn
-            this day.
+            Each dropdown lists the players who picked that time first, most {DAYS[day].label} speedups on top.
+            Picking a player by hand locks the turn and moves them off any other turn this day. Auto-assign keeps
+            locked turns.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0 sm:px-4">
@@ -136,11 +230,17 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
               {SLOTS.map((slot) => {
                 const turn = bySlot.get(slot);
                 const player = turn && byId.get(turn.gameId);
+                const picked = pickedBy.get(slot) ?? [];
+                const pickedIds = new Set(picked.map((p) => p.gameId));
+                const others = sorted.filter((p) => !pickedIds.has(p.gameId));
                 return (
                   <TableRow key={slot} className={cn(turn?.locked && "bg-primary/5")}>
                     <TableCell>
                       <div className="font-mono font-semibold">{slotRangeUtc(slot)}</div>
                       {today && <div className="text-xs text-muted-foreground">{formatSlotLocal(slot, today)}</div>}
+                      <div className={cn("text-xs", picked.length > 0 ? "text-primary" : "text-muted-foreground")}>
+                        {picked.length} picked
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Select
@@ -154,11 +254,23 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent alignItemWithTrigger={false}>
-                          {options.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>
-                              {o.label}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value={EMPTY}>— Empty —</SelectItem>
+                          <SelectSeparator />
+                          <SelectGroup>
+                            <SelectLabel>
+                              {picked.length > 0 ? `Picked this time (${picked.length})` : "Nobody picked this time"}
+                            </SelectLabel>
+                            {picked.map((p) => optionItem(p, slot))}
+                          </SelectGroup>
+                          {others.length > 0 && (
+                            <>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectLabel>Didn&apos;t pick this time</SelectLabel>
+                                {others.map((p) => optionItem(p, slot))}
+                              </SelectGroup>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </TableCell>

@@ -1,183 +1,163 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { CalendarClock, Lock, LogOut, Swords } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useConvex, useMutation, useQuery } from "convex/react";
+import { ArrowLeft, ArrowRight, CalendarClock, Lock, LogOut, TriangleAlert } from "lucide-react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { errorMessage, useStoredString } from "@/lib/client";
 import {
   DAYS,
   DAY_KEYS,
+  dayScoreOf,
   formatDuration,
   formatSlotLocal,
-  localTimeZone,
+  playerLabel,
   slotRangeUtc,
+  slotUtc,
   useToday,
   type DayKey,
 } from "@/lib/kvk";
-import { DurationInput } from "./duration-input";
-import { SlotGrid } from "./slot-grid";
-
-type Entry = {
-  name: string;
-  alliance: string;
-  d1Construction: number;
-  d1Research: number;
-  d1General: number;
-  d4Training: number;
-  d4General: number;
-  d1Slots: number[];
-  d4Slots: number[];
-};
-
-const EMPTY: Entry = {
-  name: "",
-  alliance: "",
-  d1Construction: 0,
-  d1Research: 0,
-  d1General: 0,
-  d4Training: 0,
-  d4General: 0,
-  d1Slots: [],
-  d4Slots: [],
-};
-
-const SPEEDUP_FIELDS: Record<DayKey, { key: keyof Entry; label: string }[]> = {
-  d1: [
-    { key: "d1Construction", label: "Construction speedups" },
-    { key: "d1Research", label: "Research speedups" },
-    { key: "d1General", label: "General speedups for Day 1" },
-  ],
-  d4: [
-    { key: "d4Training", label: "Training speedups" },
-    { key: "d4General", label: "General speedups for Day 4" },
-  ],
-};
+import { cn } from "@/lib/utils";
+import { DayCard, DetailsCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
 
 export function KvkSignup() {
   const settings = useQuery(api.kvk.schedule.settings);
+  // The game ID this browser signed up with (or looked up), so the entry and turn show on return visits.
   const [gameId, setGameId] = useStoredString("kvk:gameId");
+  const entry = useQuery(api.kvk.players.get, gameId ? { gameId } : "skip");
+  const loading = gameId === undefined || (!!gameId && entry === undefined);
 
   return (
     <>
       <PageHeader
         eyebrow={settings?.eventName ?? "KvK"}
         title="Appointment sign-up"
-        description="Enter your speedups and the times you can play. The most speedups get turns first."
-      >
-        {settings && (
-          <Badge variant={settings.submissionsOpen ? "success" : "secondary"}>
-            {settings.submissionsOpen ? "Sign-ups open" : "Sign-ups closed"}
-          </Badge>
-        )}
-      </PageHeader>
-      {gameId === undefined ? null : gameId ? (
-        <PlayerArea gameId={gameId} onSwitch={() => setGameId(null)} submissionsOpen={settings?.submissionsOpen} />
+        description="Enter your speedups and the times you can play. The most speedups get turns first. You can only submit once — entries can't be edited afterwards."
+      />
+      {loading ? null : gameId && entry ? (
+        <PlayerArea gameId={gameId} entry={entry} onSwitch={() => setGameId(null)} />
       ) : (
-        <LoginCard onLogin={setGameId} />
+        <SignupForm onSignedUp={setGameId} />
       )}
     </>
   );
 }
 
-function LoginCard({ onLogin }: { onLogin: (gameId: string) => void }) {
-  const [value, setValue] = useState("");
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (value.trim()) onLogin(value.trim());
-  };
-  return (
-    <Card className="mx-auto w-full max-w-md">
-      <CardHeader className="items-center text-center">
-        <span className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <Swords className="size-6" />
-        </span>
-        <CardTitle className="text-xl">Enter your game ID</CardTitle>
-        <CardDescription>No password needed. Use the same ID later to edit your entry or see your turn.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={submit} className="flex flex-col gap-3">
-          <Label htmlFor="game-id" className="sr-only">
-            Game ID
-          </Label>
-          <Input
-            id="game-id"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="Game ID"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="h-12 text-center font-mono text-lg tracking-wider"
-          />
-          <Button type="submit" className="h-11 text-base" disabled={!value.trim()}>
-            Continue
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PlayerArea({
-  gameId,
-  onSwitch,
-  submissionsOpen,
-}: {
-  gameId: string;
-  onSwitch: () => void;
-  submissionsOpen: boolean | undefined;
-}) {
-  const entry = useQuery(api.kvk.players.get, { gameId });
+function PlayerArea({ gameId, entry, onSwitch }: { gameId: string; entry: Entry; onSwitch: () => void }) {
   const turns = useQuery(api.kvk.players.myTurns, { gameId });
-  const initials = (entry?.name || "?").slice(0, 2).toUpperCase();
 
   return (
     <>
       <Card size="sm">
         <CardContent className="flex items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-            {initials}
+            {entry.name.slice(0, 2).toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">
-              {entry ? (entry.alliance ? `[${entry.alliance}] ${entry.name}` : entry.name) : "New player"}
-            </p>
+            <p className="truncate font-semibold">{playerLabel(entry)}</p>
             <p className="text-xs text-muted-foreground">
               ID <span className="font-mono">{gameId}</span>
-              {entry && <span className="text-success"> · Signed up</span>}
+              <span className="text-success"> · Signed up</span>
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={onSwitch}>
             <LogOut data-icon="inline-start" />
-            Switch
+            Not you?
           </Button>
         </CardContent>
       </Card>
 
-      {turns && entry && <MyTurns turns={turns} entry={entry} />}
+      {turns && <MyTurns turns={turns} entry={entry} />}
 
-      {submissionsOpen === false && (
-        <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
-          <Lock className="mt-0.5 size-4 shrink-0 text-warning" />
-          <div>
-            <p className="font-medium">Sign-ups are closed</p>
-            <p className="text-muted-foreground">You can no longer change your entry. Ask your King or R4 if something is wrong.</p>
-          </div>
-        </div>
-      )}
-
-      {entry !== undefined && submissionsOpen !== undefined && (
-        <SignupForm key={gameId} gameId={gameId} initial={entry ?? EMPTY} isNew={!entry} disabled={!submissionsOpen} />
-      )}
+      <Notice icon={Lock} title="Your entry is final">
+        Entries can&apos;t be edited after signing up. If something is wrong, ask your King or R4 — only an admin can
+        change it.
+      </Notice>
+      <EntrySummary entry={entry} />
     </>
+  );
+}
+
+function Notice({ icon: Icon, title, children }: { icon: typeof Lock; title: string; children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+      <Icon className="mt-0.5 size-4 shrink-0 text-warning" />
+      <div>
+        <p className="font-semibold">{title}</p>
+        <p className="text-muted-foreground">{children}</p>
+      </div>
+    </div>
+  );
+}
+
+// Read-only view of what the player submitted.
+function EntrySummary({
+  entry,
+  title = "Your entry",
+  description = "What you submitted. Read-only.",
+}: {
+  entry: Entry;
+  title?: string;
+  description?: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        {DAY_KEYS.map((day) => {
+          const slots = day === "d1" ? entry.d1Slots : entry.d4Slots;
+          return (
+            <div key={day} className="flex flex-col gap-3 rounded-lg bg-muted p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                {DAYS[day].label} · {DAYS[day].title}
+              </p>
+              <dl className="flex flex-col gap-1 text-sm">
+                {SPEEDUP_FIELDS[day].map((f) => (
+                  <div key={f.key} className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">{f.label}</dt>
+                    <dd className="font-mono">{formatDuration(entry[f.key])}</dd>
+                  </div>
+                ))}
+                <div className="flex justify-between gap-3 border-t pt-1 font-semibold">
+                  <dt>Total</dt>
+                  <dd className="font-mono text-primary">{formatDuration(dayScoreOf(entry, day))}</dd>
+                </div>
+              </dl>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xs text-muted-foreground">
+                  {slots.length > 0 ? `${slots.length} times picked (UTC)` : "No times picked"}
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {slots.map((s) => (
+                    <Badge key={s} variant="secondary" className="font-mono">
+                      {slotUtc(s)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -223,39 +203,36 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
   );
 }
 
-function SignupForm({
-  gameId,
-  initial,
-  isNew,
-  disabled,
-}: {
-  gameId: string;
-  initial: Entry;
-  isNew: boolean;
-  disabled: boolean;
-}) {
+const STEPS = ["Details", ...DAY_KEYS.map((d) => DAYS[d].label), "Review"];
+
+// First and only submission, one section at a time: details (with game ID), Day 1, Day 4, review.
+// Asks for confirmation at the end because the entry cannot be edited afterwards.
+function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
+  const convex = useConvex();
   const save = useMutation(api.kvk.players.save);
-  const today = useToday();
-  const [form, setForm] = useState<Entry>(() => ({
-    name: initial.name,
-    alliance: initial.alliance,
-    d1Construction: initial.d1Construction,
-    d1Research: initial.d1Research,
-    d1General: initial.d1General,
-    d4Training: initial.d4Training,
-    d4General: initial.d4General,
-    d1Slots: initial.d1Slots,
-    d4Slots: initial.d4Slots,
-  }));
+  const [rawGameId, setRawGameId] = useState("");
+  const [form, setForm] = useState<Entry>(EMPTY_ENTRY);
+  const [step, setStep] = useState(0);
+  const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Entry>(key: K, value: Entry[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const gameId = rawGameId.trim();
+  const last = STEPS.length - 1;
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const go = (next: number) => {
+    setStep(next);
+    window.scrollTo({ top: 0 });
+  };
+
+  // Leaving the details step: a game ID that already signed up goes straight to its (final) entry.
+  const next = async () => {
+    if (step > 0) return go(step + 1);
     setSaving(true);
     try {
-      const res = await save({ gameId, ...form });
-      toast.success(res.created ? "You're signed up" : "Entry updated");
+      if (await convex.query(api.kvk.players.get, { gameId })) {
+        toast.info("This game ID is already signed up. Entries can't be edited.");
+        onSignedUp(gameId);
+      } else go(1);
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -263,102 +240,102 @@ function SignupForm({
     }
   };
 
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await save({ gameId, ...form });
+      toast.success("You're signed up");
+      onSignedUp(gameId);
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setSaving(false);
+      setConfirming(false);
+    }
+  };
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <StepTitle step={1} title={isNew ? "Your details" : "Edit your details"} />
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-[2fr_1fr]">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="name">In-game name</Label>
-            <Input
-              id="name"
-              required
-              maxLength={40}
-              disabled={disabled}
-              placeholder="Your name in Kingshot"
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              className="h-10"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="alliance">Alliance tag</Label>
-            <Input
-              id="alliance"
-              maxLength={10}
-              disabled={disabled}
-              placeholder="ABC"
-              value={form.alliance}
-              onChange={(e) => set("alliance", e.target.value)}
-              className="h-10 uppercase"
-            />
-          </div>
-        </CardContent>
-      </Card>
+    <form
+      onSubmit={(e: FormEvent) => {
+        e.preventDefault();
+        if (step < last) next();
+        else setConfirming(true);
+      }}
+      className="flex flex-col gap-6"
+    >
+      <ol className="grid grid-cols-4 gap-2">
+        {STEPS.map((label, i) => (
+          <li key={label} aria-current={i === step ? "step" : undefined}>
+            <button
+              type="button"
+              disabled={i >= step}
+              onClick={() => go(i)}
+              className="flex w-full flex-col gap-1.5 text-left disabled:cursor-default"
+            >
+              <span className={cn("h-1.5 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />
+              <span className={cn("text-xs font-medium", i === step ? "text-foreground" : "text-muted-foreground")}>
+                {i + 1}. {label}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
 
-      {DAY_KEYS.map((day, i) => {
-        const total = SPEEDUP_FIELDS[day].reduce((sum, f) => sum + (form[f.key] as number), 0);
-        const slotsKey = day === "d1" ? "d1Slots" : "d4Slots";
-        return (
-          <Card key={day}>
-            <CardHeader>
-              <StepTitle step={i + 2} title={`${DAYS[day].label} · ${DAYS[day].title}`} />
-              <CardDescription className="pl-10">
-                Appointment: <span className="font-medium text-foreground">{DAYS[day].position}</span>. Skip if you
-                won&apos;t play this day.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6">
-              <div className="flex flex-col gap-5">
-                {SPEEDUP_FIELDS[day].map((f) => (
-                  <DurationInput
-                    key={f.key}
-                    id={f.key}
-                    label={f.label}
-                    value={form[f.key] as number}
-                    disabled={disabled}
-                    onChange={(minutes) => set(f.key, minutes)}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
-                <span className="text-sm font-medium">{DAYS[day].label} total</span>
-                <span className="font-mono text-xl font-bold text-primary">{formatDuration(total)}</span>
-              </div>
-              <Separator />
-              <div className="flex flex-col gap-1">
-                <p className="font-medium">Times you can play</p>
-                <p className="text-xs text-muted-foreground">
-                  Pick every turn you can be online for. Big numbers are UTC
-                  {today ? `, small numbers are your time (${localTimeZone()})` : ""}.
-                </p>
-              </div>
-              <SlotGrid value={form[slotsKey]} onChange={(s) => set(slotsKey, s)} disabled={disabled} />
-            </CardContent>
-          </Card>
-        );
-      })}
+      {step === 0 && (
+        <DetailsCard
+          form={form}
+          set={set}
+          step={1}
+          title="Your details"
+          gameId={{ value: rawGameId, onChange: setRawGameId }}
+        />
+      )}
+      {DAY_KEYS.map((day, i) => step === i + 1 && <DayCard key={day} day={day} form={form} set={set} step={i + 2} />)}
+      {step === last && (
+        <EntrySummary
+          entry={form}
+          title="Review your entry"
+          description={`Signing up as ${playerLabel({ name: form.name.trim(), alliance: form.alliance.trim() })} · ID ${gameId}. Go back to fix anything now — you can't after you submit.`}
+        />
+      )}
 
-      {!disabled && (
-        <div className="sticky bottom-0 -mx-4 border-t bg-background/90 px-4 py-3 backdrop-blur-md sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
-          <Button type="submit" className="h-12 w-full text-base sm:w-auto sm:px-8" disabled={saving}>
-            {saving ? "Saving…" : isNew ? "Sign up" : "Save changes"}
+      <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t bg-background/90 px-4 py-3 backdrop-blur-md sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+        {step === last && (
+          <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
+            <TriangleAlert className="size-3.5 shrink-0" />
+            Final — you can&apos;t edit after signing up.
+          </p>
+        )}
+        <div className="flex gap-2">
+          {step > 0 && (
+            <Button type="button" variant="outline" className="h-12 px-5 text-base" onClick={() => go(step - 1)}>
+              <ArrowLeft data-icon="inline-start" />
+              Back
+            </Button>
+          )}
+          <Button type="submit" className="h-12 flex-1 text-base sm:flex-none sm:px-8" disabled={saving}>
+            {step === last ? "Sign up" : `Next: ${STEPS[step + 1]}`}
+            {step < last && <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
-      )}
-    </form>
-  );
-}
+      </div>
 
-function StepTitle({ step, title }: { step: number; title: string }) {
-  return (
-    <CardTitle className="flex items-center gap-3 text-base">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-        {step}
-      </span>
-      {title}
-    </CardTitle>
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit your entry? This is final.</AlertDialogTitle>
+            <AlertDialogDescription>
+              You won&apos;t be able to edit it afterwards. Only an admin (your King or R4) can change it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back and check</AlertDialogCancel>
+            <AlertDialogAction disabled={saving} onClick={submit}>
+              {saving ? "Saving…" : "Submit — final"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </form>
   );
 }

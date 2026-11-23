@@ -185,7 +185,7 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
   const update = useMutation(api.kvk.admin.updateSettings);
   const [eventName, setEventName] = useState(data.settings.eventName);
 
-  const run = async (args: { eventName?: string; submissionsOpen?: boolean; schedulePublished?: boolean }, done: string) => {
+  const run = async (args: { eventName?: string; schedulePublished?: boolean }, done: string) => {
     try {
       await update({ password, ...args });
       toast.success(done);
@@ -224,13 +224,6 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
           </div>
         </form>
         <div className="flex flex-col divide-y rounded-lg border">
-          <Toggle
-            id="submissions-open"
-            label="Sign-ups open"
-            hint="Players can add and edit entries."
-            checked={data.settings.submissionsOpen}
-            onChange={(v) => run({ submissionsOpen: v }, v ? "Sign-ups opened." : "Sign-ups closed.")}
-          />
           <Toggle
             id="schedule-published"
             label="Schedule published"
