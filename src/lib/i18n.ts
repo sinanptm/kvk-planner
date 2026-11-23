@@ -651,18 +651,126 @@ const de: Dictionary = {
   "schedule.noMatch": "Kein Treffer für {day}.",
 };
 
-const DICTIONARIES = { en, id, zh, fr, tr, de } satisfies Record<string, Dictionary>;
+const es: Dictionary = {
+  "nav.signup": "Inscribirse",
+  "nav.schedule": "Horario",
+  "nav.admin": "Admin",
+  "lang.label": "Idioma",
+
+  "day.d1": "Día 1",
+  "day.d4": "Día 4",
+  "day.d1.title": "Construcción e investigación",
+  "day.d4.title": "Entrenamiento",
+
+  "signup.title": "Inscripción a nombramientos",
+  "signup.desc": "Introduce tus aceleradores y las horas en que puedes jugar. Solo puedes enviarlo una vez.",
+  "signup.signedUp": "Inscrito",
+  "signup.notYou": "¿No eres tú?",
+
+  "final.title": "Tu inscripción es definitiva",
+  "final.body":
+    "No se puede editar después de inscribirte. Si algo está mal, pídeselo a tu Rey o R4: solo un admin puede cambiarlo.",
+  "final.line": "Definitivo: no podrás editar después de inscribirte.",
+
+  "entry.title": "Tu inscripción",
+  "entry.desc": "Lo que enviaste. Solo lectura.",
+  "entry.total": "Total",
+  "entry.timesPicked": "{n} horas elegidas (UTC)",
+  "entry.noTimes": "Ninguna hora elegida",
+
+  "turns.title": "Tus turnos",
+  "turns.desc": "El horario ya está publicado. Conéctate al inicio de tu turno.",
+  "turns.yourTime": "tu hora",
+  "turns.waitlist": "Aún sin turno: estás en la lista de espera.",
+  "turns.noTimes": "No elegiste ninguna hora para este día.",
+
+  "step.details": "Datos",
+  "step.review": "Revisar",
+  "step.next": "Siguiente: {step}",
+  "step.back": "Atrás",
+
+  "details.title": "Tus datos",
+  "lookup.check": "Comprobar ID",
+  "lookup.checking": "Comprobando…",
+  "lookup.found": "Te encontramos en el juego",
+  "lookup.badId": "Introduce tu ID de juego (solo números).",
+  "lookup.notFound": "No hay ningún jugador con este ID en el juego. Revisa el número e inténtalo de nuevo.",
+  "lookup.wrongKingdom": "Este jugador está en el reino {kid}. Solo el reino {ours} puede inscribirse.",
+  "lookup.wrongAlliance": "Solo los miembros de VIK, TEA, BTF y FFF pueden inscribirse. Alianza de este jugador: {alliance}.",
+  "lookup.pending": "El juego todavía está buscando a este jugador. Inténtalo de nuevo en unos segundos.",
+  "lookup.error": "No se pudo comprobar el ID ahora. Inténtalo de nuevo en un minuto.",
+  "field.gameId": "ID de juego",
+  "field.gameIdPlaceholder": "Tu ID de jugador de Kingshot",
+  "field.name": "Nombre en el juego",
+  "field.namePlaceholder": "Nombre en Kingshot",
+  "field.alliance": "Alianza",
+
+  "day.appointment": "Nombramiento:",
+  "day.total": "Total del {day}",
+  "speedup.d1Construction": "Aceleradores de construcción",
+  "speedup.d1Research": "Aceleradores de investigación",
+  "speedup.d1General": "Aceleradores generales para el Día 1",
+  "speedup.d4Training": "Aceleradores de entrenamiento",
+  "speedup.d4General": "Aceleradores generales para el Día 4",
+  "duration.days": "Días",
+  "duration.hours": "Horas",
+  "duration.minutes": "Minutos",
+  "tc.level": "Nivel del Centro Urbano",
+  "tc.levelPlaceholder": "Elige tu nivel",
+  "tc.truegold": "Oro Verdadero (TG) que tienes",
+  "entry.tc": "Centro Urbano",
+  "entry.truegold": "Oro Verdadero",
+  "toast.pickTc": "Elige el nivel de tu Centro Urbano.",
+
+  "times.title": "Horas disponibles",
+  "times.hint": "Elige al menos un turno, y todos los que te vengan bien. Los números grandes son UTC.",
+  "times.hintLocal": "Los números pequeños son tu hora ({tz}).",
+  "times.count": "{n} de {total} turnos elegidos",
+  "times.selectAll": "Elegir todos",
+  "times.clear": "Borrar",
+  "times.pickAll": "Elegir todos",
+  "times.clearThese": "Borrar estos",
+
+  "review.title": "Revisa tu inscripción",
+  "review.desc": "Te inscribes como {name} · ID {id}. Vuelve atrás para corregir algo ahora: no podrás después de enviarlo.",
+  "confirm.title": "¿Enviar tu inscripción? Es definitiva.",
+  "confirm.desc": "No podrás editarla después. Solo un admin (tu Rey o R4) puede cambiarla.",
+  "confirm.back": "Volver y revisar",
+  "confirm.submit": "Enviar: definitivo",
+  "action.signUp": "Inscribirse",
+  "action.saving": "Guardando…",
+
+  "toast.pickTime": "Elige al menos una hora para el {day}.",
+  "toast.pickAlliance": "Elige tu alianza.",
+  "toast.alreadySignedUp": "Este ID de juego ya está inscrito. Las inscripciones no se pueden editar.",
+  "toast.signedUp": "Te has inscrito",
+
+  "schedule.title": "Horario de nombramientos",
+  "schedule.desc": "Turnos de 30 minutos. Las horas son UTC.",
+  "schedule.descLocal": "Tu hora ({tz}) aparece debajo.",
+  "schedule.notPublished": "Aún no publicado",
+  "schedule.notPublishedDesc": "El horario aparecerá aquí cuando el Rey lo publique.",
+  "schedule.search": "Buscar nombre o alianza",
+  "schedule.hideOpen": "Ocultar turnos libres",
+  "schedule.filled": "{n}/{total} ocupados",
+  "schedule.open": "Libre",
+  "schedule.you": "Tú",
+  "schedule.noMatch": "Sin resultados el {day}.",
+};
+
+const DICTIONARIES = { en, id, zh, fr, tr, de, es } satisfies Record<string, Dictionary>;
 
 export type Lang = keyof typeof DICTIONARIES;
 
-// Shown in the language menu, each in its own language.
-export const LANGUAGES: { code: Lang; name: string }[] = [
-  { code: "en", name: "English" },
-  { code: "id", name: "Bahasa Indonesia" },
-  { code: "zh", name: "中文" },
-  { code: "fr", name: "Français" },
-  { code: "tr", name: "Türkçe" },
-  { code: "de", name: "Deutsch" },
+// Shown in the language menu, each in its own language, with the flag image in /public/flags.
+export const LANGUAGES: { code: Lang; name: string; flag: string }[] = [
+  { code: "en", name: "English", flag: "gb" },
+  { code: "es", name: "Español", flag: "es" },
+  { code: "id", name: "Bahasa Indonesia", flag: "id" },
+  { code: "zh", name: "中文", flag: "cn" },
+  { code: "fr", name: "Français", flag: "fr" },
+  { code: "tr", name: "Türkçe", flag: "tr" },
+  { code: "de", name: "Deutsch", flag: "de" },
 ];
 
 const isLang = (value: string | null | undefined): value is Lang => !!value && value in DICTIONARIES;
