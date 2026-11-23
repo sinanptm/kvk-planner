@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { SLOT_COUNT, type DayKey } from "@convex/lib/kvk";
 
-export { DAY_KEYS, SLOT_COUNT, assignDay, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
+export { ALLIANCES, DAY_KEYS, SLOT_COUNT, assignDay, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
 
 // dayScore for objects that only carry the speedup fields (forms, summaries).
 export const dayScoreOf = (
@@ -72,6 +72,30 @@ export function formatDuration(minutes: number) {
   const m = minutes % 60;
   return [d && `${d}d`, h && `${h}h`, m && `${m}m`].filter(Boolean).join(" ");
 }
+
+// One colour per alliance: the small tag, a filled turn tile, and a plain dot.
+export const ALLIANCE_STYLES: Record<string, { tag: string; tile: string; dot: string }> = {
+  VIK: {
+    tag: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+    tile: "border-sky-500/50 bg-sky-500/10 hover:bg-sky-500/20 dark:bg-sky-500/10 dark:hover:bg-sky-500/20",
+    dot: "bg-sky-500",
+  },
+  TEA: {
+    tag: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    tile: "border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20",
+    dot: "bg-emerald-500",
+  },
+  BTF: {
+    tag: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    tile: "border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 dark:bg-amber-500/10 dark:hover:bg-amber-500/20",
+    dot: "bg-amber-500",
+  },
+  FFF: {
+    tag: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+    tile: "border-violet-500/50 bg-violet-500/10 hover:bg-violet-500/20 dark:bg-violet-500/10 dark:hover:bg-violet-500/20",
+    dot: "bg-violet-500",
+  },
+};
 
 export const playerLabel = (p: { name: string; alliance: string }) =>
   p.alliance ? `[${p.alliance}] ${p.name}` : p.name;

@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS, formatSlotLocal, localTimeZone, slotRangeUtc, useToday } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
+import { AllianceTag } from "./alliance-tag";
 
 export function PublicSchedule() {
   const schedule = useQuery(api.kvk.schedule.published);
@@ -106,11 +107,7 @@ export function PublicSchedule() {
                           </div>
                           {turn ? (
                             <div className="flex min-w-0 flex-1 items-center gap-2">
-                              {turn.alliance && (
-                                <Badge variant="secondary" className="font-mono">
-                                  {turn.alliance}
-                                </Badge>
-                              )}
+                              <AllianceTag alliance={turn.alliance} />
                               <span className="truncate font-medium">{turn.name}</span>
                               {mine && <Badge className="ml-auto">You</Badge>}
                             </div>

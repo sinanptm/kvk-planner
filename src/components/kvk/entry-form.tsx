@@ -4,7 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { DAYS, DAY_KEYS, formatDuration, localTimeZone, useToday, type DayKey } from "@/lib/kvk";
+import {
+  ALLIANCES,
+  ALLIANCE_STYLES,
+  DAYS,
+  DAY_KEYS,
+  formatDuration,
+  localTimeZone,
+  useToday,
+  type DayKey,
+} from "@/lib/kvk";
+import { cn } from "@/lib/utils";
 import { DurationInput } from "./duration-input";
 import { SlotGrid } from "./slot-grid";
 
@@ -90,9 +100,9 @@ export function DetailsCard({
       <CardHeader>
         <StepTitle step={step} title={title} />
       </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+      <CardContent className="grid gap-4 sm:grid-cols-2">
         {gameId && (
-          <div className="flex flex-col gap-2 sm:col-span-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="game-id">Game ID</Label>
             <Input
               id="game-id"
@@ -107,7 +117,7 @@ export function DetailsCard({
             />
           </div>
         )}
-        <div className="flex flex-col gap-2">
+        <div className={cn("flex flex-col gap-2", !gameId && "sm:col-span-2")}>
           <Label htmlFor="name">In-game name</Label>
           <Input
             id="name"
@@ -119,16 +129,29 @@ export function DetailsCard({
             className="h-10"
           />
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="alliance">Alliance tag</Label>
-          <Input
-            id="alliance"
-            maxLength={10}
-            placeholder="ABC"
-            value={form.alliance}
-            onChange={(e) => set("alliance", e.target.value)}
-            className="h-10 uppercase"
-          />
+        <div className="flex flex-col gap-2 sm:col-span-2">
+          <Label id="alliance-label">Alliance</Label>
+          <div role="radiogroup" aria-labelledby="alliance-label" className="grid grid-cols-4 gap-2">
+            {ALLIANCES.map((tag) => {
+              const on = form.alliance === tag;
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => set("alliance", tag)}
+                  className={cn(
+                    "flex h-10 items-center justify-center gap-2 rounded-lg border font-mono text-sm font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                    on ? ALLIANCE_STYLES[tag].tile : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <span className={cn("size-2 rounded-full", ALLIANCE_STYLES[tag].dot)} />
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -3,6 +3,10 @@
 
 export const SLOT_COUNT = 48;
 
+// The alliances taking part. Every player belongs to exactly one.
+export const ALLIANCES = ["VIK", "TEA", "BTF", "FFF"] as const;
+export type Alliance = (typeof ALLIANCES)[number];
+
 export type DayKey = "d1" | "d4";
 
 export const DAY_KEYS: DayKey[] = ["d1", "d4"];

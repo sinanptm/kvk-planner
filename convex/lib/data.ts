@@ -1,7 +1,7 @@
 import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { isValidSlot, type DayKey } from "./kvk";
+import { ALLIANCES, isValidSlot, type DayKey } from "./kvk";
 
 // Upper bounds for reads. A kingdom never has anywhere near this many players.
 export const MAX_PLAYERS = 2000;
@@ -75,8 +75,9 @@ const cleanSlots = (slots: number[]) => [...new Set(slots.filter(isValidSlot))].
 export function cleanEntry(args: Infer<typeof entryValidator>) {
   const name = args.name.trim();
   if (!name || name.length > 40) throw new ConvexError("Enter the in-game name (max 40 characters).");
-  const alliance = args.alliance.trim();
-  if (alliance.length > 10) throw new ConvexError("Alliance tag is too long.");
+  const alliance = args.alliance.trim().toUpperCase();
+  if (!(ALLIANCES as readonly string[]).includes(alliance))
+    throw new ConvexError(`Pick an alliance: ${ALLIANCES.join(", ")}.`);
   return {
     name,
     alliance,

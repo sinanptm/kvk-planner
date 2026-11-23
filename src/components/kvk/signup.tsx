@@ -33,6 +33,7 @@ import {
   type DayKey,
 } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
+import { PlayerName } from "./alliance-tag";
 import { DayCard, DetailsCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
 
 export function KvkSignup() {
@@ -69,7 +70,9 @@ function PlayerArea({ gameId, entry, onSwitch }: { gameId: string; entry: Entry;
             {entry.name.slice(0, 2).toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{playerLabel(entry)}</p>
+            <p className="flex font-semibold">
+              <PlayerName player={entry} />
+            </p>
             <p className="text-xs text-muted-foreground">
               ID <span className="font-mono">{gameId}</span>
               <span className="text-success"> · Signed up</span>
@@ -227,6 +230,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   // Leaving the details step: a game ID that already signed up goes straight to its (final) entry.
   const next = async () => {
     if (step > 0) return go(step + 1);
+    if (!form.alliance) return void toast.error("Pick your alliance.");
     setSaving(true);
     try {
       if (await convex.query(api.kvk.players.get, { gameId })) {

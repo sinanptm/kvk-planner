@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { copyText, errorMessage } from "@/lib/client";
-import { dayScore, formatDuration, searchPlayers, slotUtc } from "@/lib/kvk";
+import { ALLIANCES, dayScore, formatDuration, searchPlayers, slotUtc } from "@/lib/kvk";
 import type { Dashboard } from "./admin";
+import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
 import { EntryFields, toEntry, type Entry } from "./entry-form";
 
@@ -138,8 +139,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
               {shown.map((p) => (
                 <TableRow key={p.gameId}>
                   <TableCell>
-                    <div className="font-medium">{p.name}</div>
-                    {p.alliance && <div className="text-xs text-muted-foreground">[{p.alliance}]</div>}
+                    <PlayerName player={p} className="font-medium" />
                   </TableCell>
                   <TableCell className="font-mono">{p.gameId}</TableCell>
                   {(["d1", "d4"] as const).map((day) => {
@@ -208,6 +208,8 @@ function EditPlayer({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!ALLIANCES.includes(form.alliance as (typeof ALLIANCES)[number]))
+      return void toast.error("Pick an alliance for this player.");
     setSaving(true);
     try {
       await updatePlayer({ password, gameId: player.gameId, ...form });

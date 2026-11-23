@@ -31,6 +31,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { errorMessage } from "@/lib/client";
 import {
   DAYS,
+  ALLIANCES,
+  ALLIANCE_STYLES,
   SLOTS,
   assignDay,
   dayScore,
@@ -45,6 +47,7 @@ import {
 } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
+import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
 
 const EMPTY = "__empty";
@@ -93,9 +96,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
     const held = turnOf.get(p.gameId);
     return (
       <SelectItem key={p.gameId} value={p.gameId}>
-        <span className={cn("min-w-0 flex-1 truncate", held !== undefined && "text-muted-foreground")}>
-          {playerLabel(p)}
-        </span>
+        <PlayerName player={p} className={cn("flex-1", held !== undefined && "opacity-60")} />
         {held !== undefined && (
           <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">at {slotUtc(held)}</span>
         )}
@@ -153,6 +154,12 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
     if (gameId === undefined) return null;
     const p = byId.get(gameId);
     return p ? playerLabel(p) : "Unknown";
+  };
+
+  const playerNode = (gameId: string | undefined) => {
+    if (gameId === undefined) return null;
+    const p = byId.get(gameId);
+    return p ? <PlayerName player={p} className="max-w-full" /> : "Unknown";
   };
 
   const run = async (fn: () => Promise<unknown>, done?: string) => {
@@ -226,11 +233,11 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
               <li key={slot} className="flex items-center gap-2 px-3 py-2">
                 <span className="w-12 shrink-0 font-mono font-semibold">{slotUtc(slot)}</span>
                 <span className={cn("min-w-0 flex-1 truncate", from ? "line-through opacity-60" : "text-muted-foreground")}>
-                  {nameOf(from) ?? "Empty"}
+                  {playerNode(from) ?? "Empty"}
                 </span>
                 <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className={cn("min-w-0 flex-1 truncate", to ? "font-medium text-primary" : "text-muted-foreground")}>
-                  {nameOf(to) ?? "Empty"}
+                  {playerNode(to) ?? "Empty"}
                 </span>
               </li>
             ))}
@@ -286,6 +293,15 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
               ))}
             </div>
           </div>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {ALLIANCES.map((tag) => (
+              <li key={tag} className="flex items-center gap-1.5">
+                <span className={cn("size-2 rounded-full", ALLIANCE_STYLES[tag].dot)} />
+                <span className="font-mono font-semibold text-foreground">{tag}</span>
+                {[...bySlot.values()].filter((t) => byId.get(t.gameId)?.alliance === tag).length} turns
+              </li>
+            ))}
+          </ul>
           {PERIODS.map((period) => (
             <div key={period.label} className="flex flex-col gap-2">
               <p className="flex items-center justify-between text-xs font-medium text-muted-foreground">
@@ -312,7 +328,8 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           className={cn(
                             "h-auto! w-full flex-col items-stretch gap-0.5 p-2.5 text-left whitespace-normal [&>svg]:hidden",
                             turn
-                              ? "border-primary/40 bg-primary/10 hover:bg-primary/15 dark:bg-primary/10 dark:hover:bg-primary/15"
+                              ? (ALLIANCE_STYLES[player?.alliance ?? ""]?.tile ??
+                                "border-primary/40 bg-primary/10 hover:bg-primary/15 dark:bg-primary/10 dark:hover:bg-primary/15")
                               : picked.length > 0
                                 ? "border-dashed border-primary/50"
                                 : "border-dashed",
@@ -325,7 +342,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                             )}
                           </div>
                           <div className={cn("truncate text-sm", turn ? "pr-6 font-medium" : "text-muted-foreground")}>
-                            {turn ? nameOf(turn.gameId) : "Empty"}
+                            {turn ? playerNode(turn.gameId) : "Empty"}
                           </div>
                           <div className={cn("text-xs", !turn && picked.length > 0 ? "text-primary" : "text-muted-foreground")}>
                             {player ? formatDuration(dayScore(player, day)) : turn ? "—" : `${picked.length} picked`}
@@ -379,7 +396,9 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                 return (
                   <TableRow key={r.player.gameId}>
                     <TableCell className="font-mono text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell>{playerLabel(r.player)}</TableCell>
+                    <TableCell>
+                      <PlayerName player={r.player} />
+                    </TableCell>
                     <TableCell>{formatDuration(r.score)}</TableCell>
                     <TableCell>{r.slots.length}</TableCell>
                     <TableCell>
