@@ -27,7 +27,6 @@ import {
   SelectSeparator,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { errorMessage } from "@/lib/client";
 import {
   DAYS,
@@ -192,14 +191,14 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+      <div className="flex gap-2">
         {plan.changes.length > 0 ? (
-          <Button className="col-span-2 h-10 sm:col-span-1" onClick={() => setPreviewing(true)}>
+          <Button className="h-10 min-w-0 flex-1 sm:flex-none" onClick={() => setPreviewing(true)}>
             <Sparkles data-icon="inline-start" />
             Auto-assign · {plan.changes.length} {plan.changes.length === 1 ? "change" : "changes"}
           </Button>
         ) : (
-          <Button variant="outline" className="col-span-2 h-10 sm:col-span-1" disabled>
+          <Button variant="outline" className="h-10 min-w-0 flex-1 sm:flex-none" disabled>
             <Check data-icon="inline-start" />
             Auto-assign · nothing to change
           </Button>
@@ -282,7 +281,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4 shrink-0" />
                   {label}
                 </button>
               ))}
@@ -330,13 +329,13 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                                 : "border-dashed",
                           )}
                         >
-                          <div className="flex items-baseline gap-1.5">
+                          <div className={cn("flex items-baseline gap-1.5", turn && "pr-7")}>
                             <span className="font-mono text-sm font-semibold">{slotUtc(slot)}</span>
                             {today && (
                               <span className="text-[11px] text-muted-foreground">{formatSlotLocal(slot, today)}</span>
                             )}
                           </div>
-                          <div className={cn("truncate text-sm", turn ? "pr-6 font-medium" : "text-muted-foreground")}>
+                          <div className={cn("truncate text-sm", turn ? "font-medium" : "text-muted-foreground")}>
                             {turn ? playerNode(turn.gameId) : "Empty"}
                           </div>
                           <div className={cn("text-xs", !turn && picked.length > 0 ? "text-primary" : "text-muted-foreground")}>
@@ -374,47 +373,33 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
             Players with speedups and at least one picked time, most speedups first. Ties go to who signed up first.
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-0 sm:px-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead>Speedups</TableHead>
-                <TableHead>Times picked</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ranked.map((r, i) => {
-                const slot = turnOf.get(r.player.gameId);
-                return (
-                  <TableRow key={r.player.gameId}>
-                    <TableCell className="font-mono text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell>
-                      <PlayerName player={r.player} />
-                    </TableCell>
-                    <TableCell>{formatDuration(r.score)}</TableCell>
-                    <TableCell>{r.slots.length}</TableCell>
-                    <TableCell>
-                      {slot !== undefined ? (
-                        <Badge variant="success">Has turn · {slotUtc(slot)}</Badge>
-                      ) : (
-                        <Badge variant="warning">Waiting</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {ranked.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Nobody has signed up for {DAYS[day].label} yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <ol className="flex flex-col divide-y">
+            {ranked.map((r, i) => {
+              const slot = turnOf.get(r.player.gameId);
+              return (
+                <li key={r.player.gameId} className="flex items-center gap-3 py-2.5">
+                  <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">{i + 1}</span>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <PlayerName player={r.player} className="max-w-full font-medium" />
+                    <span className="text-xs text-muted-foreground">
+                      {formatDuration(r.score)} · {r.slots.length} {r.slots.length === 1 ? "time" : "times"} picked
+                    </span>
+                  </div>
+                  {slot !== undefined ? (
+                    <Badge variant="success">Turn {slotUtc(slot)}</Badge>
+                  ) : (
+                    <Badge variant="warning">Waiting</Badge>
+                  )}
+                </li>
+              );
+            })}
+            {ranked.length === 0 && (
+              <li className="py-6 text-center text-sm text-muted-foreground">
+                Nobody has signed up for {DAYS[day].label} yet.
+              </li>
+            )}
+          </ol>
         </CardContent>
       </Card>
     </div>

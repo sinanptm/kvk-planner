@@ -1,0 +1,607 @@
+import { useCallback } from "react";
+import { useStoredString } from "@/lib/client";
+
+// Player-facing text in every supported language. English is the source; the other
+// dictionaries must define exactly the same keys (enforced by the Dictionary type).
+// The admin pages are English only. Appointment names stay in English in every language.
+const en = {
+  "nav.signup": "Sign up",
+  "nav.schedule": "Schedule",
+  "nav.admin": "Admin",
+  "lang.label": "Language",
+
+  "day.d1": "Day 1",
+  "day.d4": "Day 4",
+  "day.d1.title": "Construction & Research",
+  "day.d4.title": "Training",
+
+  "signup.title": "Appointment sign-up",
+  "signup.desc":
+    "Enter your speedups and the times you can play. The most speedups get turns first. You can only submit once — entries can't be edited afterwards.",
+  "signup.signedUp": "Signed up",
+  "signup.notYou": "Not you?",
+
+  "final.title": "Your entry is final",
+  "final.body":
+    "Entries can't be edited after signing up. If something is wrong, ask your King or R4 — only an admin can change it.",
+  "final.line": "Final — you can't edit after signing up.",
+
+  "entry.title": "Your entry",
+  "entry.desc": "What you submitted. Read-only.",
+  "entry.total": "Total",
+  "entry.timesPicked": "{n} times picked (UTC)",
+  "entry.noTimes": "No times picked",
+
+  "turns.title": "Your turns",
+  "turns.desc": "The schedule is out. Be online at the start of your turn.",
+  "turns.yourTime": "your time",
+  "turns.waitlist": "No turn yet — you're on the waitlist.",
+  "turns.noTimes": "You didn't pick any times for this day.",
+
+  "step.details": "Details",
+  "step.review": "Review",
+  "step.next": "Next: {step}",
+  "step.back": "Back",
+
+  "details.title": "Your details",
+  "field.gameId": "Game ID",
+  "field.gameIdPlaceholder": "Your Kingshot player ID",
+  "field.name": "In-game name",
+  "field.namePlaceholder": "Name in Kingshot",
+  "field.alliance": "Alliance",
+
+  "day.appointment": "Appointment:",
+  "day.total": "{day} total",
+  "speedup.d1Construction": "Construction speedups",
+  "speedup.d1Research": "Research speedups",
+  "speedup.d1General": "General speedups for Day 1",
+  "speedup.d4Training": "Training speedups",
+  "speedup.d4General": "General speedups for Day 4",
+  "duration.days": "Days",
+  "duration.hours": "Hours",
+  "duration.minutes": "Minutes",
+
+  "times.title": "Times available",
+  "times.hint": "Pick at least one turn, and every turn that works. Big numbers are UTC.",
+  "times.hintLocal": "Small numbers are your time ({tz}).",
+  "times.count": "{n} of {total} turns picked",
+  "times.selectAll": "Select all",
+  "times.clear": "Clear",
+  "times.pickAll": "Pick all",
+  "times.clearThese": "Clear these",
+
+  "review.title": "Review your entry",
+  "review.desc": "Signing up as {name} · ID {id}. Go back to fix anything now — you can't after you submit.",
+  "confirm.title": "Submit your entry? This is final.",
+  "confirm.desc": "You won't be able to edit it afterwards. Only an admin (your King or R4) can change it.",
+  "confirm.back": "Go back and check",
+  "confirm.submit": "Submit — final",
+  "action.signUp": "Sign up",
+  "action.saving": "Saving…",
+
+  "toast.pickTime": "Pick at least one time for {day}.",
+  "toast.pickAlliance": "Pick your alliance.",
+  "toast.alreadySignedUp": "This game ID is already signed up. Entries can't be edited.",
+  "toast.signedUp": "You're signed up",
+
+  "schedule.title": "Appointment schedule",
+  "schedule.desc": "30-minute turns. Times are UTC.",
+  "schedule.descLocal": "Your time ({tz}) is shown underneath.",
+  "schedule.notPublished": "Not published yet",
+  "schedule.notPublishedDesc": "The schedule shows up here once the King publishes it.",
+  "schedule.search": "Search name or alliance",
+  "schedule.hideOpen": "Hide open turns",
+  "schedule.filled": "{n}/{total} filled",
+  "schedule.open": "Open",
+  "schedule.you": "You",
+  "schedule.noMatch": "No match on {day}.",
+};
+
+export type TranslationKey = keyof typeof en;
+type Dictionary = Record<TranslationKey, string>;
+
+const id: Dictionary = {
+  "nav.signup": "Daftar",
+  "nav.schedule": "Jadwal",
+  "nav.admin": "Admin",
+  "lang.label": "Bahasa",
+
+  "day.d1": "Hari 1",
+  "day.d4": "Hari 4",
+  "day.d1.title": "Konstruksi & Riset",
+  "day.d4.title": "Pelatihan",
+
+  "signup.title": "Pendaftaran penunjukan",
+  "signup.desc":
+    "Masukkan percepatan Anda dan waktu Anda bisa bermain. Percepatan terbanyak mendapat giliran lebih dulu. Anda hanya bisa mengirim sekali — data tidak bisa diubah setelahnya.",
+  "signup.signedUp": "Terdaftar",
+  "signup.notYou": "Bukan Anda?",
+
+  "final.title": "Data Anda sudah final",
+  "final.body":
+    "Data tidak bisa diubah setelah mendaftar. Jika ada yang salah, hubungi King atau R4 Anda — hanya admin yang bisa mengubahnya.",
+  "final.line": "Final — Anda tidak bisa mengubah setelah mendaftar.",
+
+  "entry.title": "Data Anda",
+  "entry.desc": "Yang Anda kirim. Hanya bisa dibaca.",
+  "entry.total": "Total",
+  "entry.timesPicked": "{n} waktu dipilih (UTC)",
+  "entry.noTimes": "Tidak ada waktu dipilih",
+
+  "turns.title": "Giliran Anda",
+  "turns.desc": "Jadwal sudah keluar. Online saat giliran Anda dimulai.",
+  "turns.yourTime": "waktu Anda",
+  "turns.waitlist": "Belum ada giliran — Anda di daftar tunggu.",
+  "turns.noTimes": "Anda tidak memilih waktu untuk hari ini.",
+
+  "step.details": "Data diri",
+  "step.review": "Tinjau",
+  "step.next": "Lanjut: {step}",
+  "step.back": "Kembali",
+
+  "details.title": "Data Anda",
+  "field.gameId": "ID game",
+  "field.gameIdPlaceholder": "ID pemain Kingshot Anda",
+  "field.name": "Nama dalam game",
+  "field.namePlaceholder": "Nama di Kingshot",
+  "field.alliance": "Aliansi",
+
+  "day.appointment": "Penunjukan:",
+  "day.total": "Total {day}",
+  "speedup.d1Construction": "Percepatan konstruksi",
+  "speedup.d1Research": "Percepatan riset",
+  "speedup.d1General": "Percepatan umum untuk Hari 1",
+  "speedup.d4Training": "Percepatan pelatihan",
+  "speedup.d4General": "Percepatan umum untuk Hari 4",
+  "duration.days": "Hari",
+  "duration.hours": "Jam",
+  "duration.minutes": "Menit",
+
+  "times.title": "Waktu tersedia",
+  "times.hint": "Pilih minimal satu giliran, dan semua giliran yang Anda bisa. Angka besar adalah UTC.",
+  "times.hintLocal": "Angka kecil adalah waktu Anda ({tz}).",
+  "times.count": "{n} dari {total} giliran dipilih",
+  "times.selectAll": "Pilih semua",
+  "times.clear": "Hapus",
+  "times.pickAll": "Pilih semua",
+  "times.clearThese": "Hapus ini",
+
+  "review.title": "Tinjau data Anda",
+  "review.desc":
+    "Mendaftar sebagai {name} · ID {id}. Kembali untuk memperbaiki sekarang — tidak bisa setelah dikirim.",
+  "confirm.title": "Kirim data Anda? Ini final.",
+  "confirm.desc": "Anda tidak bisa mengubahnya setelah ini. Hanya admin (King atau R4 Anda) yang bisa mengubahnya.",
+  "confirm.back": "Kembali dan periksa",
+  "confirm.submit": "Kirim — final",
+  "action.signUp": "Daftar",
+  "action.saving": "Menyimpan…",
+
+  "toast.pickTime": "Pilih minimal satu waktu untuk {day}.",
+  "toast.pickAlliance": "Pilih aliansi Anda.",
+  "toast.alreadySignedUp": "ID game ini sudah terdaftar. Data tidak bisa diubah.",
+  "toast.signedUp": "Anda sudah terdaftar",
+
+  "schedule.title": "Jadwal penunjukan",
+  "schedule.desc": "Giliran 30 menit. Waktu dalam UTC.",
+  "schedule.descLocal": "Waktu Anda ({tz}) ditampilkan di bawahnya.",
+  "schedule.notPublished": "Belum dipublikasikan",
+  "schedule.notPublishedDesc": "Jadwal akan muncul di sini setelah King mempublikasikannya.",
+  "schedule.search": "Cari nama atau aliansi",
+  "schedule.hideOpen": "Sembunyikan giliran kosong",
+  "schedule.filled": "{n}/{total} terisi",
+  "schedule.open": "Kosong",
+  "schedule.you": "Anda",
+  "schedule.noMatch": "Tidak ada hasil di {day}.",
+};
+
+const zh: Dictionary = {
+  "nav.signup": "报名",
+  "nav.schedule": "时间表",
+  "nav.admin": "管理",
+  "lang.label": "语言",
+
+  "day.d1": "第1天",
+  "day.d4": "第4天",
+  "day.d1.title": "建造与研究",
+  "day.d4.title": "训练",
+
+  "signup.title": "任命报名",
+  "signup.desc": "填写你的加速和可以在线的时间。加速最多的玩家优先获得时段。只能提交一次，提交后无法修改。",
+  "signup.signedUp": "已报名",
+  "signup.notYou": "不是你？",
+
+  "final.title": "你的报名已确定",
+  "final.body": "报名后无法修改。如有错误，请联系你的国王或 R4，只有管理员可以修改。",
+  "final.line": "最终提交，报名后无法修改。",
+
+  "entry.title": "你的报名",
+  "entry.desc": "你提交的内容，仅供查看。",
+  "entry.total": "合计",
+  "entry.timesPicked": "已选 {n} 个时间（UTC）",
+  "entry.noTimes": "未选择时间",
+
+  "turns.title": "你的时段",
+  "turns.desc": "时间表已公布。请在你的时段开始时在线。",
+  "turns.yourTime": "你的时间",
+  "turns.waitlist": "暂无时段，你在候补名单中。",
+  "turns.noTimes": "你没有为这一天选择时间。",
+
+  "step.details": "资料",
+  "step.review": "确认",
+  "step.next": "下一步：{step}",
+  "step.back": "返回",
+
+  "details.title": "你的资料",
+  "field.gameId": "游戏 ID",
+  "field.gameIdPlaceholder": "你的 Kingshot 玩家 ID",
+  "field.name": "游戏内名称",
+  "field.namePlaceholder": "Kingshot 中的名称",
+  "field.alliance": "联盟",
+
+  "day.appointment": "任命：",
+  "day.total": "{day}合计",
+  "speedup.d1Construction": "建造加速",
+  "speedup.d1Research": "研究加速",
+  "speedup.d1General": "用于第1天的通用加速",
+  "speedup.d4Training": "训练加速",
+  "speedup.d4General": "用于第4天的通用加速",
+  "duration.days": "天",
+  "duration.hours": "小时",
+  "duration.minutes": "分钟",
+
+  "times.title": "可用时间",
+  "times.hint": "至少选择一个时段，并选上所有你方便的时段。大号数字为 UTC 时间。",
+  "times.hintLocal": "小号数字为你的当地时间（{tz}）。",
+  "times.count": "已选 {n} / {total} 个时段",
+  "times.selectAll": "全选",
+  "times.clear": "清空",
+  "times.pickAll": "全选",
+  "times.clearThese": "清空这些",
+
+  "review.title": "确认你的报名",
+  "review.desc": "以 {name} · ID {id} 报名。现在可以返回修改，提交后无法修改。",
+  "confirm.title": "提交报名？此操作为最终提交。",
+  "confirm.desc": "提交后无法修改。只有管理员（你的国王或 R4）可以修改。",
+  "confirm.back": "返回检查",
+  "confirm.submit": "提交（最终）",
+  "action.signUp": "报名",
+  "action.saving": "保存中…",
+
+  "toast.pickTime": "请为{day}至少选择一个时间。",
+  "toast.pickAlliance": "请选择你的联盟。",
+  "toast.alreadySignedUp": "该游戏 ID 已报名，无法修改。",
+  "toast.signedUp": "报名成功",
+
+  "schedule.title": "任命时间表",
+  "schedule.desc": "每个时段 30 分钟。时间为 UTC。",
+  "schedule.descLocal": "下方显示你的当地时间（{tz}）。",
+  "schedule.notPublished": "尚未公布",
+  "schedule.notPublishedDesc": "国王公布后，时间表会显示在这里。",
+  "schedule.search": "搜索名称或联盟",
+  "schedule.hideOpen": "隐藏空时段",
+  "schedule.filled": "已安排 {n}/{total}",
+  "schedule.open": "空",
+  "schedule.you": "你",
+  "schedule.noMatch": "{day}没有匹配结果。",
+};
+
+const fr: Dictionary = {
+  "nav.signup": "Inscription",
+  "nav.schedule": "Planning",
+  "nav.admin": "Admin",
+  "lang.label": "Langue",
+
+  "day.d1": "Jour 1",
+  "day.d4": "Jour 4",
+  "day.d1.title": "Construction et recherche",
+  "day.d4.title": "Entraînement",
+
+  "signup.title": "Inscription aux nominations",
+  "signup.desc":
+    "Indiquez vos accélérations et les heures où vous pouvez jouer. Les plus grosses accélérations passent en premier. Vous ne pouvez envoyer qu'une seule fois — impossible de modifier ensuite.",
+  "signup.signedUp": "Inscrit",
+  "signup.notYou": "Ce n'est pas vous ?",
+
+  "final.title": "Votre inscription est définitive",
+  "final.body":
+    "Les inscriptions ne peuvent pas être modifiées. En cas d'erreur, contactez votre Roi ou un R4 — seul un admin peut la modifier.",
+  "final.line": "Définitif — impossible de modifier après l'inscription.",
+
+  "entry.title": "Votre inscription",
+  "entry.desc": "Ce que vous avez envoyé. Lecture seule.",
+  "entry.total": "Total",
+  "entry.timesPicked": "{n} créneaux choisis (UTC)",
+  "entry.noTimes": "Aucun créneau choisi",
+
+  "turns.title": "Vos tours",
+  "turns.desc": "Le planning est publié. Soyez en ligne au début de votre tour.",
+  "turns.yourTime": "votre heure",
+  "turns.waitlist": "Pas encore de tour — vous êtes sur liste d'attente.",
+  "turns.noTimes": "Vous n'avez choisi aucun créneau pour ce jour.",
+
+  "step.details": "Infos",
+  "step.review": "Vérifier",
+  "step.next": "Suivant : {step}",
+  "step.back": "Retour",
+
+  "details.title": "Vos informations",
+  "field.gameId": "ID de jeu",
+  "field.gameIdPlaceholder": "Votre ID de joueur Kingshot",
+  "field.name": "Nom en jeu",
+  "field.namePlaceholder": "Nom dans Kingshot",
+  "field.alliance": "Alliance",
+
+  "day.appointment": "Nomination :",
+  "day.total": "Total {day}",
+  "speedup.d1Construction": "Accélérations de construction",
+  "speedup.d1Research": "Accélérations de recherche",
+  "speedup.d1General": "Accélérations générales pour le Jour 1",
+  "speedup.d4Training": "Accélérations d'entraînement",
+  "speedup.d4General": "Accélérations générales pour le Jour 4",
+  "duration.days": "Jours",
+  "duration.hours": "Heures",
+  "duration.minutes": "Minutes",
+
+  "times.title": "Créneaux disponibles",
+  "times.hint": "Choisissez au moins un créneau, et tous ceux qui vous conviennent. Les grands chiffres sont en UTC.",
+  "times.hintLocal": "Les petits chiffres sont votre heure ({tz}).",
+  "times.count": "{n} créneaux choisis sur {total}",
+  "times.selectAll": "Tout choisir",
+  "times.clear": "Effacer",
+  "times.pickAll": "Tout choisir",
+  "times.clearThese": "Effacer ceux-ci",
+
+  "review.title": "Vérifiez votre inscription",
+  "review.desc":
+    "Inscription de {name} · ID {id}. Revenez en arrière pour corriger maintenant — impossible après l'envoi.",
+  "confirm.title": "Envoyer votre inscription ? C'est définitif.",
+  "confirm.desc": "Vous ne pourrez plus la modifier. Seul un admin (votre Roi ou un R4) peut la changer.",
+  "confirm.back": "Revenir vérifier",
+  "confirm.submit": "Envoyer — définitif",
+  "action.signUp": "S'inscrire",
+  "action.saving": "Enregistrement…",
+
+  "toast.pickTime": "Choisissez au moins un créneau pour le {day}.",
+  "toast.pickAlliance": "Choisissez votre alliance.",
+  "toast.alreadySignedUp": "Cet ID de jeu est déjà inscrit. Impossible de modifier.",
+  "toast.signedUp": "Vous êtes inscrit",
+
+  "schedule.title": "Planning des nominations",
+  "schedule.desc": "Tours de 30 minutes. Heures en UTC.",
+  "schedule.descLocal": "Votre heure ({tz}) est indiquée en dessous.",
+  "schedule.notPublished": "Pas encore publié",
+  "schedule.notPublishedDesc": "Le planning apparaîtra ici dès que le Roi l'aura publié.",
+  "schedule.search": "Rechercher un nom ou une alliance",
+  "schedule.hideOpen": "Masquer les tours libres",
+  "schedule.filled": "{n}/{total} attribués",
+  "schedule.open": "Libre",
+  "schedule.you": "Vous",
+  "schedule.noMatch": "Aucun résultat pour le {day}.",
+};
+
+const tr: Dictionary = {
+  "nav.signup": "Kayıt",
+  "nav.schedule": "Program",
+  "nav.admin": "Yönetim",
+  "lang.label": "Dil",
+
+  "day.d1": "1. Gün",
+  "day.d4": "4. Gün",
+  "day.d1.title": "İnşaat ve Araştırma",
+  "day.d4.title": "Eğitim",
+
+  "signup.title": "Atama kaydı",
+  "signup.desc":
+    "Hızlandırmalarınızı ve oynayabileceğiniz saatleri girin. En çok hızlandırması olan önce sıra alır. Yalnızca bir kez gönderebilirsiniz — sonradan düzenlenemez.",
+  "signup.signedUp": "Kayıtlı",
+  "signup.notYou": "Siz değil misiniz?",
+
+  "final.title": "Kaydınız kesinleşti",
+  "final.body":
+    "Kayıtlar gönderildikten sonra düzenlenemez. Bir hata varsa Kralınıza veya R4'e yazın — yalnızca yönetici değiştirebilir.",
+  "final.line": "Kesin — kayıttan sonra düzenleyemezsiniz.",
+
+  "entry.title": "Kaydınız",
+  "entry.desc": "Gönderdiğiniz bilgiler. Salt okunur.",
+  "entry.total": "Toplam",
+  "entry.timesPicked": "{n} saat seçildi (UTC)",
+  "entry.noTimes": "Saat seçilmedi",
+
+  "turns.title": "Sıralarınız",
+  "turns.desc": "Program yayınlandı. Sıranız başlarken çevrimiçi olun.",
+  "turns.yourTime": "sizin saatiniz",
+  "turns.waitlist": "Henüz sıra yok — bekleme listesindesiniz.",
+  "turns.noTimes": "Bu gün için saat seçmediniz.",
+
+  "step.details": "Bilgiler",
+  "step.review": "Kontrol",
+  "step.next": "İleri: {step}",
+  "step.back": "Geri",
+
+  "details.title": "Bilgileriniz",
+  "field.gameId": "Oyun ID",
+  "field.gameIdPlaceholder": "Kingshot oyuncu ID'niz",
+  "field.name": "Oyun içi ad",
+  "field.namePlaceholder": "Kingshot'taki adınız",
+  "field.alliance": "İttifak",
+
+  "day.appointment": "Atama:",
+  "day.total": "{day} toplamı",
+  "speedup.d1Construction": "İnşaat hızlandırmaları",
+  "speedup.d1Research": "Araştırma hızlandırmaları",
+  "speedup.d1General": "1. Gün için genel hızlandırmalar",
+  "speedup.d4Training": "Eğitim hızlandırmaları",
+  "speedup.d4General": "4. Gün için genel hızlandırmalar",
+  "duration.days": "Gün",
+  "duration.hours": "Saat",
+  "duration.minutes": "Dakika",
+
+  "times.title": "Uygun saatler",
+  "times.hint": "En az bir sıra seçin ve size uyan tüm sıraları işaretleyin. Büyük sayılar UTC'dir.",
+  "times.hintLocal": "Küçük sayılar sizin saatinizdir ({tz}).",
+  "times.count": "{total} sıradan {n} tanesi seçildi",
+  "times.selectAll": "Tümünü seç",
+  "times.clear": "Temizle",
+  "times.pickAll": "Tümünü seç",
+  "times.clearThese": "Bunları temizle",
+
+  "review.title": "Kaydınızı kontrol edin",
+  "review.desc": "{name} · ID {id} olarak kayıt oluyorsunuz. Şimdi geri dönüp düzeltin — gönderdikten sonra olmaz.",
+  "confirm.title": "Kaydınız gönderilsin mi? Bu kesindir.",
+  "confirm.desc": "Sonradan düzenleyemezsiniz. Yalnızca yönetici (Kralınız veya R4) değiştirebilir.",
+  "confirm.back": "Geri dön ve kontrol et",
+  "confirm.submit": "Gönder — kesin",
+  "action.signUp": "Kayıt ol",
+  "action.saving": "Kaydediliyor…",
+
+  "toast.pickTime": "{day} için en az bir saat seçin.",
+  "toast.pickAlliance": "İttifakınızı seçin.",
+  "toast.alreadySignedUp": "Bu oyun ID'si zaten kayıtlı. Kayıtlar düzenlenemez.",
+  "toast.signedUp": "Kaydınız alındı",
+
+  "schedule.title": "Atama programı",
+  "schedule.desc": "30 dakikalık sıralar. Saatler UTC'dir.",
+  "schedule.descLocal": "Sizin saatiniz ({tz}) altında gösterilir.",
+  "schedule.notPublished": "Henüz yayınlanmadı",
+  "schedule.notPublishedDesc": "Kral yayınladığında program burada görünecek.",
+  "schedule.search": "Ad veya ittifak ara",
+  "schedule.hideOpen": "Boş sıraları gizle",
+  "schedule.filled": "{n}/{total} dolu",
+  "schedule.open": "Boş",
+  "schedule.you": "Siz",
+  "schedule.noMatch": "{day} için sonuç yok.",
+};
+
+const de: Dictionary = {
+  "nav.signup": "Anmelden",
+  "nav.schedule": "Zeitplan",
+  "nav.admin": "Admin",
+  "lang.label": "Sprache",
+
+  "day.d1": "Tag 1",
+  "day.d4": "Tag 4",
+  "day.d1.title": "Bau & Forschung",
+  "day.d4.title": "Training",
+
+  "signup.title": "Anmeldung für Ernennungen",
+  "signup.desc":
+    "Trage deine Beschleunigungen und die Zeiten ein, zu denen du spielen kannst. Wer die meisten Beschleunigungen hat, ist zuerst dran. Du kannst nur einmal absenden — danach ist keine Änderung möglich.",
+  "signup.signedUp": "Angemeldet",
+  "signup.notYou": "Nicht du?",
+
+  "final.title": "Deine Anmeldung ist endgültig",
+  "final.body":
+    "Anmeldungen können danach nicht mehr geändert werden. Wenn etwas falsch ist, wende dich an deinen König oder R4 — nur ein Admin kann es ändern.",
+  "final.line": "Endgültig — nach der Anmeldung nicht mehr änderbar.",
+
+  "entry.title": "Deine Anmeldung",
+  "entry.desc": "Was du abgeschickt hast. Nur lesbar.",
+  "entry.total": "Gesamt",
+  "entry.timesPicked": "{n} Zeiten gewählt (UTC)",
+  "entry.noTimes": "Keine Zeiten gewählt",
+
+  "turns.title": "Deine Slots",
+  "turns.desc": "Der Zeitplan ist da. Sei zu Beginn deines Slots online.",
+  "turns.yourTime": "deine Zeit",
+  "turns.waitlist": "Noch kein Slot — du stehst auf der Warteliste.",
+  "turns.noTimes": "Du hast für diesen Tag keine Zeiten gewählt.",
+
+  "step.details": "Daten",
+  "step.review": "Prüfen",
+  "step.next": "Weiter: {step}",
+  "step.back": "Zurück",
+
+  "details.title": "Deine Daten",
+  "field.gameId": "Spiel-ID",
+  "field.gameIdPlaceholder": "Deine Kingshot-Spieler-ID",
+  "field.name": "Name im Spiel",
+  "field.namePlaceholder": "Name in Kingshot",
+  "field.alliance": "Allianz",
+
+  "day.appointment": "Ernennung:",
+  "day.total": "{day} gesamt",
+  "speedup.d1Construction": "Bau-Beschleunigungen",
+  "speedup.d1Research": "Forschungs-Beschleunigungen",
+  "speedup.d1General": "Allgemeine Beschleunigungen für Tag 1",
+  "speedup.d4Training": "Trainings-Beschleunigungen",
+  "speedup.d4General": "Allgemeine Beschleunigungen für Tag 4",
+  "duration.days": "Tage",
+  "duration.hours": "Stunden",
+  "duration.minutes": "Minuten",
+
+  "times.title": "Verfügbare Zeiten",
+  "times.hint": "Wähle mindestens einen Slot und alle, die für dich passen. Große Zahlen sind UTC.",
+  "times.hintLocal": "Kleine Zahlen sind deine Ortszeit ({tz}).",
+  "times.count": "{n} von {total} Slots gewählt",
+  "times.selectAll": "Alle wählen",
+  "times.clear": "Leeren",
+  "times.pickAll": "Alle wählen",
+  "times.clearThese": "Diese leeren",
+
+  "review.title": "Prüfe deine Anmeldung",
+  "review.desc":
+    "Anmeldung als {name} · ID {id}. Geh jetzt zurück, um etwas zu korrigieren — nach dem Absenden geht das nicht mehr.",
+  "confirm.title": "Anmeldung absenden? Das ist endgültig.",
+  "confirm.desc": "Du kannst sie danach nicht mehr ändern. Nur ein Admin (dein König oder R4) kann das.",
+  "confirm.back": "Zurück und prüfen",
+  "confirm.submit": "Absenden — endgültig",
+  "action.signUp": "Anmelden",
+  "action.saving": "Speichern…",
+
+  "toast.pickTime": "Wähle mindestens eine Zeit für {day}.",
+  "toast.pickAlliance": "Wähle deine Allianz.",
+  "toast.alreadySignedUp": "Diese Spiel-ID ist bereits angemeldet. Anmeldungen können nicht geändert werden.",
+  "toast.signedUp": "Du bist angemeldet",
+
+  "schedule.title": "Zeitplan der Ernennungen",
+  "schedule.desc": "30-Minuten-Slots. Zeiten in UTC.",
+  "schedule.descLocal": "Deine Ortszeit ({tz}) steht darunter.",
+  "schedule.notPublished": "Noch nicht veröffentlicht",
+  "schedule.notPublishedDesc": "Der Zeitplan erscheint hier, sobald der König ihn veröffentlicht.",
+  "schedule.search": "Name oder Allianz suchen",
+  "schedule.hideOpen": "Freie Slots ausblenden",
+  "schedule.filled": "{n}/{total} vergeben",
+  "schedule.open": "Frei",
+  "schedule.you": "Du",
+  "schedule.noMatch": "Kein Treffer für {day}.",
+};
+
+const DICTIONARIES = { en, id, zh, fr, tr, de } satisfies Record<string, Dictionary>;
+
+export type Lang = keyof typeof DICTIONARIES;
+
+// Shown in the language menu, each in its own language.
+export const LANGUAGES: { code: Lang; name: string }[] = [
+  { code: "en", name: "English" },
+  { code: "id", name: "Bahasa Indonesia" },
+  { code: "zh", name: "中文" },
+  { code: "fr", name: "Français" },
+  { code: "tr", name: "Türkçe" },
+  { code: "de", name: "Deutsch" },
+];
+
+const isLang = (value: string | null | undefined): value is Lang => !!value && value in DICTIONARIES;
+
+// The saved choice, else the browser's language if we support it, else English.
+// English during server render and hydration, so the first paint matches the server.
+function resolveLang(stored: string | null | undefined): Lang {
+  if (stored === undefined) return "en";
+  if (isLang(stored)) return stored;
+  const browser = navigator.language.slice(0, 2).toLowerCase();
+  return isLang(browser) ? browser : "en";
+}
+
+export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
+
+export function useLanguage() {
+  const [stored, setStored] = useStoredString("kvk:lang");
+  const lang = resolveLang(stored);
+  const t: Translate = useCallback(
+    (key, vars) => {
+      const text = DICTIONARIES[lang][key];
+      return vars ? text.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match)) : text;
+    },
+    [lang],
+  );
+  return { lang, setLang: setStored as (lang: Lang) => void, t };
+}

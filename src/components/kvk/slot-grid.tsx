@@ -3,6 +3,7 @@
 import { Moon, Sun, Sunrise, Sunset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SLOTS, slotLocal, slotUtc, useToday } from "@/lib/kvk";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 // UTC quarters of the day, 12 turns each.
@@ -24,6 +25,7 @@ export function SlotGrid({
   disabled?: boolean;
 }) {
   const today = useToday();
+  const { t } = useLanguage();
   const selected = new Set(value);
 
   const setSlots = (slots: number[], on: boolean) => {
@@ -38,16 +40,15 @@ export function SlotGrid({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm">
-          <span className="font-semibold text-primary">{value.length}</span>
-          <span className="text-muted-foreground"> of {SLOTS.length} turns picked</span>
+        <p className={cn("text-sm font-medium", value.length > 0 ? "text-primary" : "text-muted-foreground")}>
+          {t("times.count", { n: value.length, total: SLOTS.length })}
         </p>
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => onChange([...SLOTS])}>
-            Select all
+            {t("times.selectAll")}
           </Button>
           <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onChange([])}>
-            Clear
+            {t("times.clear")}
           </Button>
         </div>
       </div>
@@ -66,7 +67,7 @@ export function SlotGrid({
                 onClick={() => setSlots(period.slots, !allOn)}
                 className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
               >
-                {allOn ? "Clear these" : "Pick all"}
+                {allOn ? t("times.clearThese") : t("times.pickAll")}
               </button>
             </div>
             <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">

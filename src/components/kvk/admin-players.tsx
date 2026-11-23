@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { copyText, errorMessage } from "@/lib/client";
 import { ALLIANCES, dayScore, formatDuration, searchPlayers, slotUtc } from "@/lib/kvk";
 import type { Dashboard } from "./admin";
@@ -125,36 +124,15 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
               className="h-10 pl-9"
             />
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Player</TableHead>
-                <TableHead>Game ID</TableHead>
-                <TableHead>Day 1</TableHead>
-                <TableHead>Day 4</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {shown.map((p) => (
-                <TableRow key={p.gameId}>
-                  <TableCell>
-                    <PlayerName player={p} className="font-medium" />
-                  </TableCell>
-                  <TableCell className="font-mono">{p.gameId}</TableCell>
-                  {(["d1", "d4"] as const).map((day) => {
-                    const turn = turnOf(p.gameId, day);
-                    const picked = day === "d1" ? p.d1Slots.length : p.d4Slots.length;
-                    return (
-                      <TableCell key={day}>
-                        <div>{formatDuration(dayScore(p, day))}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {picked} times{turn ? ` · turn ${slotUtc(turn.slot)}` : ""}
-                        </div>
-                      </TableCell>
-                    );
-                  })}
-                  <TableCell className="whitespace-nowrap">
+          <ul className="flex flex-col divide-y px-4 sm:px-0">
+            {shown.map((p) => (
+              <li key={p.gameId} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <PlayerName player={p} className="max-w-full font-medium" />
+                    <span className="font-mono text-xs text-muted-foreground">ID {p.gameId}</span>
+                  </div>
+                  <div className="flex shrink-0 gap-1 sm:order-last">
                     <Button
                       variant="ghost"
                       size="icon-sm"
@@ -173,18 +151,35 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                     >
                       <Trash2 aria-label="Delete player" />
                     </ConfirmButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {shown.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    {players.length === 0 ? "No players yet." : "No player matches that search."}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:w-72 sm:shrink-0">
+                  {(["d1", "d4"] as const).map((day) => {
+                    const turn = turnOf(p.gameId, day);
+                    const picked = day === "d1" ? p.d1Slots.length : p.d4Slots.length;
+                    return (
+                      <div key={day} className="rounded-lg bg-muted px-2.5 py-1.5 text-xs">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="whitespace-nowrap text-muted-foreground">{day === "d1" ? "Day 1" : "Day 4"}</span>
+                          <span className="font-mono text-sm font-medium whitespace-nowrap">
+                            {formatDuration(dayScore(p, day)).split(" ").slice(0, 2).join(" ")}
+                          </span>
+                        </div>
+                        <div className="text-muted-foreground">
+                          {picked} times{turn ? ` · turn ${slotUtc(turn.slot)}` : ""}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            ))}
+            {shown.length === 0 && (
+              <li className="py-6 text-center text-sm text-muted-foreground">
+                {players.length === 0 ? "No players yet." : "No player matches that search."}
+              </li>
+            )}
+          </ul>
         </CardContent>
       </Card>
     </div>

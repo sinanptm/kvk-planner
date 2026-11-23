@@ -14,6 +14,7 @@ import {
   useToday,
   type DayKey,
 } from "@/lib/kvk";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { DurationInput } from "./duration-input";
 import { SlotGrid } from "./slot-grid";
@@ -44,16 +45,9 @@ export const EMPTY_ENTRY: Entry = {
 
 type SpeedupKey = "d1Construction" | "d1Research" | "d1General" | "d4Training" | "d4General";
 
-export const SPEEDUP_FIELDS: Record<DayKey, { key: SpeedupKey; label: string }[]> = {
-  d1: [
-    { key: "d1Construction", label: "Construction speedups" },
-    { key: "d1Research", label: "Research speedups" },
-    { key: "d1General", label: "General speedups for Day 1" },
-  ],
-  d4: [
-    { key: "d4Training", label: "Training speedups" },
-    { key: "d4General", label: "General speedups for Day 4" },
-  ],
+export const SPEEDUP_FIELDS: Record<DayKey, SpeedupKey[]> = {
+  d1: ["d1Construction", "d1Research", "d1General"],
+  d4: ["d4Training", "d4General"],
 };
 
 // Copies only the entry fields, dropping anything else on the object (gameId, _creationTime).
@@ -95,6 +89,7 @@ export function DetailsCard({
   title,
   gameId,
 }: FieldProps & { step: number; title: string; gameId?: { value: string; onChange: (value: string) => void } }) {
+  const { t } = useLanguage();
   return (
     <Card>
       <CardHeader>
@@ -103,14 +98,14 @@ export function DetailsCard({
       <CardContent className="grid gap-4 sm:grid-cols-2">
         {gameId && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="game-id">Game ID</Label>
+            <Label htmlFor="game-id">{t("field.gameId")}</Label>
             <Input
               id="game-id"
               required
               maxLength={32}
               inputMode="numeric"
               autoComplete="off"
-              placeholder="Your Kingshot player ID"
+              placeholder={t("field.gameIdPlaceholder")}
               value={gameId.value}
               onChange={(e) => gameId.onChange(e.target.value)}
               className="h-10 font-mono"
@@ -118,19 +113,19 @@ export function DetailsCard({
           </div>
         )}
         <div className={cn("flex flex-col gap-2", !gameId && "sm:col-span-2")}>
-          <Label htmlFor="name">In-game name</Label>
+          <Label htmlFor="name">{t("field.name")}</Label>
           <Input
             id="name"
             required
             maxLength={40}
-            placeholder="Name in Kingshot"
+            placeholder={t("field.namePlaceholder")}
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
             className="h-10"
           />
         </div>
         <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label id="alliance-label">Alliance</Label>
+          <Label id="alliance-label">{t("field.alliance")}</Label>
           <div role="radiogroup" aria-labelledby="alliance-label" className="grid grid-cols-4 gap-2">
             {ALLIANCES.map((tag) => {
               const on = form.alliance === tag;
@@ -161,40 +156,41 @@ export function DetailsCard({
 // Speedups and available times for one day.
 export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; step: number }) {
   const today = useToday();
-  const total = SPEEDUP_FIELDS[day].reduce((sum, f) => sum + form[f.key], 0);
+  const { t } = useLanguage();
+  const total = SPEEDUP_FIELDS[day].reduce((sum, key) => sum + form[key], 0);
   const slotsKey = day === "d1" ? "d1Slots" : "d4Slots";
   return (
     <Card>
       <CardHeader>
-        <StepTitle step={step} title={`${DAYS[day].label} · ${DAYS[day].title}`} />
+        <StepTitle step={step} title={`${t(`day.${day}`)} · ${t(`day.${day}.title`)}`} />
         <CardDescription className="pl-10">
-          Appointment: <span className="font-medium text-foreground">{DAYS[day].position}</span>.
+          {t("day.appointment")} <span className="font-medium text-foreground">{DAYS[day].position}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-5">
-          {SPEEDUP_FIELDS[day].map((f) => (
+          {SPEEDUP_FIELDS[day].map((key) => (
             <DurationInput
-              key={f.key}
-              id={f.key}
-              label={f.label}
-              value={form[f.key]}
-              onChange={(minutes) => set(f.key, minutes)}
+              key={key}
+              id={key}
+              label={t(`speedup.${key}`)}
+              value={form[key]}
+              onChange={(minutes) => set(key, minutes)}
             />
           ))}
         </div>
         <div className="flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
-          <span className="text-sm font-medium">{DAYS[day].label} total</span>
+          <span className="text-sm font-medium">{t("day.total", { day: t(`day.${day}`) })}</span>
           <span className="font-mono text-xl font-bold text-primary">{formatDuration(total)}</span>
         </div>
         <Separator />
         <div className="flex flex-col gap-1">
           <p className="font-medium">
-            Times available <span className="text-primary">*</span>
+            {t("times.title")} <span className="text-primary">*</span>
           </p>
           <p className="text-xs text-muted-foreground">
-            Pick at least one turn, and every turn that works. Big numbers are UTC
-            {today ? `, small numbers are your time (${localTimeZone()})` : ""}.
+            {t("times.hint")}
+            {today ? ` ${t("times.hintLocal", { tz: localTimeZone() })}` : ""}
           </p>
         </div>
         <SlotGrid value={form[slotsKey]} onChange={(s) => set(slotsKey, s)} />

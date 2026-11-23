@@ -3,17 +3,19 @@
 import { CalendarDays, ClipboardPen, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/", label: "Sign up", icon: ClipboardPen },
-  { href: "/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/admin", label: "Admin", icon: ShieldCheck },
-];
+  { href: "/", label: "nav.signup", icon: ClipboardPen },
+  { href: "/schedule", label: "nav.schedule", icon: CalendarDays },
+  { href: "/admin", label: "nav.admin", icon: ShieldCheck },
+] as const;
 
 // Links to every page of the planner.
 export function SiteNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   return (
     <nav className="flex gap-0.5 rounded-xl bg-muted p-1 min-[360px]:gap-1">
       {LINKS.map(({ href, label, icon: Icon }) => {
@@ -29,7 +31,7 @@ export function SiteNav() {
             )}
           >
             <Icon className="hidden size-4 sm:block" />
-            {label}
+            {t(label)}
           </Link>
         );
       })}

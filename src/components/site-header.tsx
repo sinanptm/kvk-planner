@@ -1,7 +1,7 @@
 import { Crown } from "lucide-react";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function SiteHeader() {
   return (
@@ -15,7 +15,7 @@ export function SiteHeader() {
         </Link>
         <div className="ml-auto flex items-center gap-1 min-[360px]:gap-2">
           <SiteNav />
-          <ThemeToggle />
+          <LanguageSwitcher />
         </div>
       </div>
     </header>

@@ -47,7 +47,7 @@ export function slotLocal(slot: number, today: Date) {
 
 export const formatSlotLocal = (slot: number, today: Date) => {
   const { time, dayShift } = slotLocal(slot, today);
-  return dayShift === 0 ? time : `${time} (${dayShift > 0 ? "+1" : "−1"} day)`;
+  return dayShift === 0 ? time : `${time} (${dayShift > 0 ? "+1" : "−1"}d)`;
 };
 
 const noopSubscribe = () => () => {};

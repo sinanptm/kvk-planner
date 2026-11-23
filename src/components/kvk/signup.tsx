@@ -32,6 +32,7 @@ import {
   useToday,
   type DayKey,
 } from "@/lib/kvk";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { PlayerName } from "./alliance-tag";
 import { DayCard, DetailsCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
@@ -42,13 +43,14 @@ export function KvkSignup() {
   const [gameId, setGameId] = useStoredString("kvk:gameId");
   const entry = useQuery(api.kvk.players.get, gameId ? { gameId } : "skip");
   const loading = gameId === undefined || (!!gameId && entry === undefined);
+  const { t } = useLanguage();
 
   return (
     <>
       <PageHeader
         eyebrow={settings?.eventName ?? "KvK"}
-        title="Appointment sign-up"
-        description="Enter your speedups and the times you can play. The most speedups get turns first. You can only submit once — entries can't be edited afterwards."
+        title={t("signup.title")}
+        description={t("signup.desc")}
       />
       {loading ? null : gameId && entry ? (
         <PlayerArea gameId={gameId} entry={entry} onSwitch={() => setGameId(null)} />
@@ -61,6 +63,7 @@ export function KvkSignup() {
 
 function PlayerArea({ gameId, entry, onSwitch }: { gameId: string; entry: Entry; onSwitch: () => void }) {
   const turns = useQuery(api.kvk.players.myTurns, { gameId });
+  const { t } = useLanguage();
 
   return (
     <>
@@ -75,21 +78,20 @@ function PlayerArea({ gameId, entry, onSwitch }: { gameId: string; entry: Entry;
             </p>
             <p className="text-xs text-muted-foreground">
               ID <span className="font-mono">{gameId}</span>
-              <span className="text-success"> · Signed up</span>
+              <span className="text-success"> · {t("signup.signedUp")}</span>
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={onSwitch}>
             <LogOut data-icon="inline-start" />
-            Not you?
+            {t("signup.notYou")}
           </Button>
         </CardContent>
       </Card>
 
       {turns && <MyTurns turns={turns} entry={entry} />}
 
-      <Notice icon={Lock} title="Your entry is final">
-        Entries can&apos;t be edited after signing up. If something is wrong, ask your King or R4 — only an admin can
-        change it.
+      <Notice icon={Lock} title={t("final.title")}>
+        {t("final.body")}
       </Notice>
       <EntrySummary entry={entry} />
     </>
@@ -109,20 +111,13 @@ function Notice({ icon: Icon, title, children }: { icon: typeof Lock; title: str
 }
 
 // Read-only view of what the player submitted.
-function EntrySummary({
-  entry,
-  title = "Your entry",
-  description = "What you submitted. Read-only.",
-}: {
-  entry: Entry;
-  title?: string;
-  description?: string;
-}) {
+function EntrySummary({ entry, title, description }: { entry: Entry; title?: string; description?: string }) {
+  const { t } = useLanguage();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle>{title ?? t("entry.title")}</CardTitle>
+        <CardDescription>{description ?? t("entry.desc")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
         {DAY_KEYS.map((day) => {
@@ -130,23 +125,23 @@ function EntrySummary({
           return (
             <div key={day} className="flex flex-col gap-3 rounded-lg bg-muted p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                {DAYS[day].label} · {DAYS[day].title}
+                {t(`day.${day}`)} · {t(`day.${day}.title`)}
               </p>
               <dl className="flex flex-col gap-1 text-sm">
-                {SPEEDUP_FIELDS[day].map((f) => (
-                  <div key={f.key} className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">{f.label}</dt>
-                    <dd className="font-mono">{formatDuration(entry[f.key])}</dd>
+                {SPEEDUP_FIELDS[day].map((key) => (
+                  <div key={key} className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">{t(`speedup.${key}`)}</dt>
+                    <dd className="font-mono">{formatDuration(entry[key])}</dd>
                   </div>
                 ))}
                 <div className="flex justify-between gap-3 border-t pt-1 font-semibold">
-                  <dt>Total</dt>
+                  <dt>{t("entry.total")}</dt>
                   <dd className="font-mono text-primary">{formatDuration(dayScoreOf(entry, day))}</dd>
                 </div>
               </dl>
               <div className="flex flex-col gap-1.5">
                 <p className="text-xs text-muted-foreground">
-                  {slots.length > 0 ? `${slots.length} times picked (UTC)` : "No times picked"}
+                  {slots.length > 0 ? t("entry.timesPicked", { n: slots.length }) : t("entry.noTimes")}
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {slots.map((s) => (
@@ -166,36 +161,37 @@ function EntrySummary({
 
 function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; entry: Entry }) {
   const today = useToday();
+  const { t } = useLanguage();
   return (
     <Card className="ring-primary/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarClock className="size-5 text-primary" />
-          Your turns
+          {t("turns.title")}
         </CardTitle>
-        <CardDescription>The schedule is out. Be online at the start of your turn.</CardDescription>
+        <CardDescription>{t("turns.desc")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2">
         {DAY_KEYS.map((day) => {
-          const mine = turns.filter((t) => t.day === day);
+          const mine = turns.filter((turn) => turn.day === day);
           const signedUp = (day === "d1" ? entry.d1Slots : entry.d4Slots).length > 0;
           return (
             <div key={day} className="flex flex-col gap-1 rounded-lg bg-muted p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                {DAYS[day].label} · {DAYS[day].position}
+                {t(`day.${day}`)} · {DAYS[day].position}
               </p>
               {mine.length > 0 ? (
-                mine.map((t) => (
-                  <div key={t.slot}>
-                    <p className="font-mono text-xl font-bold text-primary">{slotRangeUtc(t.slot)}</p>
+                mine.map((turn) => (
+                  <div key={turn.slot}>
+                    <p className="font-mono text-xl font-bold text-primary">{slotRangeUtc(turn.slot)}</p>
                     <p className="text-xs text-muted-foreground">
-                      UTC{today && ` · ${formatSlotLocal(t.slot, today)} your time`}
+                      UTC{today && ` · ${formatSlotLocal(turn.slot, today)} ${t("turns.yourTime")}`}
                     </p>
                   </div>
                 ))
               ) : (
                 <p className="text-sm">
-                  {signedUp ? "No turn yet — you're on the waitlist." : "You didn't pick any times for this day."}
+                  {signedUp ? t("turns.waitlist") : t("turns.noTimes")}
                 </p>
               )}
             </div>
@@ -205,8 +201,6 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
     </Card>
   );
 }
-
-const STEPS = ["Details", ...DAY_KEYS.map((d) => DAYS[d].label), "Review"];
 
 // First and only submission, one section at a time: details (with game ID), Day 1, Day 4, review.
 // Asks for confirmation at the end because the entry cannot be edited afterwards.
@@ -219,8 +213,10 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Entry>(key: K, value: Entry[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const { t } = useLanguage();
+  const steps = [t("step.details"), ...DAY_KEYS.map((d) => t(`day.${d}`)), t("step.review")];
   const gameId = rawGameId.trim();
-  const last = STEPS.length - 1;
+  const last = steps.length - 1;
 
   const go = (next: number) => {
     setStep(next);
@@ -232,14 +228,14 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     if (step > 0) {
       const day = DAY_KEYS[step - 1];
       const picked = day === "d1" ? form.d1Slots : form.d4Slots;
-      if (picked.length === 0) return void toast.error(`Pick at least one time for ${DAYS[day].label}.`);
+      if (picked.length === 0) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
       return go(step + 1);
     }
-    if (!form.alliance) return void toast.error("Pick your alliance.");
+    if (!form.alliance) return void toast.error(t("toast.pickAlliance"));
     setSaving(true);
     try {
       if (await convex.query(api.kvk.players.get, { gameId })) {
-        toast.info("This game ID is already signed up. Entries can't be edited.");
+        toast.info(t("toast.alreadySignedUp"));
         onSignedUp(gameId);
       } else go(1);
     } catch (err) {
@@ -253,7 +249,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     setSaving(true);
     try {
       await save({ gameId, ...form });
-      toast.success("You're signed up");
+      toast.success(t("toast.signedUp"));
       onSignedUp(gameId);
     } catch (err) {
       toast.error(errorMessage(err));
@@ -273,8 +269,8 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
       className="flex flex-col gap-6"
     >
       <ol className="grid grid-cols-4 gap-2">
-        {STEPS.map((label, i) => (
-          <li key={label} aria-current={i === step ? "step" : undefined}>
+        {steps.map((label, i) => (
+          <li key={i} aria-current={i === step ? "step" : undefined}>
             <button
               type="button"
               disabled={i >= step}
@@ -295,7 +291,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
           form={form}
           set={set}
           step={1}
-          title="Your details"
+          title={t("details.title")}
           gameId={{ value: rawGameId, onChange: setRawGameId }}
         />
       )}
@@ -303,8 +299,11 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
       {step === last && (
         <EntrySummary
           entry={form}
-          title="Review your entry"
-          description={`Signing up as ${playerLabel({ name: form.name.trim(), alliance: form.alliance.trim() })} · ID ${gameId}. Go back to fix anything now — you can't after you submit.`}
+          title={t("review.title")}
+          description={t("review.desc", {
+            name: playerLabel({ name: form.name.trim(), alliance: form.alliance.trim() }),
+            id: gameId,
+          })}
         />
       )}
 
@@ -312,18 +311,18 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
         {step === last && (
           <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
             <TriangleAlert className="size-3.5 shrink-0" />
-            Final — you can&apos;t edit after signing up.
+            {t("final.line")}
           </p>
         )}
         <div className="flex gap-2">
           {step > 0 && (
             <Button type="button" variant="outline" className="h-12 px-5 text-base" onClick={() => go(step - 1)}>
               <ArrowLeft data-icon="inline-start" />
-              Back
+              {t("step.back")}
             </Button>
           )}
           <Button type="submit" className="h-12 flex-1 text-base sm:flex-none sm:px-8" disabled={saving}>
-            {step === last ? "Sign up" : `Next: ${STEPS[step + 1]}`}
+            {step === last ? t("action.signUp") : t("step.next", { step: steps[step + 1] })}
             {step < last && <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
@@ -332,15 +331,13 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit your entry? This is final.</AlertDialogTitle>
-            <AlertDialogDescription>
-              You won&apos;t be able to edit it afterwards. Only an admin (your King or R4) can change it.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("confirm.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("confirm.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Go back and check</AlertDialogCancel>
+            <AlertDialogCancel>{t("confirm.back")}</AlertDialogCancel>
             <AlertDialogAction disabled={saving} onClick={submit}>
-              {saving ? "Saving…" : "Submit — final"}
+              {saving ? t("action.saving") : t("confirm.submit")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

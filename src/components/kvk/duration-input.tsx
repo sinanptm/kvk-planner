@@ -2,11 +2,12 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n";
 
 const PARTS = [
-  { key: "d", label: "Days", size: 1440 },
-  { key: "h", label: "Hours", size: 60 },
-  { key: "m", label: "Minutes", size: 1 },
+  { key: "d", label: "duration.days", size: 1440 },
+  { key: "h", label: "duration.hours", size: 60 },
+  { key: "m", label: "duration.minutes", size: 1 },
 ] as const;
 
 // Speedups as days / hours / minutes boxes. The value is total minutes.
@@ -23,6 +24,7 @@ export function DurationInput({
   onChange: (minutes: number) => void;
   disabled?: boolean;
 }) {
+  const { t } = useLanguage();
   const parts = { d: Math.floor(value / 1440), h: Math.floor((value % 1440) / 60), m: value % 60 };
 
   const update = (key: keyof typeof parts, raw: string) => {
@@ -48,7 +50,7 @@ export function DurationInput({
               className="h-10 font-mono"
             />
             <Label htmlFor={`${id}-${p.key}`} className="text-xs font-normal text-muted-foreground">
-              {p.label}
+              {t(p.label)}
             </Label>
           </div>
         ))}

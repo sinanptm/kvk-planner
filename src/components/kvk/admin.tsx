@@ -111,8 +111,8 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
   return (
     <>
       <PublishBanner password={password} data={data} />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Stat icon={Users} label="Players signed up" value={data.players.length} />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <Stat icon={Users} label="Players signed up" shortLabel="Players" value={data.players.length} />
         {DAY_KEYS.map((day) => {
           const filled = data.turns.filter((t) => t.day === day).length;
           return (
@@ -120,6 +120,7 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
               key={day}
               icon={CalendarCheck}
               label={`${DAYS[day].label} · ${DAYS[day].position}`}
+              shortLabel={DAYS[day].label}
               value={`${filled}/${SLOTS.length}`}
               progress={filled / SLOTS.length}
             />
@@ -153,26 +154,31 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
 function Stat({
   icon: Icon,
   label,
+  shortLabel,
   value,
   progress,
 }: {
   icon: LucideIcon;
   label: string;
+  shortLabel: string;
   value: string | number;
   progress?: number;
 }) {
   return (
     <Card size="sm">
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+      <CardContent className="flex h-full flex-col gap-2 sm:gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate text-xs font-medium text-muted-foreground">
+            <span className="sm:hidden">{shortLabel}</span>
+            <span className="hidden sm:inline">{label}</span>
+          </span>
+          <span className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary sm:flex">
             <Icon className="size-4" />
           </span>
         </div>
-        <span className="font-mono text-2xl font-bold">{value}</span>
+        <span className="font-mono text-xl font-bold sm:text-2xl">{value}</span>
         {progress !== undefined && (
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="mt-auto h-1.5 overflow-hidden rounded-full bg-muted">
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress * 100}%` }} />
           </div>
         )}
