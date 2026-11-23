@@ -2,14 +2,13 @@
 
 import { api } from "@convex/_generated/api";
 import { useAction, useQuery } from "convex/react";
-import { ClipboardCopy, RefreshCw, Search, X } from "lucide-react";
+import { ClipboardCopy, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { copyText, errorMessage } from "@/lib/client";
-import { ALLIANCES, ALLIANCE_STYLES, searchPlayers, tcLabel } from "@/lib/kvk";
+import { ALLIANCES, ALLIANCE_STYLES, tcLabel } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
 
@@ -21,15 +20,6 @@ const timeAgo = (ms: number) => {
   return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`;
 };
 
-const STATUS = [
-  { key: "missing", label: "Not signed up" },
-  { key: "done", label: "Signed up" },
-  { key: "all", label: "All" },
-] as const;
-type Status = (typeof STATUS)[number]["key"];
-
-const RANKS = ["R5", "R4", "R3", "R2", "R1"] as const;
-
 // Town Center groups as the game reports levels (31-35 TG1, 36-40 TG2, 41-45 TG3, 46+ beyond).
 const TC_GROUPS = [
   { key: "tg3", label: "TG3+", test: (l: number) => l >= 41 },
@@ -39,50 +29,24 @@ const TC_GROUPS = [
 ] as const;
 type TcGroup = (typeof TC_GROUPS)[number]["key"];
 
-const SORTS = [
-  { key: "tc", label: "Town Center" },
-  { key: "rank", label: "Rank" },
-  { key: "name", label: "Name" },
-] as const;
-type Sort = (typeof SORTS)[number]["key"];
-
-const rankValue = (rank: string) => Number(rank.replace(/\D/g, "")) || 0;
-
-// One alliance at a time: who in the game has (not) signed up, with filters.
+// One alliance at a time: members in the game who have not signed up, filterable by Town Center level.
 export function AdminMissing({ password }: { password: string }) {
   const data = useQuery(api.kvk.lookup.notSignedUp, { password });
   const refresh = useAction(api.kvk.lookup.refreshRosters);
   const [busy, setBusy] = useState(false);
   const [alliance, setAlliance] = useState<string>(ALLIANCES[0]);
-  const [status, setStatus] = useState<Status>("missing");
-  const [ranks, setRanks] = useState<string[]>([]);
   const [tc, setTc] = useState<TcGroup[]>([]);
-  const [sort, setSort] = useState<Sort>("tc");
-  const [search, setSearch] = useState("");
 
   const current = data?.find((a) => a.alliance === alliance);
 
-  const shown = useMemo(() => {
-    if (!current) return [];
-    const filtered = current.members.filter(
-      (m) =>
-        (status === "all" || (status === "done") === m.signedUp) &&
-        (ranks.length === 0 || ranks.includes(m.rank)) &&
-        (tc.length === 0 || TC_GROUPS.some((g) => tc.includes(g.key) && g.test(m.tcLevel))),
-    );
-    const searched = searchPlayers(
-      filtered.map((m) => ({ ...m, alliance })),
-      search,
-    );
-    const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
-    return [...searched].sort((a, b) =>
-      sort === "name"
-        ? byName(a, b)
-        : sort === "rank"
-          ? rankValue(b.rank) - rankValue(a.rank) || b.tcLevel - a.tcLevel || byName(a, b)
-          : b.tcLevel - a.tcLevel || rankValue(b.rank) - rankValue(a.rank) || byName(a, b),
-    );
-  }, [current, status, ranks, tc, sort, search, alliance]);
+  const shown = useMemo(
+    () =>
+      (current?.members ?? [])
+        .filter((m) => !m.signedUp && (tc.length === 0 || TC_GROUPS.some((g) => tc.includes(g.key) && g.test(m.tcLevel))))
+        .sort((a, b) => b.tcLevel - a.tcLevel || a.name.localeCompare(b.name)),
+    [current, tc],
+  );
+  const missingTotal = current ? current.total - current.signedUp : 0;
 
   const runRefresh = async () => {
     setBusy(true);
@@ -101,14 +65,11 @@ export function AdminMissing({ password }: { password: string }) {
 
   const fetched = data.filter((a) => a.fetchedAt !== null);
   const oldest = fetched.length ? Math.min(...fetched.map((a) => a.fetchedAt!)) : null;
-  const filtersOn = ranks.length > 0 || tc.length > 0 || search.trim() !== "";
   const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
 
   const copy = () =>
     copyText(
-      [`[${alliance}] ${STATUS.find((s) => s.key === status)!.label} (${shown.length})`, ...shown.map((m) => m.name)].join(
-        "\n",
-      ),
+      [`[${alliance}] not signed up (${shown.length})`, ...shown.map((m) => m.name)].join("\n"),
       "List copied",
     );
 
@@ -172,83 +133,19 @@ export function AdminMissing({ password }: { password: string }) {
       ) : (
         <Card>
           <CardContent className="flex flex-col gap-4">
-            {/* Filters */}
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    aria-label="Search members"
-                    placeholder={`Search ${alliance} members`}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 pl-9"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
-                  {STATUS.map((s) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      aria-pressed={status === s.key}
-                      onClick={() => setStatus(s.key)}
-                      className={cn(
-                        "rounded-md px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors sm:px-3 sm:text-sm",
-                        status === s.key
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <FilterRow label="Rank">
-                {RANKS.map((r) => (
-                  <Chip key={r} on={ranks.includes(r)} onClick={() => setRanks((x) => toggle(x, r))}>
-                    {r}
-                  </Chip>
-                ))}
-              </FilterRow>
-              <FilterRow label="Level">
-                {TC_GROUPS.map((g) => (
-                  <Chip key={g.key} on={tc.includes(g.key)} onClick={() => setTc((x) => toggle(x, g.key))}>
-                    {g.label}
-                  </Chip>
-                ))}
-              </FilterRow>
-              <FilterRow label="Sort">
-                {SORTS.map((s) => (
-                  <Chip key={s.key} on={sort === s.key} onClick={() => setSort(s.key)}>
-                    {s.label}
-                  </Chip>
-                ))}
-              </FilterRow>
-            </div>
+            <FilterRow label="Level">
+              {TC_GROUPS.map((g) => (
+                <Chip key={g.key} on={tc.includes(g.key)} onClick={() => setTc((x) => toggle(x, g.key))}>
+                  {g.label}
+                </Chip>
+              ))}
+            </FilterRow>
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
               <p className="text-sm text-muted-foreground">
-                Showing <span className="font-semibold text-foreground">{shown.length}</span> of{" "}
-                {current?.total ?? 0} members
+                <span className="font-semibold text-foreground">{shown.length}</span> of {missingTotal} not signed up
               </p>
               <div className="flex gap-2">
-                {filtersOn && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setRanks([]);
-                      setTc([]);
-                      setSearch("");
-                    }}
-                  >
-                    <X data-icon="inline-start" />
-                    Clear filters
-                  </Button>
-                )}
                 <Button variant="outline" size="sm" disabled={shown.length === 0} onClick={copy}>
                   <ClipboardCopy data-icon="inline-start" />
                   Copy names
@@ -260,10 +157,6 @@ export function AdminMissing({ password }: { password: string }) {
             <ul className="flex flex-col divide-y">
               {shown.map((m) => (
                 <li key={m.gameId} className="flex items-center gap-3 py-2">
-                  <span
-                    className={cn("size-2 shrink-0 rounded-full", m.signedUp ? "bg-success" : "bg-muted-foreground/40")}
-                    title={m.signedUp ? "Signed up" : "Not signed up"}
-                  />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-medium">{m.name}</span>
                     <span className="font-mono text-xs text-muted-foreground">ID {m.gameId}</span>
@@ -280,9 +173,7 @@ export function AdminMissing({ password }: { password: string }) {
               ))}
               {shown.length === 0 && (
                 <li className="py-8 text-center text-sm text-muted-foreground">
-                  {status === "missing" && !filtersOn
-                    ? `Everyone in ${alliance} has signed up.`
-                    : "No members match these filters."}
+                  {missingTotal === 0 ? `Everyone in ${alliance} has signed up.` : "Nobody at this level is missing."}
                 </li>
               )}
             </ul>
