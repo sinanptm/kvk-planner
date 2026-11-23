@@ -1,7 +1,7 @@
 import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { ALLIANCES, isValidSlot, type DayKey } from "./kvk";
+import { ALLIANCES, MAX_TRUEGOLD, TC_MAX_LEVEL, isValidSlot, type DayKey } from "./kvk";
 
 // Upper bounds for reads. A kingdom never has anywhere near this many players.
 export const MAX_PLAYERS = 2000;
@@ -57,6 +57,8 @@ export const turnAt = (ctx: QueryCtx, day: DayKey, slot: number) =>
 const entryValidator = v.object({
   name: v.string(),
   alliance: v.string(),
+  tcLevel: v.number(),
+  truegold: v.number(),
   d1Construction: v.number(),
   d1Research: v.number(),
   d1General: v.number(),
@@ -78,9 +80,13 @@ export function cleanEntry(args: Infer<typeof entryValidator>) {
   const alliance = args.alliance.trim().toUpperCase();
   if (!(ALLIANCES as readonly string[]).includes(alliance))
     throw new ConvexError(`Pick an alliance: ${ALLIANCES.join(", ")}.`);
+  if (!Number.isInteger(args.tcLevel) || args.tcLevel < 1 || args.tcLevel > TC_MAX_LEVEL)
+    throw new ConvexError("Pick your Town Center level.");
   return {
     name,
     alliance,
+    tcLevel: args.tcLevel,
+    truegold: Number.isFinite(args.truegold) ? Math.min(Math.max(Math.round(args.truegold), 0), MAX_TRUEGOLD) : 0,
     d1Construction: cleanMinutes(args.d1Construction),
     d1Research: cleanMinutes(args.d1Research),
     d1General: cleanMinutes(args.d1General),
@@ -90,3 +96,10 @@ export function cleanEntry(args: Infer<typeof entryValidator>) {
     d4Slots: cleanSlots(args.d4Slots),
   };
 }
+
+// Players saved before Town Center level and Truegold existed have neither; show them as 0.
+export const withTc = <P extends { tcLevel?: number; truegold?: number }>(p: P) => ({
+  ...p,
+  tcLevel: p.tcLevel ?? 0,
+  truegold: p.truegold ?? 0,
+});

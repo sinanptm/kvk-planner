@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { cleanEntry, entryFields, readSettings } from "../lib/data";
+import { cleanEntry, entryFields, readSettings, withTc } from "../lib/data";
 
 // Game ID is the only "login". Not secure on purpose: anyone who knows an ID can see that entry.
 // Players sign up once; after that only an admin can change the entry (admin.updatePlayer).
@@ -19,7 +19,7 @@ export const get = query({
       .unique();
     if (!player) return null;
     const { _id, ...entry } = player;
-    return entry;
+    return withTc(entry);
   },
 });
 

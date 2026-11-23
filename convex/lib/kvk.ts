@@ -3,6 +3,11 @@
 
 export const SLOT_COUNT = 48;
 
+// Town Center level: 1-30, then 31-33 are Truegold levels TG1-TG3 (the highest the list offers).
+export const TC_MAX_LEVEL = 33;
+export const tcLabel = (level: number) => (level > 30 ? `TG${level - 30}` : `TC ${level}`);
+export const MAX_TRUEGOLD = 1_000_000_000;
+
 // The alliances taking part. Every player belongs to exactly one.
 export const ALLIANCES = ["VIK", "TEA", "BTF", "FFF"] as const;
 export type Alliance = (typeof ALLIANCES)[number];

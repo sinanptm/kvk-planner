@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { SLOT_COUNT, type DayKey } from "@convex/lib/kvk";
 
-export { ALLIANCES, DAY_KEYS, SLOT_COUNT, assignDay, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
+export { ALLIANCES, DAY_KEYS, SLOT_COUNT, TC_MAX_LEVEL, assignDay, tcLabel, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
 
 // dayScore for objects that only carry the speedup fields (forms, summaries).
 export const dayScoreOf = (
@@ -128,3 +128,5 @@ export function searchPlayers<P extends { name: string; alliance: string; gameId
   }
   return [...exact, ...loose];
 }
+
+export const formatTruegold = (n: number) => n.toLocaleString("en-US");

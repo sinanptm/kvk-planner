@@ -11,6 +11,7 @@ import {
   readSettings,
   requireAdmin,
   settingsRow,
+  withTc,
   turnAt,
 } from "../lib/data";
 import { assignDay, isValidSlot } from "../lib/kvk";
@@ -34,7 +35,7 @@ export const dashboard = query({
     const [settings, players, turns] = await Promise.all([readSettings(ctx), listPlayers(ctx), listAllTurns(ctx)]);
     return {
       settings,
-      players: players.map(({ _id, ...p }) => p),
+      players: players.map(({ _id, ...p }) => withTc(p)),
       turns: turns.map(({ day, slot, gameId, locked }) => ({ day, slot, gameId, locked })),
     };
   },

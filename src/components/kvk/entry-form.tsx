@@ -3,11 +3,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   ALLIANCES,
   ALLIANCE_STYLES,
   DAYS,
+  TC_MAX_LEVEL,
+  tcLabel,
   DAY_KEYS,
   formatDuration,
   localTimeZone,
@@ -22,6 +25,8 @@ import { SlotGrid } from "./slot-grid";
 export type Entry = {
   name: string;
   alliance: string;
+  tcLevel: number;
+  truegold: number;
   d1Construction: number;
   d1Research: number;
   d1General: number;
@@ -34,6 +39,8 @@ export type Entry = {
 export const EMPTY_ENTRY: Entry = {
   name: "",
   alliance: "",
+  tcLevel: 0,
+  truegold: 0,
   d1Construction: 0,
   d1Research: 0,
   d1General: 0,
@@ -54,6 +61,8 @@ export const SPEEDUP_FIELDS: Record<DayKey, SpeedupKey[]> = {
 export const toEntry = (e: Entry): Entry => ({
   name: e.name,
   alliance: e.alliance,
+  tcLevel: e.tcLevel,
+  truegold: e.truegold,
   d1Construction: e.d1Construction,
   d1Research: e.d1Research,
   d1General: e.d1General,
@@ -183,6 +192,7 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
           <span className="text-sm font-medium">{t("day.total", { day: t(`day.${day}`) })}</span>
           <span className="font-mono text-xl font-bold text-primary">{formatDuration(total)}</span>
         </div>
+        {day === "d1" && <TownCenterFields form={form} set={set} />}
         <Separator />
         <div className="flex flex-col gap-1">
           <p className="font-medium">
@@ -196,6 +206,56 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
         <SlotGrid value={form[slotsKey]} onChange={(s) => set(slotsKey, s)} />
       </CardContent>
     </Card>
+  );
+}
+
+// Highest first: most players are at the top of the range.
+const TC_ITEMS = Array.from({ length: TC_MAX_LEVEL }, (_, i) => TC_MAX_LEVEL - i).map((level) => ({
+  value: String(level),
+  label: tcLabel(level),
+}));
+
+// Town Center level and the Truegold (TG) a player holds. Shown with the Day 1 speedups.
+function TownCenterFields({ form, set }: FieldProps) {
+  const { t } = useLanguage();
+  return (
+    <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="tc-level">
+          {t("tc.level")} <span className="text-primary">*</span>
+        </Label>
+        <Select
+          items={TC_ITEMS}
+          value={form.tcLevel ? String(form.tcLevel) : null}
+          onValueChange={(v) => v && set("tcLevel", Number(v))}
+        >
+          <SelectTrigger id="tc-level" className="h-10 w-full">
+            <SelectValue placeholder={t("tc.levelPlaceholder")} />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            {TC_ITEMS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="truegold">{t("tc.truegold")}</Label>
+        <Input
+          id="truegold"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          placeholder="0"
+          value={form.truegold || ""}
+          onChange={(e) => set("truegold", Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+          className="h-10 font-mono"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">{t("tc.hint")}</p>
+    </div>
   );
 }
 

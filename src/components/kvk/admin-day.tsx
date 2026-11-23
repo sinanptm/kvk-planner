@@ -36,11 +36,13 @@ import {
   assignDay,
   dayScore,
   formatDuration,
+  formatTruegold,
   formatSlotLocal,
   playerLabel,
   rankPlayers,
   slotRangeUtc,
   slotUtc,
+  tcLabel,
   useToday,
   type DayKey,
 } from "@/lib/kvk";
@@ -386,7 +388,8 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                   <div className="flex min-w-0 flex-1 flex-col">
                     <PlayerName player={r.player} className="max-w-full font-medium" />
                     <span className="text-xs text-muted-foreground">
-                      {formatDuration(r.score)} · {r.slots.length} {r.slots.length === 1 ? "time" : "times"} picked
+                      {formatDuration(r.score)} · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} ·{" "}
+                      {formatTruegold(r.player.truegold)} TG · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
                     </span>
                   </div>
                   {slot !== undefined ? (

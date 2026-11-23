@@ -14,6 +14,10 @@ export default defineSchema({
     d1General: v.number(),
     d4Training: v.number(),
     d4General: v.number(),
+    // Town Center level: 1-30, then 31-33 stand for Truegold levels TG1-TG3. Truegold is the amount held.
+    // Optional so entries saved before these fields existed stay valid.
+    tcLevel: v.optional(v.number()),
+    truegold: v.optional(v.number()),
     d1Slots: v.array(v.number()),
     d4Slots: v.array(v.number()),
   }).index("by_gameId", ["gameId"]),

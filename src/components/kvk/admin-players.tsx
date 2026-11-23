@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { copyText, errorMessage } from "@/lib/client";
-import { ALLIANCES, dayScore, formatDuration, searchPlayers, slotUtc } from "@/lib/kvk";
+import { ALLIANCES, dayScore, formatDuration, formatTruegold, searchPlayers, slotUtc, tcLabel } from "@/lib/kvk";
 import type { Dashboard } from "./admin";
 import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
@@ -42,6 +42,8 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       "game_id",
       "name",
       "alliance",
+      "tc_level",
+      "truegold",
       "d1_construction_min",
       "d1_research_min",
       "d1_general_min",
@@ -62,6 +64,8 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
         p.gameId,
         p.name,
         p.alliance,
+        p.tcLevel ? tcLabel(p.tcLevel) : "",
+        p.truegold,
         p.d1Construction,
         p.d1Research,
         p.d1General,
@@ -130,7 +134,9 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <div className="flex min-w-0 flex-1 flex-col">
                     <PlayerName player={p} className="max-w-full font-medium" />
-                    <span className="font-mono text-xs text-muted-foreground">ID {p.gameId}</span>
+                    <span className="font-mono text-xs text-muted-foreground">
+                      ID {p.gameId} · {p.tcLevel ? tcLabel(p.tcLevel) : "TC ?"} · {formatTruegold(p.truegold)} TG
+                    </span>
                   </div>
                   <div className="flex shrink-0 gap-1 sm:order-last">
                     <Button
@@ -203,6 +209,7 @@ function EditPlayer({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!form.tcLevel) return void toast.error("Pick this player's Town Center level.");
     if (!ALLIANCES.includes(form.alliance as (typeof ALLIANCES)[number]))
       return void toast.error("Pick an alliance for this player.");
     setSaving(true);

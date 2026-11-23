@@ -25,10 +25,12 @@ import {
   DAY_KEYS,
   dayScoreOf,
   formatDuration,
+  formatTruegold,
   formatSlotLocal,
   playerLabel,
   slotRangeUtc,
   slotUtc,
+  tcLabel,
   useToday,
   type DayKey,
 } from "@/lib/kvk";
@@ -128,6 +130,18 @@ function EntrySummary({ entry, title, description }: { entry: Entry; title?: str
                 {t(`day.${day}`)} · {t(`day.${day}.title`)}
               </p>
               <dl className="flex flex-col gap-1 text-sm">
+                {day === "d1" && (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">{t("entry.tc")}</dt>
+                      <dd className="font-mono">{entry.tcLevel ? tcLabel(entry.tcLevel) : "—"}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">{t("entry.truegold")}</dt>
+                      <dd className="font-mono">{formatTruegold(entry.truegold)}</dd>
+                    </div>
+                  </>
+                )}
                 {SPEEDUP_FIELDS[day].map((key) => (
                   <div key={key} className="flex justify-between gap-3">
                     <dt className="text-muted-foreground">{t(`speedup.${key}`)}</dt>
@@ -227,6 +241,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const next = async () => {
     if (step > 0) {
       const day = DAY_KEYS[step - 1];
+      if (day === "d1" && !form.tcLevel) return void toast.error(t("toast.pickTc"));
       const picked = day === "d1" ? form.d1Slots : form.d4Slots;
       if (picked.length === 0) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
       return go(step + 1);
