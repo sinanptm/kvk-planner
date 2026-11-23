@@ -118,6 +118,21 @@ export const clearDay = mutation({
   },
 });
 
+// Mark whether a player has been told their turns.
+export const setInformed = mutation({
+  args: { password: v.string(), gameId: v.string(), informed: v.boolean() },
+  handler: async (ctx, { password, gameId, informed }) => {
+    requireAdmin(password);
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_gameId", (q) => q.eq("gameId", gameId))
+      .unique();
+    if (!player) throw new ConvexError("Player not found.");
+    await ctx.db.patch("players", player._id, { informed });
+    return null;
+  },
+});
+
 // Players cannot edit their own entry after signing up; this is the only way to change one.
 // Turns the player already has are kept.
 export const updatePlayer = mutation({

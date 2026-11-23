@@ -20,6 +20,8 @@ export default defineSchema({
     truegold: v.optional(v.number()),
     d1Slots: v.array(v.number()),
     d4Slots: v.array(v.number()),
+    // Set by an admin once the player has been told their turns.
+    informed: v.optional(v.boolean()),
   }).index("by_gameId", ["gameId"]),
 
   assignments: defineTable({

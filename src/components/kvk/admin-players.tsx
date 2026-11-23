@@ -2,14 +2,27 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowLeft, FileSpreadsheet, Pencil, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Copy, FileSpreadsheet, Pencil, RotateCcw, Search, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { copyText, errorMessage } from "@/lib/client";
-import { ALLIANCES, dayScore, formatDuration, formatTruegold, searchPlayers, slotUtc, tcLabel } from "@/lib/kvk";
+import {
+  ALLIANCES,
+  DAYS,
+  DAY_KEYS,
+  dayScore,
+  formatDuration,
+  formatTruegold,
+  playerLabel,
+  searchPlayers,
+  slotRangeUtc,
+  slotUtc,
+  tcLabel,
+} from "@/lib/kvk";
+import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
 import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
@@ -27,6 +40,20 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   const [search, setSearch] = useState("");
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
   const turnOf = (gameId: string, day: "d1" | "d4") => data.turns.find((t) => t.gameId === gameId && t.day === day);
+
+  const setInformed = useMutation(api.kvk.admin.setInformed);
+  const informedCount = players.filter((p) => p.informed).length;
+
+  // Plain text for in-game chat or DMs: the player's turn on each day, or that they have none.
+  const turnMessage = (p: (typeof players)[number]) =>
+    [
+      `Hi ${playerLabel(p)}! Your KvK appointment turns (UTC):`,
+      ...DAY_KEYS.map((day) => {
+        const turn = turnOf(p.gameId, day);
+        return `${DAYS[day].label} · ${DAYS[day].position}: ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
+      }),
+      "Please be online at the start of your turn.",
+    ].join("\n");
 
   const run = async (fn: () => Promise<unknown>, done: string) => {
     try {
@@ -114,7 +141,10 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
           <CardTitle>
             All players ({search.trim() ? `${shown.length} of ${players.length}` : players.length})
           </CardTitle>
-          <CardDescription>In sign-up order. Players can&apos;t edit their own entry — use the pencil to change one.</CardDescription>
+          <CardDescription>
+            In sign-up order · {informedCount}/{players.length} informed. Copy a player&apos;s turns to send them, then
+            mark them informed.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 px-0 sm:px-4">
           <div className="relative mx-4 sm:mx-0">
@@ -134,11 +164,37 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <div className="flex min-w-0 flex-1 flex-col">
                     <PlayerName player={p} className="max-w-full font-medium" />
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="truncate font-mono text-xs text-muted-foreground">
                       ID {p.gameId} · {p.tcLevel ? tcLabel(p.tcLevel) : "TC ?"} · {formatTruegold(p.truegold)} TG
                     </span>
                   </div>
                   <div className="flex shrink-0 gap-1 sm:order-last">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Copy message for ${p.name}`}
+                      title="Copy message with their turns"
+                      onClick={() => copyText(turnMessage(p), `Message for ${p.name} copied`)}
+                    >
+                      <Copy />
+                    </Button>
+                    <Button
+                      variant={p.informed ? "default" : "outline"}
+                      size="sm"
+                      aria-pressed={!!p.informed}
+                      aria-label={p.informed ? `${p.name} is informed` : `Mark ${p.name} informed`}
+                      title={p.informed ? "Informed — click to undo" : "Mark informed"}
+                      className={cn("h-8 gap-1 px-2.5", p.informed && "bg-success text-background hover:bg-success/90")}
+                      onClick={() =>
+                        run(
+                          () => setInformed({ password, gameId: p.gameId, informed: !p.informed }),
+                          p.informed ? `${p.name} marked not informed` : `${p.name} marked informed`,
+                        )
+                      }
+                    >
+                      <Check className="size-3.5" />
+                      <span className="hidden sm:inline">{p.informed ? "Informed" : "Mark informed"}</span>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon-sm"
