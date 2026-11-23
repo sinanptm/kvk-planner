@@ -183,53 +183,26 @@ function Stat({
 
 function SettingsCard({ password, data }: { password: string; data: Dashboard }) {
   const update = useMutation(api.kvk.admin.updateSettings);
-  const [eventName, setEventName] = useState(data.settings.eventName);
 
-  const run = async (args: { eventName?: string; schedulePublished?: boolean }, done: string) => {
+  const setPublished = async (schedulePublished: boolean) => {
     try {
-      await update({ password, ...args });
-      toast.success(done);
+      await update({ password, schedulePublished });
+      toast.success(schedulePublished ? "Schedule published." : "Schedule hidden.");
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Event</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-5">
-        <form
-          className="flex flex-col gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            run({ eventName }, "Event name saved.");
-          }}
-        >
-          <Label htmlFor="event-name">Event name</Label>
-          <div className="flex gap-2">
-            <Input
-              id="event-name"
-              maxLength={60}
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              className="h-10"
-            />
-            <Button type="submit" variant="outline" className="h-10" disabled={eventName.trim() === data.settings.eventName}>
-              Save
-            </Button>
-          </div>
-        </form>
-        <div className="flex flex-col divide-y rounded-lg border">
-          <Toggle
-            id="schedule-published"
-            label="Schedule published"
-            hint="Players can see the schedule and their own turns."
-            checked={data.settings.schedulePublished}
-            onChange={(v) => run({ schedulePublished: v }, v ? "Schedule published." : "Schedule hidden.")}
-          />
-        </div>
+    <Card size="sm">
+      <CardContent className="px-0">
+        <Toggle
+          id="schedule-published"
+          label="Schedule published"
+          hint="Players can see the schedule and their own turns."
+          checked={data.settings.schedulePublished}
+          onChange={setPublished}
+        />
       </CardContent>
     </Card>
   );
