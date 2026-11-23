@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowRight, Check, Lock, LockOpen, Sparkles, Trash2 } from "lucide-react";
+import { ArrowRight, Check, Lock, LockOpen, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -256,11 +254,37 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          <div className="flex items-center gap-2">
-            <Switch id={`show-all-${day}`} checked={showAll} onCheckedChange={(v) => setShowAll(v)} />
-            <Label htmlFor={`show-all-${day}`} className="text-sm font-normal text-muted-foreground">
-              Also list players who didn&apos;t pick the time
-            </Label>
+          <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">Who can I choose from?</p>
+              <p className="text-xs text-muted-foreground">
+                {showAll
+                  ? "Every player is listed for every turn, even if they didn\u2019t pick that time."
+                  : "Each turn lists only the players who picked that time."}
+              </p>
+            </div>
+            <div role="group" aria-label="Who to list for each turn" className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+              {[
+                { all: false, label: "Picked the time", icon: UserCheck },
+                { all: true, label: "Everyone", icon: Users },
+              ].map(({ all, label, icon: Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  aria-pressed={showAll === all}
+                  onClick={() => setShowAll(all)}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                    showAll === all
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
           {PERIODS.map((period) => (
             <div key={period.label} className="flex flex-col gap-2">
