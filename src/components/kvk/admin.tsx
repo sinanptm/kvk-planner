@@ -67,7 +67,6 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
           <KeyRound className="size-6" />
         </span>
         <CardTitle className="text-xl">Admin login</CardTitle>
-        <CardDescription>Enter the admin password set in Convex (ADMIN_PASSWORD).</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="flex flex-col gap-3">
@@ -77,6 +76,7 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
           <Input
             id="admin-password"
             type="password"
+            placeholder="Password"
             autoComplete="current-password"
             value={value}
             onChange={(e) => setValue(e.target.value)}

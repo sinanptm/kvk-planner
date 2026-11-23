@@ -34,8 +34,8 @@ export function PublicSchedule() {
       />
 
       {schedule === null && (
-        <Card className="items-center py-10 text-center">
-          <CardHeader className="items-center">
+        <Card className="py-10 text-center">
+          <CardHeader className="justify-items-center">
             <CalendarX2 className="mx-auto mb-2 size-8 text-muted-foreground" />
             <CardTitle>Not published yet</CardTitle>
             <CardDescription>The schedule shows up here once the King publishes it.</CardDescription>
