@@ -123,7 +123,10 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         <SelectItem value={EMPTY}>
           <span className="text-muted-foreground">Empty</span>
         </SelectItem>
-        {groups.length === 0 && <SelectLabel>Nobody picked this time</SelectLabel>}
+        {/* A plain element: SelectLabel throws when rendered outside a SelectGroup. */}
+        {groups.length === 0 && (
+          <p className="px-1.5 py-1 text-xs text-muted-foreground">Nobody picked this time</p>
+        )}
         {groups.map((g) => (
           <SelectGroup key={g.label}>
             <SelectSeparator />
