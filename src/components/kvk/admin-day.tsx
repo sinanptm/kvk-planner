@@ -254,11 +254,6 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
       <Card>
         <CardHeader>
           <CardTitle>Turns</CardTitle>
-          <CardDescription>
-            Click a turn to choose from the players who picked that time, most {DAYS[day].label} speedups on top.
-            Picking by hand locks the turn and moves the player off any other turn this day. Auto-assign keeps
-            locked turns.
-          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
