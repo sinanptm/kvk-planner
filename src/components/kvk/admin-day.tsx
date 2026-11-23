@@ -101,7 +101,12 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         {held !== undefined && (
           <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">at {slotUtc(held)}</span>
         )}
-        <span className="w-14 text-right font-mono text-xs text-muted-foreground tabular-nums">
+        {day === "d1" && (
+          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+            {p.tcLevel ? tcLabel(p.tcLevel) : "TC ?"} · {formatTruegold(p.truegold)} TG
+          </span>
+        )}
+        <span className="w-16 shrink-0 text-right font-mono text-xs font-medium tabular-nums">
           {shortDuration(dayScore(p, day))}
         </span>
       </SelectItem>
@@ -344,10 +349,18 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                             {turn ? playerNode(turn.gameId) : "Empty"}
                           </div>
                           <div className={cn("text-xs", !turn && picked.length > 0 ? "text-primary" : "text-muted-foreground")}>
-                            {player ? formatDuration(dayScore(player, day)) : turn ? "—" : `${picked.length} picked`}
+                            {player
+                              ? `${shortDuration(dayScore(player, day))}${
+                                  day === "d1"
+                                    ? ` · ${player.tcLevel ? tcLabel(player.tcLevel) : "TC ?"} · ${formatTruegold(player.truegold)} TG`
+                                    : ""
+                                }`
+                              : turn
+                                ? "—"
+                                : `${picked.length} picked`}
                           </div>
                         </SelectTrigger>
-                        <SelectContent alignItemWithTrigger={false} align="start" className="min-w-72!">
+                        <SelectContent alignItemWithTrigger={false} align="start" className="min-w-[min(26rem,calc(100vw-2rem))]!">
                           {optionGroups(slot)}
                         </SelectContent>
                       </Select>
