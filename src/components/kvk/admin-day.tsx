@@ -26,7 +26,6 @@ import {
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { errorMessage } from "@/lib/client";
@@ -49,6 +48,12 @@ import type { Dashboard } from "./admin";
 import { ConfirmButton } from "./confirm-button";
 
 const EMPTY = "__empty";
+
+// UTC quarters of the day, 12 turns each.
+const PERIODS = ["00:00–06:00", "06:00–12:00", "12:00–18:00", "18:00–24:00"].map((label, i) => ({
+  label,
+  slots: SLOTS.slice(i * 12, i * 12 + 12),
+}));
 
 export function AdminDay({ password, day, data }: { password: string; day: DayKey; data: Dashboard }) {
   const autoAssign = useMutation(api.kvk.admin.autoAssign);
@@ -77,12 +82,6 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
     for (const p of sorted) for (const slot of day === "d1" ? p.d1Slots : p.d4Slots) map.get(slot)?.push(p);
     return map;
   }, [sorted, day]);
-
-  // Labels the closed dropdown shows for the selected value.
-  const options = useMemo(
-    () => [{ value: EMPTY, label: "— Empty —" }, ...sorted.map((p) => ({ value: p.gameId, label: playerLabel(p) }))],
-    [sorted],
-  );
 
   // One dropdown row: name, speedups for this day, and the turn they already hold (picking them moves them).
   const optionItem = (p: (typeof sorted)[number], slot: number) => {
@@ -211,49 +210,60 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         <CardHeader>
           <CardTitle>Turns</CardTitle>
           <CardDescription>
-            Each dropdown lists the players who picked that time first, most {DAYS[day].label} speedups on top.
-            Picking a player by hand locks the turn and moves them off any other turn this day. Auto-assign keeps
-            locked turns.
+            Click a turn to choose a player. Players who picked that time are listed first, most {DAYS[day].label}{" "}
+            speedups on top. Picking by hand locks the turn and moves the player off any other turn this day.
+            Auto-assign keeps locked turns.
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-0 sm:px-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Time (UTC)</TableHead>
-                <TableHead className="w-full min-w-36">Player</TableHead>
-                <TableHead className="hidden sm:table-cell">Speedups</TableHead>
-                <TableHead className="w-12">Lock</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {SLOTS.map((slot) => {
-                const turn = bySlot.get(slot);
-                const player = turn && byId.get(turn.gameId);
-                const picked = pickedBy.get(slot) ?? [];
-                const pickedIds = new Set(picked.map((p) => p.gameId));
-                const others = sorted.filter((p) => !pickedIds.has(p.gameId));
-                return (
-                  <TableRow key={slot} className={cn(turn?.locked && "bg-primary/5")}>
-                    <TableCell>
-                      <div className="font-mono font-semibold">{slotRangeUtc(slot)}</div>
-                      {today && <div className="text-xs text-muted-foreground">{formatSlotLocal(slot, today)}</div>}
-                      <div className={cn("text-xs", picked.length > 0 ? "text-primary" : "text-muted-foreground")}>
-                        {picked.length} picked
-                      </div>
-                    </TableCell>
-                    <TableCell>
+        <CardContent className="flex flex-col gap-5">
+          {PERIODS.map((period) => (
+            <div key={period.label} className="flex flex-col gap-2">
+              <p className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>{period.label} UTC</span>
+                <span>
+                  {period.slots.filter((slot) => bySlot.has(slot)).length}/{period.slots.length} filled
+                </span>
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                {period.slots.map((slot) => {
+                  const turn = bySlot.get(slot);
+                  const player = turn && byId.get(turn.gameId);
+                  const picked = pickedBy.get(slot) ?? [];
+                  const pickedIds = new Set(picked.map((p) => p.gameId));
+                  const others = sorted.filter((p) => !pickedIds.has(p.gameId));
+                  return (
+                    <div key={slot} className="relative">
                       <Select
-                        items={options}
                         value={turn?.gameId ?? EMPTY}
                         onValueChange={(v) =>
                           run(() => setTurn({ password, day, slot, gameId: !v || v === EMPTY ? null : v }))
                         }
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
+                        <SelectTrigger
+                          aria-label={`${slotRangeUtc(slot)} UTC: ${turn ? (nameOf(turn.gameId) ?? "") : "empty"}`}
+                          className={cn(
+                            "h-auto! w-full flex-col items-stretch gap-0.5 p-2.5 text-left whitespace-normal [&>svg]:hidden",
+                            turn
+                              ? "border-primary/40 bg-primary/10 hover:bg-primary/15 dark:bg-primary/10 dark:hover:bg-primary/15"
+                              : picked.length > 0
+                                ? "border-dashed border-primary/50"
+                                : "border-dashed",
+                          )}
+                        >
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="font-mono text-sm font-semibold">{slotUtc(slot)}</span>
+                            {today && (
+                              <span className="text-[11px] text-muted-foreground">{formatSlotLocal(slot, today)}</span>
+                            )}
+                          </div>
+                          <div className={cn("truncate text-sm", turn ? "pr-6 font-medium" : "text-muted-foreground")}>
+                            {turn ? nameOf(turn.gameId) : "Empty"}
+                          </div>
+                          <div className={cn("text-xs", !turn && picked.length > 0 ? "text-primary" : "text-muted-foreground")}>
+                            {player ? formatDuration(dayScore(player, day)) : turn ? "—" : `${picked.length} picked`}
+                          </div>
                         </SelectTrigger>
-                        <SelectContent alignItemWithTrigger={false}>
+                        <SelectContent alignItemWithTrigger={false} align="start" className="min-w-72!">
                           <SelectItem value={EMPTY}>— Empty —</SelectItem>
                           <SelectSeparator />
                           <SelectGroup>
@@ -273,25 +283,23 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           )}
                         </SelectContent>
                       </Select>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">{player ? formatDuration(dayScore(player, day)) : "—"}</TableCell>
-                    <TableCell>
                       {turn && (
                         <Button
                           variant={turn.locked ? "default" : "ghost"}
                           size="icon-sm"
+                          className="absolute top-1.5 right-1.5 size-6"
                           aria-label={turn.locked ? "Unlock turn" : "Lock turn"}
                           onClick={() => run(() => setLocked({ password, day, slot, locked: !turn.locked }))}
                         >
-                          {turn.locked ? <Lock /> : <LockOpen className="text-muted-foreground" />}
+                          {turn.locked ? <Lock className="size-3.5" /> : <LockOpen className="size-3.5 text-muted-foreground" />}
                         </Button>
                       )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
