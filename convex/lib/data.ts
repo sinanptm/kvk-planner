@@ -1,7 +1,7 @@
 import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { ALLIANCES, MAX_TRUEGOLD, TC_MAX_LEVEL, isValidSlot, type DayKey } from "./kvk";
+import { ALLIANCES, MAX_TRUEGOLD, TC_MAX_LEVEL, TC_MIN_LEVEL, isValidSlot, type DayKey } from "./kvk";
 
 // Upper bounds for reads. A kingdom never has anywhere near this many players.
 export const MAX_PLAYERS = 2000;
@@ -80,7 +80,7 @@ export function cleanEntry(args: Infer<typeof entryValidator>) {
   const alliance = args.alliance.trim().toUpperCase();
   if (!(ALLIANCES as readonly string[]).includes(alliance))
     throw new ConvexError(`Pick an alliance: ${ALLIANCES.join(", ")}.`);
-  if (!Number.isInteger(args.tcLevel) || args.tcLevel < 1 || args.tcLevel > TC_MAX_LEVEL)
+  if (!Number.isInteger(args.tcLevel) || args.tcLevel < TC_MIN_LEVEL || args.tcLevel > TC_MAX_LEVEL)
     throw new ConvexError("Pick your Town Center level.");
   return {
     name,

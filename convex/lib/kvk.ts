@@ -3,7 +3,8 @@
 
 export const SLOT_COUNT = 48;
 
-// Town Center level: 1-30, then 31-33 are Truegold levels TG1-TG3 (the highest the list offers).
+// Town Center level: players pick from TC 26 to TC 30, then 31-33 are Truegold levels TG1-TG3.
+export const TC_MIN_LEVEL = 26;
 export const TC_MAX_LEVEL = 33;
 export const tcLabel = (level: number) => (level > 30 ? `TG${level - 30}` : `TC ${level}`);
 export const MAX_TRUEGOLD = 1_000_000_000;

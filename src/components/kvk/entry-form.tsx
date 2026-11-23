@@ -10,6 +10,7 @@ import {
   ALLIANCE_STYLES,
   DAYS,
   TC_MAX_LEVEL,
+  TC_MIN_LEVEL,
   tcLabel,
   DAY_KEYS,
   formatDuration,
@@ -209,8 +210,8 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
   );
 }
 
-// Highest first: most players are at the top of the range.
-const TC_ITEMS = Array.from({ length: TC_MAX_LEVEL }, (_, i) => TC_MAX_LEVEL - i).map((level) => ({
+// TC 26 to TG3, highest first.
+const TC_ITEMS = Array.from({ length: TC_MAX_LEVEL - TC_MIN_LEVEL + 1 }, (_, i) => TC_MAX_LEVEL - i).map((level) => ({
   value: String(level),
   label: tcLabel(level),
 }));
