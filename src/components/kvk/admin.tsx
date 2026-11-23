@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarCheck, Copy, KeyRound, LogOut, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, KeyRound, LogOut, Users, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { copyText, errorMessage, useStoredString } from "@/lib/client";
+import { errorMessage, useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS } from "@/lib/kvk";
 import { AdminDay } from "./admin-day";
 import { AdminPlayers } from "./admin-players";
@@ -194,8 +194,6 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
     }
   };
 
-  const link = (path: string) => `${window.location.origin}${path}`;
-
   return (
     <Card>
       <CardHeader>
@@ -231,16 +229,6 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
             checked={data.settings.schedulePublished}
             onChange={(v) => run({ schedulePublished: v }, v ? "Schedule published." : "Schedule hidden.")}
           />
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Button variant="outline" className="h-10" onClick={() => copyText(link("/"), "Player link copied")}>
-            <Copy data-icon="inline-start" />
-            Copy player link
-          </Button>
-          <Button variant="outline" className="h-10" onClick={() => copyText(link("/schedule"), "Schedule link copied")}>
-            <Copy data-icon="inline-start" />
-            Copy schedule link
-          </Button>
         </div>
       </CardContent>
     </Card>
