@@ -5,6 +5,7 @@ import {
   cleanEntry,
   entryFields,
   isAdmin,
+  isDateString,
   listAllTurns,
   listPlayers,
   listTurns,
@@ -46,14 +47,17 @@ export const updateSettings = mutation({
     password: v.string(),
     eventName: v.optional(v.string()),
     schedulePublished: v.optional(v.boolean()),
+    startDate: v.optional(v.string()),
   },
-  handler: async (ctx, { password, eventName, schedulePublished }) => {
+  handler: async (ctx, { password, eventName, schedulePublished, startDate }) => {
     requireAdmin(password);
     const row = await settingsRow(ctx);
     const name = eventName?.trim();
     if (name !== undefined && (!name || name.length > 60)) throw new ConvexError("Event name must be 1–60 characters.");
+    if (startDate !== undefined && !isDateString(startDate)) throw new ConvexError("Pick a valid date.");
     await ctx.db.patch("settings", row._id, {
       ...(schedulePublished !== undefined && { schedulePublished }),
+      ...(startDate !== undefined && { startDate }),
       ...(name !== undefined && { eventName: name }),
     });
   },

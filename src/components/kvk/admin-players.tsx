@@ -20,6 +20,7 @@ import {
   slotRangeUtc,
   slotUtc,
   tcLabel,
+  dayDate,
 } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
@@ -49,7 +50,8 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       "Your KvK appointment turns (UTC):",
       ...DAY_KEYS.map((day) => {
         const turn = turnOf(p.gameId, day);
-        return `${DAYS[day].label} · ${DAYS[day].position}: ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
+        const date = dayDate(data.settings.startDate, day);
+        return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].position}: ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
       }),
       "Please be online at the start of your turn.",
     ].join("\n");

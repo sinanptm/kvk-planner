@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { PlayerName } from "./alliance-tag";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDayDate } from "./day-date";
 import { DayCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
 
 export function KvkSignup() {
@@ -118,6 +119,7 @@ function Notice({ icon: Icon, title, children }: { icon: typeof Lock; title: str
 // Read-only view of what the player submitted.
 function EntrySummary({ entry, title, description }: { entry: Entry; title?: string; description?: string }) {
   const { t } = useLanguage();
+  const dateOf = useDayDate();
   return (
     <Card>
       <CardHeader>
@@ -130,7 +132,8 @@ function EntrySummary({ entry, title, description }: { entry: Entry; title?: str
           return (
             <div key={day} className="flex flex-col gap-3 rounded-lg bg-muted p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                {t(`day.${day}`)} · {t(`day.${day}.title`)}
+                {t(`day.${day}`)}
+                {dateOf(day) && ` · ${dateOf(day)}`} · {t(`day.${day}.title`)}
               </p>
               <dl className="flex flex-col gap-1 text-sm">
                 {day === "d1" && (
@@ -179,6 +182,7 @@ function EntrySummary({ entry, title, description }: { entry: Entry; title?: str
 function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; entry: Entry }) {
   const today = useToday();
   const { t } = useLanguage();
+  const dateOf = useDayDate();
   return (
     <Card className="ring-primary/40">
       <CardHeader>
@@ -195,7 +199,8 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
           return (
             <div key={day} className="flex flex-col gap-1 rounded-lg bg-muted p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                {t(`day.${day}`)} · {DAYS[day].position}
+                {t(`day.${day}`)}
+                {dateOf(day) && ` · ${dateOf(day)}`} · {DAYS[day].position}
               </p>
               {mine.length > 0 ? (
                 mine.map((turn) => (

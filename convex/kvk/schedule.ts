@@ -23,6 +23,6 @@ export const published = query({
         return { day: t.day, slot: t.slot, name: player?.name ?? "Unknown", alliance: player?.alliance ?? "" };
       }),
     );
-    return { eventName: settings.eventName, turns: rows };
+    return { eventName: settings.eventName, startDate: settings.startDate, turns: rows };
   },
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarDays } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/kvk";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useDayDate } from "./day-date";
 import { DurationInput } from "./duration-input";
 import { SlotGrid } from "./slot-grid";
 
@@ -157,14 +159,23 @@ export function DayCard({
 }: FieldProps & { day: DayKey; step: number; tcEditable?: boolean }) {
   const today = useToday();
   const { t } = useLanguage();
+  const date = useDayDate()(day, true);
   const total = SPEEDUP_FIELDS[day].reduce((sum, key) => sum + form[key], 0);
   const slotsKey = day === "d1" ? "d1Slots" : "d4Slots";
   return (
     <Card>
       <CardHeader>
         <StepTitle step={step} title={`${t(`day.${day}`)} · ${t(`day.${day}.title`)}`} />
-        <CardDescription className="pl-10">
-          {t("day.appointment")} <span className="font-medium text-foreground">{DAYS[day].position}</span>
+        <CardDescription className="flex flex-col gap-1 pl-10">
+          {date && (
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <CalendarDays className="size-4 text-primary" />
+              {date}
+            </span>
+          )}
+          <span>
+            {t("day.appointment")} <span className="font-medium text-foreground">{DAYS[day].position}</span>
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">

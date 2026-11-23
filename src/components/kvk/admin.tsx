@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarCheck, CircleCheck, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarDays, CircleCheck, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { errorMessage, useStoredString } from "@/lib/client";
-import { DAYS, DAY_KEYS, SLOTS } from "@/lib/kvk";
+import { DAYS, DAY_KEYS, SLOTS, dayDate } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AdminDay } from "./admin-day";
 import { AdminMissing } from "./admin-missing";
@@ -112,6 +112,7 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
   return (
     <>
       <PublishBanner password={password} data={data} />
+      <EventDates password={password} data={data} />
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Stat icon={Users} label="Players signed up" shortLabel="Players" value={data.players.length} />
         {DAY_KEYS.map((day) => {
@@ -247,5 +248,52 @@ function PublishBanner({ password, data }: { password: string; data: Dashboard }
         </Button>
       )}
     </div>
+  );
+}
+
+// The date of Day 1, shown to players next to each day so they know when to be online. Day 4 follows from it.
+function EventDates({ password, data }: { password: string; data: Dashboard }) {
+  const update = useMutation(api.kvk.admin.updateSettings);
+  const startDate = data.settings.startDate;
+
+  const save = async (value: string) => {
+    // Typing a year digit by digit passes through dates like 0002-11-30; wait for a real one.
+    if (!value || value === startDate || Number(value.slice(0, 4)) < 2024) return;
+    try {
+      await update({ password, startDate: value });
+      toast.success(`Day 1 set to ${dayDate(value, "d1", "en", true)}.`);
+    } catch (err) {
+      toast.error(errorMessage(err));
+    }
+  };
+
+  return (
+    <Card size="sm">
+      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-1 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <CalendarDays className="size-5" />
+          </span>
+          <div>
+            <p className="font-semibold">KvK prep dates</p>
+            <p className="text-sm text-muted-foreground">
+              {startDate
+                ? DAY_KEYS.map((day) => `${DAYS[day].label}: ${dayDate(startDate, day)}`).join(" · ")
+                : "Not set. Players won\u2019t see dates yet."}
+            </p>
+          </div>
+        </div>
+        <Label className="flex items-center gap-2 text-sm whitespace-nowrap text-muted-foreground">
+          Day 1
+          <Input
+            type="date"
+            className="h-10 flex-1 [color-scheme:dark] sm:w-44 sm:flex-none"
+            defaultValue={startDate ?? ""}
+            key={startDate ?? ""}
+            onChange={(e) => void save(e.target.value)}
+          />
+        </Label>
+      </CardContent>
+    </Card>
   );
 }

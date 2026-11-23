@@ -12,14 +12,18 @@ export const DEFAULT_SETTINGS = {
   schedulePublished: false,
 };
 
-export type Settings = typeof DEFAULT_SETTINGS;
+export type Settings = typeof DEFAULT_SETTINGS & { startDate: string | null };
 
 export async function readSettings(ctx: QueryCtx): Promise<Settings> {
   const row = await ctx.db.query("settings").first();
-  if (!row) return DEFAULT_SETTINGS;
-  const { eventName, schedulePublished } = row;
-  return { eventName, schedulePublished };
+  if (!row) return { ...DEFAULT_SETTINGS, startDate: null };
+  const { eventName, schedulePublished, startDate } = row;
+  return { eventName, schedulePublished, startDate: startDate ?? null };
 }
+
+// A real calendar date written as YYYY-MM-DD.
+export const isDateString = (s: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T00:00:00Z`).toISOString().startsWith(s);
 
 export async function settingsRow(ctx: MutationCtx): Promise<Doc<"settings">> {
   const row = await ctx.db.query("settings").first();

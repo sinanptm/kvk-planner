@@ -45,6 +45,7 @@ import {
   tcLabel,
   useToday,
   type DayKey,
+  dayDate,
 } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
@@ -205,6 +206,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           {DAYS[day].label} · {DAYS[day].title}
         </h2>
         <p className="text-sm text-muted-foreground">
+          {dayDate(data.settings.startDate, day, "en", true) && `${dayDate(data.settings.startDate, day, "en", true)} · `}
           {DAYS[day].position}. Score = {DAYS[day].scoreHint.toLowerCase()}.
         </p>
       </div>

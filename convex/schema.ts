@@ -63,5 +63,7 @@ export default defineSchema({
     // No longer used: sign-ups are always open. Kept optional so rows written before the removal stay valid.
     submissionsOpen: v.optional(v.boolean()),
     schedulePublished: v.boolean(),
+    // Day 1 of KvK prep as "YYYY-MM-DD" (UTC). Day 4 is three days later.
+    startDate: v.optional(v.string()),
   }),
 });

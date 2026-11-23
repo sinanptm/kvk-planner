@@ -26,6 +26,23 @@ export const DAYS: Record<DayKey, { label: string; title: string; position: stri
   },
 };
 
+// Days after Day 1 that each prep day falls on.
+const DAY_OFFSET: Record<DayKey, number> = { d1: 0, d4: 3 };
+
+// The calendar date of a prep day, e.g. "Mon 30 Nov" (or "Monday 30 November" when long).
+// Null until an admin sets the Day 1 date. lang is a language code like "en" or "zh".
+export function dayDate(startDate: string | null | undefined, day: DayKey, lang = "en", long = false) {
+  if (!startDate) return null;
+  const date = new Date(`${startDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + DAY_OFFSET[day]);
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : lang, {
+    timeZone: "UTC",
+    weekday: long ? "long" : "short",
+    day: "numeric",
+    month: long ? "long" : "short",
+  }).format(date);
+}
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const hhmm = (minutes: number) => `${pad(Math.floor(minutes / 60) % 24)}:${pad(minutes % 60)}`;
 

@@ -16,6 +16,7 @@ import { DAYS, DAY_KEYS, SLOTS, formatSlotLocal, localTimeZone, slotRangeUtc, us
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
+import { useDayDate } from "./day-date";
 
 export function PublicSchedule() {
   const schedule = useQuery(api.kvk.schedule.published);
@@ -25,6 +26,7 @@ export function PublicSchedule() {
   const [filledOnly, setFilledOnly] = useState(false);
   const today = useToday();
   const { t } = useLanguage();
+  const dateOf = useDayDate();
   const q = search.trim().toLowerCase();
   const isMine = (day: string, slot: number) => !!myTurns?.some((t) => t.day === day && t.slot === slot);
 
@@ -86,6 +88,7 @@ export function PublicSchedule() {
                 <TabsContent key={day} value={day} className="mt-3 flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="min-w-0 truncate text-muted-foreground">
+                      {dateOf(day) && <span className="font-medium text-foreground">{dateOf(day)} · </span>}
                       {DAYS[day].position} · {t(`day.${day}.title`)}
                     </span>
                     <span className="shrink-0 font-medium text-primary">
