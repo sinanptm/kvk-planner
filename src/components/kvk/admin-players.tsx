@@ -16,7 +16,6 @@ import {
   dayScore,
   formatDuration,
   formatTruegold,
-  playerLabel,
   searchPlayers,
   slotRangeUtc,
   slotUtc,
@@ -47,7 +46,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   // Plain text for in-game chat or DMs: the player's turn on each day, or that they have none.
   const turnMessage = (p: (typeof players)[number]) =>
     [
-      `Hi ${playerLabel(p)}! Your KvK appointment turns (UTC):`,
+      "Your KvK appointment turns (UTC):",
       ...DAY_KEYS.map((day) => {
         const turn = turnOf(p.gameId, day);
         return `${DAYS[day].label} · ${DAYS[day].position}: ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
