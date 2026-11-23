@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -49,6 +51,9 @@ import { ConfirmButton } from "./confirm-button";
 
 const EMPTY = "__empty";
 
+// Speedups in two units at most ("22d 21h", "5h 30m"), so the dropdown column stays narrow.
+const shortDuration = (minutes: number) => formatDuration(minutes).split(" ").slice(0, 2).join(" ");
+
 // UTC quarters of the day, 12 turns each.
 const PERIODS = ["00:00–06:00", "06:00–12:00", "12:00–18:00", "18:00–24:00"].map((label, i) => ({
   label,
@@ -62,6 +67,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
   const clearDay = useMutation(api.kvk.admin.clearDay);
   const [assigning, setAssigning] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const today = useToday();
 
   const { players, turns } = data;
@@ -83,17 +89,51 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
     return map;
   }, [sorted, day]);
 
-  // One dropdown row: name, speedups for this day, and the turn they already hold (picking them moves them).
-  const optionItem = (p: (typeof sorted)[number], slot: number) => {
+  // One dropdown row: name on the left, speedups for this day on the right.
+  // Players who already hold another turn are dimmed and show where they would move from.
+  const optionItem = (p: (typeof sorted)[number]) => {
     const held = turnOf.get(p.gameId);
     return (
       <SelectItem key={p.gameId} value={p.gameId}>
-        <span className="truncate">{playerLabel(p)}</span>
-        <span className="font-mono text-xs text-muted-foreground">{formatDuration(dayScore(p, day))}</span>
-        {held !== undefined && held !== slot && (
-          <span className="text-xs text-warning">has {slotUtc(held)}</span>
+        <span className={cn("min-w-0 flex-1 truncate", held !== undefined && "text-muted-foreground")}>
+          {playerLabel(p)}
+        </span>
+        {held !== undefined && (
+          <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">at {slotUtc(held)}</span>
         )}
+        <span className="w-14 text-right font-mono text-xs text-muted-foreground tabular-nums">
+          {shortDuration(dayScore(p, day))}
+        </span>
       </SelectItem>
+    );
+  };
+
+  // The dropdown for one turn: free players who picked the time, then ones already placed elsewhere,
+  // and (only when the switch is on) everyone who did not pick it.
+  const optionGroups = (slot: number) => {
+    const current = bySlot.get(slot)?.gameId;
+    const isFree = (p: (typeof sorted)[number]) => !turnOf.has(p.gameId) || p.gameId === current;
+    const picked = pickedBy.get(slot) ?? [];
+    const pickedIds = new Set(picked.map((p) => p.gameId));
+    const groups = [
+      { label: "Picked this time", players: picked.filter(isFree) },
+      { label: "Picked this time · already has a turn", players: picked.filter((p) => !isFree(p)) },
+      { label: "Didn\u2019t pick this time", players: showAll ? sorted.filter((p) => !pickedIds.has(p.gameId)) : [] },
+    ].filter((g) => g.players.length > 0);
+    return (
+      <>
+        <SelectItem value={EMPTY}>
+          <span className="text-muted-foreground">Empty</span>
+        </SelectItem>
+        {groups.length === 0 && <SelectLabel>Nobody picked this time</SelectLabel>}
+        {groups.map((g) => (
+          <SelectGroup key={g.label}>
+            <SelectSeparator />
+            <SelectLabel>{g.label}</SelectLabel>
+            {g.players.map(optionItem)}
+          </SelectGroup>
+        ))}
+      </>
     );
   };
 
@@ -210,12 +250,18 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         <CardHeader>
           <CardTitle>Turns</CardTitle>
           <CardDescription>
-            Click a turn to choose a player. Players who picked that time are listed first, most {DAYS[day].label}{" "}
-            speedups on top. Picking by hand locks the turn and moves the player off any other turn this day.
-            Auto-assign keeps locked turns.
+            Click a turn to choose from the players who picked that time, most {DAYS[day].label} speedups on top.
+            Picking by hand locks the turn and moves the player off any other turn this day. Auto-assign keeps
+            locked turns.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <Switch id={`show-all-${day}`} checked={showAll} onCheckedChange={(v) => setShowAll(v)} />
+            <Label htmlFor={`show-all-${day}`} className="text-sm font-normal text-muted-foreground">
+              Also list players who didn&apos;t pick the time
+            </Label>
+          </div>
           {PERIODS.map((period) => (
             <div key={period.label} className="flex flex-col gap-2">
               <p className="flex items-center justify-between text-xs font-medium text-muted-foreground">
@@ -229,8 +275,6 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                   const turn = bySlot.get(slot);
                   const player = turn && byId.get(turn.gameId);
                   const picked = pickedBy.get(slot) ?? [];
-                  const pickedIds = new Set(picked.map((p) => p.gameId));
-                  const others = sorted.filter((p) => !pickedIds.has(p.gameId));
                   return (
                     <div key={slot} className="relative">
                       <Select
@@ -264,23 +308,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           </div>
                         </SelectTrigger>
                         <SelectContent alignItemWithTrigger={false} align="start" className="min-w-72!">
-                          <SelectItem value={EMPTY}>— Empty —</SelectItem>
-                          <SelectSeparator />
-                          <SelectGroup>
-                            <SelectLabel>
-                              {picked.length > 0 ? `Picked this time (${picked.length})` : "Nobody picked this time"}
-                            </SelectLabel>
-                            {picked.map((p) => optionItem(p, slot))}
-                          </SelectGroup>
-                          {others.length > 0 && (
-                            <>
-                              <SelectSeparator />
-                              <SelectGroup>
-                                <SelectLabel>Didn&apos;t pick this time</SelectLabel>
-                                {others.map((p) => optionItem(p, slot))}
-                              </SelectGroup>
-                            </>
-                          )}
+                          {optionGroups(slot)}
                         </SelectContent>
                       </Select>
                       {turn && (
