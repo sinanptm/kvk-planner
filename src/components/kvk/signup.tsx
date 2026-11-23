@@ -1,8 +1,8 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvex, useMutation, useQuery } from "convex/react";
-import { ArrowLeft, ArrowRight, CalendarClock, Lock, LogOut, TriangleAlert } from "lucide-react";
+import { useAction, useConvex, useMutation, useQuery } from "convex/react";
+import { ArrowLeft, ArrowRight, CalendarClock, CircleAlert, CircleCheck, Lock, LogOut, Search, TriangleAlert } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -29,6 +29,7 @@ import {
   formatSlotLocal,
   playerLabel,
   slotRangeUtc,
+  KINGDOM_ID,
   slotUtc,
   tcLabel,
   useToday,
@@ -37,7 +38,9 @@ import {
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { PlayerName } from "./alliance-tag";
-import { DayCard, DetailsCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DayCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
 
 export function KvkSignup() {
   const settings = useQuery(api.kvk.schedule.settings);
@@ -221,7 +224,10 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
 function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const convex = useConvex();
   const save = useMutation(api.kvk.players.save);
+  const lookupPlayer = useAction(api.kvk.lookup.player);
   const [rawGameId, setRawGameId] = useState("");
+  // Result of checking the game ID, and the ID it was for (typing a new ID clears it).
+  const [lookup, setLookup] = useState<{ id: string; result: LookupResult } | null>(null);
   const [form, setForm] = useState<Entry>(EMPTY_ENTRY);
   const [step, setStep] = useState(0);
   const [confirming, setConfirming] = useState(false);
@@ -241,29 +247,36 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const next = async () => {
     if (step > 0) {
       const day = DAY_KEYS[step - 1];
-      if (day === "d1" && !form.tcLevel) return void toast.error(t("toast.pickTc"));
       const picked = day === "d1" ? form.d1Slots : form.d4Slots;
       if (picked.length === 0) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
       return go(step + 1);
     }
-    if (!form.alliance) return void toast.error(t("toast.pickAlliance"));
+    // Step 1: the game ID must be found in the game, in our kingdom and alliances.
+    if (lookup?.id === gameId && lookup.result.status === "ok") return go(1);
+    if (!/^\d{3,15}$/.test(gameId)) return void toast.error(t("lookup.badId"));
     setSaving(true);
     try {
       if (await convex.query(api.kvk.players.get, { gameId })) {
         toast.info(t("toast.alreadySignedUp"));
-        onSignedUp(gameId);
-      } else go(1);
+        return onSignedUp(gameId);
+      }
+      const result = await lookupPlayer({ gameId });
+      setLookup({ id: gameId, result });
+      if (result.status === "ok")
+        setForm((f) => ({ ...f, name: result.name ?? "", alliance: result.alliance ?? "", tcLevel: result.tcLevel ?? 0 }));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
       setSaving(false);
     }
   };
+  const verified = lookup?.id === gameId && lookup.result.status === "ok";
 
   const submit = async () => {
     setSaving(true);
     try {
-      await save({ gameId, ...form });
+      const { name: _name, alliance: _alliance, tcLevel: _tcLevel, ...rest } = form;
+      await save({ gameId, ...rest });
       toast.success(t("toast.signedUp"));
       onSignedUp(gameId);
     } catch (err) {
@@ -302,15 +315,16 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
       </ol>
 
       {step === 0 && (
-        <DetailsCard
-          form={form}
-          set={set}
-          step={1}
-          title={t("details.title")}
-          gameId={{ value: rawGameId, onChange: setRawGameId }}
+        <IdCheck
+          value={rawGameId}
+          onChange={setRawGameId}
+          result={lookup?.id === gameId ? lookup.result : null}
+          checking={saving}
         />
       )}
-      {DAY_KEYS.map((day, i) => step === i + 1 && <DayCard key={day} day={day} form={form} set={set} step={i + 2} />)}
+      {DAY_KEYS.map(
+        (day, i) => step === i + 1 && <DayCard key={day} day={day} form={form} set={set} step={i + 2} tcEditable={false} />,
+      )}
       {step === last && (
         <EntrySummary
           entry={form}
@@ -337,8 +351,15 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
             </Button>
           )}
           <Button type="submit" className="h-12 flex-1 text-base sm:flex-none sm:px-8" disabled={saving}>
-            {step === last ? t("action.signUp") : t("step.next", { step: steps[step + 1] })}
-            {step < last && <ArrowRight data-icon="inline-end" />}
+            {step === last
+              ? t("action.signUp")
+              : step === 0 && !verified
+                ? saving
+                  ? t("lookup.checking")
+                  : t("lookup.check")
+                : t("step.next", { step: steps[step + 1] })}
+            {step < last && (step > 0 || verified) && <ArrowRight data-icon="inline-end" />}
+            {step === 0 && !verified && <Search data-icon="inline-end" />}
           </Button>
         </div>
       </div>
@@ -358,5 +379,86 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
         </AlertDialogContent>
       </AlertDialog>
     </form>
+  );
+}
+
+type LookupResult = {
+  status: "ok" | "not_found" | "wrong_kingdom" | "wrong_alliance" | "pending" | "error";
+  name?: string;
+  alliance?: string;
+  tcLevel?: number;
+  kid?: number;
+};
+
+// Step 1: the player types only their game ID. Name, alliance and Town Center level come from the game.
+function IdCheck({
+  value,
+  onChange,
+  result,
+  checking,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  result: LookupResult | null;
+  checking: boolean;
+}) {
+  const { t } = useLanguage();
+  const problem =
+    result && result.status !== "ok"
+      ? {
+          not_found: t("lookup.notFound"),
+          wrong_kingdom: t("lookup.wrongKingdom", { kid: result.kid ?? "?", ours: KINGDOM_ID }),
+          wrong_alliance: t("lookup.wrongAlliance", { alliance: result.alliance || "—" }),
+          pending: t("lookup.pending"),
+          error: t("lookup.error"),
+        }[result.status]
+      : null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-3 text-base">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            1
+          </span>
+          {t("details.title")}
+        </CardTitle>
+        <CardDescription className="pl-10">{t("lookup.hint")}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="game-id">{t("field.gameId")}</Label>
+          <Input
+            id="game-id"
+            required
+            maxLength={15}
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder={t("field.gameIdPlaceholder")}
+            value={value}
+            disabled={checking}
+            onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+            className="h-11 font-mono text-base"
+          />
+        </div>
+        {result?.status === "ok" && (
+          <div className="flex items-center gap-3 rounded-lg border border-success/40 bg-success/10 p-3">
+            <CircleCheck className="size-5 shrink-0 text-success" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">{t("lookup.found")}</p>
+              <PlayerName player={{ name: result.name ?? "", alliance: result.alliance ?? "" }} className="max-w-full font-semibold" />
+            </div>
+            <span className="shrink-0 rounded-md bg-muted px-2 py-1 font-mono text-xs font-semibold">
+              {result.tcLevel ? tcLabel(result.tcLevel) : "—"}
+            </span>
+          </div>
+        )}
+        {problem && (
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <p>{problem}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

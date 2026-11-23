@@ -3,10 +3,23 @@
 
 export const SLOT_COUNT = 48;
 
-// Town Center level: players pick from TC 26 to TC 30, then 31-33 are Truegold levels TG1-TG3.
+// The kingdom taking part. Sign-ups are checked against it through the MightPulse API.
+export const KINGDOM_ID = 2323;
+
+// Town Center level as the game reports it: 1-30, then five steps per Truegold level
+// (31-35 = TG1, 36-40 = TG2, 41-45 = TG3, ...). Admins pick from TC 26 to TG3 when editing.
 export const TC_MIN_LEVEL = 26;
-export const TC_MAX_LEVEL = 33;
-export const tcLabel = (level: number) => (level > 30 ? `TG${level - 30}` : `TC ${level}`);
+export const TC_MAX_LEVEL = 45;
+const tgParts = (level: number) => {
+  const tg = Math.ceil((level - 30) / 5);
+  return { tg, step: level - 30 - (tg - 1) * 5 };
+};
+export const tcLabel = (level: number) => (level > 30 ? `TG${tgParts(level).tg}` : `TC ${level}`);
+export const tcLabelFull = (level: number) => {
+  if (level <= 30) return `TC ${level}`;
+  const { tg, step } = tgParts(level);
+  return `TG${tg} · ${step}/5`;
+};
 export const MAX_TRUEGOLD = 1_000_000_000;
 
 // The alliances taking part. Every player belongs to exactly one.

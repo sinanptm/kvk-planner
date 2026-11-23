@@ -11,7 +11,7 @@ import {
   DAYS,
   TC_MAX_LEVEL,
   TC_MIN_LEVEL,
-  tcLabel,
+  tcLabelFull,
   DAY_KEYS,
   formatDuration,
   localTimeZone,
@@ -97,8 +97,7 @@ export function DetailsCard({
   set,
   step,
   title,
-  gameId,
-}: FieldProps & { step: number; title: string; gameId?: { value: string; onChange: (value: string) => void } }) {
+}: FieldProps & { step: number; title: string }) {
   const { t } = useLanguage();
   return (
     <Card>
@@ -106,23 +105,7 @@ export function DetailsCard({
         <StepTitle step={step} title={title} />
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
-        {gameId && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="game-id">{t("field.gameId")}</Label>
-            <Input
-              id="game-id"
-              required
-              maxLength={32}
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder={t("field.gameIdPlaceholder")}
-              value={gameId.value}
-              onChange={(e) => gameId.onChange(e.target.value)}
-              className="h-10 font-mono"
-            />
-          </div>
-        )}
-        <div className={cn("flex flex-col gap-2", !gameId && "sm:col-span-2")}>
+        <div className="flex flex-col gap-2 sm:col-span-2">
           <Label htmlFor="name">{t("field.name")}</Label>
           <Input
             id="name"
@@ -164,7 +147,14 @@ export function DetailsCard({
 }
 
 // Speedups and available times for one day.
-export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; step: number }) {
+// tcEditable is false at sign-up, where the Town Center level comes from the game.
+export function DayCard({
+  day,
+  form,
+  set,
+  step,
+  tcEditable = true,
+}: FieldProps & { day: DayKey; step: number; tcEditable?: boolean }) {
   const today = useToday();
   const { t } = useLanguage();
   const total = SPEEDUP_FIELDS[day].reduce((sum, key) => sum + form[key], 0);
@@ -193,7 +183,7 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
           <span className="text-sm font-medium">{t("day.total", { day: t(`day.${day}`) })}</span>
           <span className="font-mono text-xl font-bold text-primary">{formatDuration(total)}</span>
         </div>
-        {day === "d1" && <TownCenterFields form={form} set={set} />}
+        {day === "d1" && <TownCenterFields form={form} set={set} tcEditable={tcEditable} />}
         <Separator />
         <div className="flex flex-col gap-1">
           <p className="font-medium">
@@ -213,34 +203,43 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
 // TC 26 to TG3, highest first.
 const TC_ITEMS = Array.from({ length: TC_MAX_LEVEL - TC_MIN_LEVEL + 1 }, (_, i) => TC_MAX_LEVEL - i).map((level) => ({
   value: String(level),
-  label: tcLabel(level),
+  label: tcLabelFull(level),
 }));
 
 // Town Center level and the Truegold (TG) a player holds. Shown with the Day 1 speedups.
-function TownCenterFields({ form, set }: FieldProps) {
+function TownCenterFields({ form, set, tcEditable }: FieldProps & { tcEditable: boolean }) {
   const { t } = useLanguage();
   return (
     <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
       <div className="flex flex-col gap-2">
         <Label htmlFor="tc-level">
-          {t("tc.level")} <span className="text-primary">*</span>
+          {t("tc.level")} {tcEditable && <span className="text-primary">*</span>}
         </Label>
-        <Select
-          items={TC_ITEMS}
-          value={form.tcLevel ? String(form.tcLevel) : null}
-          onValueChange={(v) => v && set("tcLevel", Number(v))}
-        >
-          <SelectTrigger id="tc-level" className="h-10! w-full">
-            <SelectValue placeholder={t("tc.levelPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            {TC_ITEMS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {tcEditable ? (
+          <Select
+            items={TC_ITEMS}
+            value={form.tcLevel ? String(form.tcLevel) : null}
+            onValueChange={(v) => v && set("tcLevel", Number(v))}
+          >
+            <SelectTrigger id="tc-level" className="h-10! w-full">
+              <SelectValue placeholder={t("tc.levelPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              {TC_ITEMS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div
+            id="tc-level"
+            className="flex h-10 items-center rounded-lg border bg-muted/50 px-3 font-mono text-sm text-muted-foreground"
+          >
+            {form.tcLevel ? tcLabelFull(form.tcLevel) : "—"}
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="truegold">{t("tc.truegold")}</Label>

@@ -16,6 +16,7 @@ import { errorMessage, useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AdminDay } from "./admin-day";
+import { AdminMissing } from "./admin-missing";
 import { AdminPlayers } from "./admin-players";
 
 export type Dashboard = NonNullable<FunctionReturnType<typeof api.kvk.admin.dashboard>>;
@@ -135,7 +136,10 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
             </TabsTrigger>
           ))}
           <TabsTrigger value="players" className="flex-1">
-            All players
+            Players
+          </TabsTrigger>
+          <TabsTrigger value="missing" className="flex-1">
+            Missing
           </TabsTrigger>
         </TabsList>
         {DAY_KEYS.map((day) => (
@@ -145,6 +149,9 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
         ))}
         <TabsContent value="players" className="mt-4">
           <AdminPlayers password={password} data={data} />
+        </TabsContent>
+        <TabsContent value="missing" className="mt-4">
+          <AdminMissing password={password} />
         </TabsContent>
       </Tabs>
     </>

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { SLOT_COUNT, type DayKey } from "@convex/lib/kvk";
 
-export { ALLIANCES, DAY_KEYS, SLOT_COUNT, TC_MAX_LEVEL, TC_MIN_LEVEL, assignDay, tcLabel, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
+export { ALLIANCES, DAY_KEYS, SLOT_COUNT, KINGDOM_ID, TC_MAX_LEVEL, TC_MIN_LEVEL, assignDay, tcLabel, tcLabelFull, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
 
 // dayScore for objects that only carry the speedup fields (forms, summaries).
 export const dayScoreOf = (

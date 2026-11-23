@@ -9,6 +9,7 @@
  */
 
 import type * as kvk_admin from "../kvk/admin.js";
+import type * as kvk_lookup from "../kvk/lookup.js";
 import type * as kvk_players from "../kvk/players.js";
 import type * as kvk_schedule from "../kvk/schedule.js";
 import type * as lib_data from "../lib/data.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "kvk/admin": typeof kvk_admin;
+  "kvk/lookup": typeof kvk_lookup;
   "kvk/players": typeof kvk_players;
   "kvk/schedule": typeof kvk_schedule;
   "lib/data": typeof lib_data;

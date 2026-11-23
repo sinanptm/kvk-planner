@@ -14,7 +14,7 @@ export default defineSchema({
     d1General: v.number(),
     d4Training: v.number(),
     d4General: v.number(),
-    // Town Center level: 1-30, then 31-33 stand for Truegold levels TG1-TG3. Truegold is the amount held.
+    // Town Center level as the game reports it (31-35 = TG1, 36-40 = TG2, ...). Truegold is the amount held.
     // Optional so entries saved before these fields existed stay valid.
     tcLevel: v.optional(v.number()),
     truegold: v.optional(v.number()),
@@ -30,6 +30,30 @@ export default defineSchema({
   })
     .index("by_day_and_slot", ["day", "slot"])
     .index("by_gameId", ["gameId"]),
+
+  // Results of looking up a game ID in the MightPulse API, so sign-up can trust them.
+  // Kept for an hour; sign-up copies name, alliance and Town Center level from here.
+  playerLookups: defineTable({
+    gameId: v.string(),
+    fetchedAt: v.number(),
+    status: v.union(
+      v.literal("ok"),
+      v.literal("not_found"),
+      v.literal("wrong_kingdom"),
+      v.literal("wrong_alliance"),
+    ),
+    name: v.optional(v.string()),
+    alliance: v.optional(v.string()),
+    tcLevel: v.optional(v.number()),
+    kid: v.optional(v.number()),
+  }).index("by_gameId", ["gameId"]),
+
+  // Latest member list of each alliance from the MightPulse API, for the admin "not signed up" list.
+  rosters: defineTable({
+    alliance: v.string(),
+    fetchedAt: v.number(),
+    members: v.array(v.object({ gameId: v.string(), name: v.string(), tcLevel: v.number(), rank: v.string() })),
+  }).index("by_alliance", ["alliance"]),
 
   // Single row.
   settings: defineTable({
