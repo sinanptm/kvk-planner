@@ -190,7 +190,7 @@ export const refreshRosters = action({
   },
 });
 
-// Alliance members with no sign-up, per alliance. Null for a wrong password.
+// Each alliance's members from the game, marked with whether they have signed up. Null for a wrong password.
 export const notSignedUp = query({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
@@ -199,14 +199,13 @@ export const notSignedUp = query({
     const signedUp = new Set(players.map((p) => p.gameId));
     return ALLIANCES.map((tag) => {
       const roster = rosters.find((r) => r.alliance === tag);
-      if (!roster) return { alliance: tag, fetchedAt: null, total: 0, signedUp: 0, missing: [] };
-      const missing = roster.members.filter((m) => !signedUp.has(m.gameId));
+      const members = (roster?.members ?? []).map((m) => ({ ...m, signedUp: signedUp.has(m.gameId) }));
       return {
         alliance: tag,
-        fetchedAt: roster.fetchedAt,
-        total: roster.members.length,
-        signedUp: roster.members.length - missing.length,
-        missing: missing.sort((a, b) => b.tcLevel - a.tcLevel || a.name.localeCompare(b.name)),
+        fetchedAt: roster?.fetchedAt ?? null,
+        total: members.length,
+        signedUp: members.filter((m) => m.signedUp).length,
+        members,
       };
     });
   },
