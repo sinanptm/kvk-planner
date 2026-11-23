@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowLeft, Check, Copy, FileSpreadsheet, Pencil, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Copy, FileSpreadsheet, Pencil, Search, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,6 @@ const csvCell = (v: string | number) => {
 
 export function AdminPlayers({ password, data }: { password: string; data: Dashboard }) {
   const deletePlayer = useMutation(api.kvk.admin.deletePlayer);
-  const resetEvent = useMutation(api.kvk.admin.resetEvent);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
@@ -124,17 +123,6 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
           <FileSpreadsheet data-icon="inline-start" />
           Copy as CSV
         </Button>
-        <ConfirmButton
-          title="Start a new KvK?"
-          description="Deletes every player and every turn and hides the schedule. This cannot be undone."
-          actionLabel="Wipe and start over"
-          confirmWord="RESET"
-          className="h-10"
-          onConfirm={() => run(() => resetEvent({ password, confirm: "RESET" }), "New KvK started.")}
-        >
-          <RotateCcw data-icon="inline-start" />
-          Start a new KvK
-        </ConfirmButton>
       </div>
 
       <Card>

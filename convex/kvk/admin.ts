@@ -169,16 +169,3 @@ export const deletePlayer = mutation({
     for (const t of turns) await ctx.db.delete("assignments", t._id);
   },
 });
-
-// Start a new KvK: wipes players and turns and unpublishes the schedule.
-export const resetEvent = mutation({
-  args: { password: v.string(), confirm: v.string() },
-  handler: async (ctx, { password, confirm }) => {
-    requireAdmin(password);
-    if (confirm !== "RESET") throw new ConvexError('Type RESET to confirm.');
-    for (const t of await listAllTurns(ctx)) await ctx.db.delete("assignments", t._id);
-    for (const p of await listPlayers(ctx)) await ctx.db.delete("players", p._id);
-    const row = await settingsRow(ctx);
-    await ctx.db.patch("settings", row._id, { schedulePublished: false });
-  },
-});
