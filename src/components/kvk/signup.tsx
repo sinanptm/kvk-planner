@@ -422,7 +422,6 @@ function IdCheck({
           </span>
           {t("details.title")}
         </CardTitle>
-        <CardDescription className="pl-10">{t("lookup.hint")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">

@@ -44,7 +44,6 @@ const en = {
   "step.back": "Back",
 
   "details.title": "Your details",
-  "lookup.hint": "Enter your game ID. We look up your name, alliance and Town Center level in the game.",
   "lookup.check": "Check ID",
   "lookup.checking": "Checking…",
   "lookup.found": "Found you in the game",
@@ -156,7 +155,6 @@ const id: Dictionary = {
   "step.back": "Kembali",
 
   "details.title": "Data Anda",
-  "lookup.hint": "Masukkan ID game Anda. Kami mencari nama, aliansi, dan level Town Center Anda di game.",
   "lookup.check": "Periksa ID",
   "lookup.checking": "Memeriksa…",
   "lookup.found": "Anda ditemukan di game",
@@ -264,7 +262,6 @@ const zh: Dictionary = {
   "step.back": "返回",
 
   "details.title": "你的资料",
-  "lookup.hint": "输入你的游戏 ID。我们会在游戏中查询你的名称、联盟和市政厅等级。",
   "lookup.check": "查询 ID",
   "lookup.checking": "查询中…",
   "lookup.found": "已在游戏中找到你",
@@ -373,7 +370,6 @@ const fr: Dictionary = {
   "step.back": "Retour",
 
   "details.title": "Vos informations",
-  "lookup.hint": "Entrez votre ID de jeu. Nous récupérons votre nom, votre alliance et le niveau de votre Centre-ville dans le jeu.",
   "lookup.check": "Vérifier l'ID",
   "lookup.checking": "Vérification…",
   "lookup.found": "Vous avez été trouvé dans le jeu",
@@ -483,7 +479,6 @@ const tr: Dictionary = {
   "step.back": "Geri",
 
   "details.title": "Bilgileriniz",
-  "lookup.hint": "Oyun ID'nizi girin. Adınızı, ittifakınızı ve Şehir Merkezi seviyenizi oyundan alıyoruz.",
   "lookup.check": "ID'yi kontrol et",
   "lookup.checking": "Kontrol ediliyor…",
   "lookup.found": "Oyunda bulundunuz",
@@ -592,7 +587,6 @@ const de: Dictionary = {
   "step.back": "Zurück",
 
   "details.title": "Deine Daten",
-  "lookup.hint": "Gib deine Spiel-ID ein. Name, Allianz und Stadtzentrum-Stufe holen wir aus dem Spiel.",
   "lookup.check": "ID prüfen",
   "lookup.checking": "Wird geprüft…",
   "lookup.found": "Im Spiel gefunden",
