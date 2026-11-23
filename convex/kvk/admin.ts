@@ -15,6 +15,7 @@ import {
   withTc,
   turnAt,
 } from "../lib/data";
+import { cleanLookupId } from "./lookup";
 import { assignDay, isValidSlot } from "../lib/kvk";
 
 // Admin functions take the password on every call; it is checked against the
@@ -139,6 +140,22 @@ export const setInformed = mutation({
 
 // Players cannot edit their own entry after signing up; this is the only way to change one.
 // Turns the player already has are kept.
+// Adds a player on their behalf (for players who can't or won't use the sign-up page).
+export const addPlayer = mutation({
+  args: { password: v.string(), gameId: v.string(), ...entryFields },
+  handler: async (ctx, { password, gameId: rawId, ...args }) => {
+    requireAdmin(password);
+    const gameId = cleanLookupId(rawId);
+    const existing = await ctx.db
+      .query("players")
+      .withIndex("by_gameId", (q) => q.eq("gameId", gameId))
+      .unique();
+    if (existing) throw new ConvexError(`${existing.name} (ID ${gameId}) is already signed up.`);
+    await ctx.db.insert("players", { gameId, ...cleanEntry(args) });
+    return null;
+  },
+});
+
 export const updatePlayer = mutation({
   args: { password: v.string(), gameId: v.string(), ...entryFields },
   handler: async (ctx, { password, gameId, ...args }) => {

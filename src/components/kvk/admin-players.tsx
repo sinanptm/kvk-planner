@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowLeft, Check, Copy, FileSpreadsheet, Pencil, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Copy, FileSpreadsheet, Pencil, Search, Trash2, UserPlus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
+import { AddPlayer } from "./admin-add-player";
 import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
 import { EntryFields, toEntry, type Entry } from "./entry-form";
@@ -36,6 +37,7 @@ const csvCell = (v: string | number) => {
 export function AdminPlayers({ password, data }: { password: string; data: Dashboard }) {
   const deletePlayer = useMutation(api.kvk.admin.deletePlayer);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [search, setSearch] = useState("");
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
   const turnOf = (gameId: string, day: "d1" | "d4") => data.turns.find((t) => t.gameId === gameId && t.day === day);
@@ -113,12 +115,28 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   const shown = searchPlayers(players, search);
 
   const editing = players.find((p) => p.gameId === editingId);
+  if (adding && !editing)
+    return <AddPlayer password={password} onDone={() => setAdding(false)} onEdit={setEditingId} />;
   if (editing)
-    return <EditPlayer key={editing.gameId} password={password} player={editing} onDone={() => setEditingId(null)} />;
+    return (
+      <EditPlayer
+        key={editing.gameId}
+        password={password}
+        player={editing}
+        onDone={() => {
+          setEditingId(null);
+          setAdding(false);
+        }}
+      />
+    );
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap gap-2">
+        <Button className="h-10" onClick={() => setAdding(true)}>
+          <UserPlus data-icon="inline-start" />
+          Add player
+        </Button>
         <Button variant="outline" className="h-10" onClick={() => copyText(csv(), "CSV copied")} disabled={players.length === 0}>
           <FileSpreadsheet data-icon="inline-start" />
           Copy as CSV
