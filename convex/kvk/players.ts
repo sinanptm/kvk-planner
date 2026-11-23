@@ -28,6 +28,8 @@ export const save = mutation({
   handler: async (ctx, { gameId: rawGameId, ...args }) => {
     const gameId = cleanGameId(rawGameId);
     const entry = cleanEntry(args);
+    if (entry.d1Slots.length === 0 || entry.d4Slots.length === 0)
+      throw new ConvexError("Pick at least one time for Day 1 and for Day 4.");
 
     const existing = await ctx.db
       .query("players")

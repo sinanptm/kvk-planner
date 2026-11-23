@@ -229,7 +229,12 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
 
   // Leaving the details step: a game ID that already signed up goes straight to its (final) entry.
   const next = async () => {
-    if (step > 0) return go(step + 1);
+    if (step > 0) {
+      const day = DAY_KEYS[step - 1];
+      const picked = day === "d1" ? form.d1Slots : form.d4Slots;
+      if (picked.length === 0) return void toast.error(`Pick at least one time for ${DAYS[day].label}.`);
+      return go(step + 1);
+    }
     if (!form.alliance) return void toast.error("Pick your alliance.");
     setSaving(true);
     try {

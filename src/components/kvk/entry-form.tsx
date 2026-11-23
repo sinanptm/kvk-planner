@@ -168,8 +168,7 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
       <CardHeader>
         <StepTitle step={step} title={`${DAYS[day].label} · ${DAYS[day].title}`} />
         <CardDescription className="pl-10">
-          Appointment: <span className="font-medium text-foreground">{DAYS[day].position}</span>. Leave empty to skip
-          this day.
+          Appointment: <span className="font-medium text-foreground">{DAYS[day].position}</span>.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -190,9 +189,11 @@ export function DayCard({ day, form, set, step }: FieldProps & { day: DayKey; st
         </div>
         <Separator />
         <div className="flex flex-col gap-1">
-          <p className="font-medium">Times available</p>
+          <p className="font-medium">
+            Times available <span className="text-primary">*</span>
+          </p>
           <p className="text-xs text-muted-foreground">
-            Pick every turn that works. Big numbers are UTC
+            Pick at least one turn, and every turn that works. Big numbers are UTC
             {today ? `, small numbers are your time (${localTimeZone()})` : ""}.
           </p>
         </div>
