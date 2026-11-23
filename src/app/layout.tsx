@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "KvK Planner", template: "%s · KvK Planner" },
+  title: { default: "2323 Appointments", template: "%s · 2323 Appointments" },
   description: "Sign up for Kingshot KvK appointment turns and see the schedule.",
 };
 
