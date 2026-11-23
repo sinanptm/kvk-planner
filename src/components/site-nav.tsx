@@ -15,7 +15,7 @@ const LINKS = [
 export function SiteNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1 rounded-xl bg-muted p-1">
+    <nav className="flex gap-0.5 rounded-xl bg-muted p-1 min-[360px]:gap-1">
       {LINKS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;
         return (
@@ -24,7 +24,7 @@ export function SiteNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm whitespace-nowrap font-medium text-muted-foreground transition-colors hover:text-foreground sm:px-3",
+              "flex items-center gap-1.5 rounded-lg px-1.5 py-1.5 text-[13px] whitespace-nowrap font-medium text-muted-foreground transition-colors hover:text-foreground min-[360px]:px-2.5 sm:px-3 sm:text-sm",
               active && "bg-background text-foreground shadow-sm",
             )}
           >

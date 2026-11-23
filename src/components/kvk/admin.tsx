@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarCheck, KeyRound, LogOut, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CircleCheck, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { errorMessage, useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS } from "@/lib/kvk";
+import { cn } from "@/lib/utils";
 import { AdminDay } from "./admin-day";
 import { AdminPlayers } from "./admin-players";
 
@@ -110,7 +110,7 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
 
   return (
     <>
-      <SettingsCard password={password} data={data} />
+      <PublishBanner password={password} data={data} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat icon={Users} label="Players signed up" value={data.players.length} />
         {DAY_KEYS.map((day) => {
@@ -181,53 +181,58 @@ function Stat({
   );
 }
 
-function SettingsCard({ password, data }: { password: string; data: Dashboard }) {
+// Says in words whether players can see the schedule, with the one button that changes it.
+function PublishBanner({ password, data }: { password: string; data: Dashboard }) {
   const update = useMutation(api.kvk.admin.updateSettings);
+  const [busy, setBusy] = useState(false);
+  const published = data.settings.schedulePublished;
 
   const setPublished = async (schedulePublished: boolean) => {
+    setBusy(true);
     try {
       await update({ password, schedulePublished });
       toast.success(schedulePublished ? "Schedule published." : "Schedule hidden.");
     } catch (err) {
       toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <Card size="sm">
-      <CardContent className="px-0">
-        <Toggle
-          id="schedule-published"
-          label="Schedule published"
-          hint="Players can see the schedule and their own turns."
-          checked={data.settings.schedulePublished}
-          onChange={setPublished}
-        />
-      </CardContent>
-    </Card>
-  );
-}
-
-function Toggle({
-  id,
-  label,
-  hint,
-  checked,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  hint: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3">
-      <div className="flex flex-col gap-0.5">
-        <Label htmlFor={id}>{label}</Label>
-        <span className="text-xs text-muted-foreground">{hint}</span>
+    <div
+      className={cn(
+        "flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center",
+        published ? "border-success/40 bg-success/10" : "border-warning/40 bg-warning/10",
+      )}
+    >
+      <div className="flex flex-1 items-center gap-3">
+        <span
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-full",
+            published ? "bg-success/20 text-success" : "bg-warning/20 text-warning",
+          )}
+        >
+          {published ? <CircleCheck className="size-5" /> : <EyeOff className="size-5" />}
+        </span>
+        <div>
+          <p className="font-semibold">{published ? "Schedule is live" : "Schedule is hidden"}</p>
+          <p className="text-sm text-muted-foreground">
+            {published ? "Players can see the schedule and their own turns." : "Players can\u2019t see any turns yet."}
+          </p>
+        </div>
       </div>
-      <Switch id={id} checked={checked} onCheckedChange={(v) => onChange(v)} />
+      {published ? (
+        <Button variant="outline" className="h-11 px-5" disabled={busy} onClick={() => setPublished(false)}>
+          <EyeOff data-icon="inline-start" />
+          Unpublish
+        </Button>
+      ) : (
+        <Button className="h-11 px-6 text-base" disabled={busy} onClick={() => setPublished(true)}>
+          <Send data-icon="inline-start" />
+          Publish schedule
+        </Button>
+      )}
     </div>
   );
 }
