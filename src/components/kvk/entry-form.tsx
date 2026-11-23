@@ -229,7 +229,7 @@ function TownCenterFields({ form, set }: FieldProps) {
           value={form.tcLevel ? String(form.tcLevel) : null}
           onValueChange={(v) => v && set("tcLevel", Number(v))}
         >
-          <SelectTrigger id="tc-level" className="h-10 w-full">
+          <SelectTrigger id="tc-level" className="h-10! w-full">
             <SelectValue placeholder={t("tc.levelPlaceholder")} />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -251,10 +251,9 @@ function TownCenterFields({ form, set }: FieldProps) {
           placeholder="0"
           value={form.truegold || ""}
           onChange={(e) => set("truegold", Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-          className="h-10 font-mono"
+          className="h-10! font-mono"
         />
       </div>
-      <p className="text-xs text-muted-foreground sm:col-span-2">{t("tc.hint")}</p>
     </div>
   );
 }
