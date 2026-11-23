@@ -16,8 +16,7 @@ const en = {
   "day.d4.title": "Training",
 
   "signup.title": "Appointment sign-up",
-  "signup.desc":
-    "Enter your speedups and the times you can play. The most speedups get turns first. You can only submit once — entries can't be edited afterwards.",
+  "signup.desc": "Enter your speedups and the times you can play. You can only submit once.",
   "signup.signedUp": "Signed up",
   "signup.notYou": "Not you?",
 
@@ -127,8 +126,7 @@ const id: Dictionary = {
   "day.d4.title": "Pelatihan",
 
   "signup.title": "Pendaftaran penunjukan",
-  "signup.desc":
-    "Masukkan percepatan Anda dan waktu Anda bisa bermain. Percepatan terbanyak mendapat giliran lebih dulu. Anda hanya bisa mengirim sekali — data tidak bisa diubah setelahnya.",
+  "signup.desc": "Masukkan percepatan dan waktu Anda bisa bermain. Anda hanya bisa mengirim sekali.",
   "signup.signedUp": "Terdaftar",
   "signup.notYou": "Bukan Anda?",
 
@@ -236,7 +234,7 @@ const zh: Dictionary = {
   "day.d4.title": "训练",
 
   "signup.title": "任命报名",
-  "signup.desc": "填写你的加速和可以在线的时间。加速最多的玩家优先获得时段。只能提交一次，提交后无法修改。",
+  "signup.desc": "填写你的加速和可以在线的时间。只能提交一次。",
   "signup.signedUp": "已报名",
   "signup.notYou": "不是你？",
 
@@ -342,8 +340,7 @@ const fr: Dictionary = {
   "day.d4.title": "Entraînement",
 
   "signup.title": "Inscription aux nominations",
-  "signup.desc":
-    "Indiquez vos accélérations et les heures où vous pouvez jouer. Les plus grosses accélérations passent en premier. Vous ne pouvez envoyer qu'une seule fois — impossible de modifier ensuite.",
+  "signup.desc": "Indiquez vos accélérations et les heures où vous pouvez jouer. Vous ne pouvez envoyer qu'une seule fois.",
   "signup.signedUp": "Inscrit",
   "signup.notYou": "Ce n'est pas vous ?",
 
@@ -451,8 +448,7 @@ const tr: Dictionary = {
   "day.d4.title": "Eğitim",
 
   "signup.title": "Atama kaydı",
-  "signup.desc":
-    "Hızlandırmalarınızı ve oynayabileceğiniz saatleri girin. En çok hızlandırması olan önce sıra alır. Yalnızca bir kez gönderebilirsiniz — sonradan düzenlenemez.",
+  "signup.desc": "Hızlandırmalarınızı ve oynayabileceğiniz saatleri girin. Yalnızca bir kez gönderebilirsiniz.",
   "signup.signedUp": "Kayıtlı",
   "signup.notYou": "Siz değil misiniz?",
 
@@ -559,8 +555,7 @@ const de: Dictionary = {
   "day.d4.title": "Training",
 
   "signup.title": "Anmeldung für Ernennungen",
-  "signup.desc":
-    "Trage deine Beschleunigungen und die Zeiten ein, zu denen du spielen kannst. Wer die meisten Beschleunigungen hat, ist zuerst dran. Du kannst nur einmal absenden — danach ist keine Änderung möglich.",
+  "signup.desc": "Trage deine Beschleunigungen und die Zeiten ein, zu denen du spielen kannst. Du kannst nur einmal absenden.",
   "signup.signedUp": "Angemeldet",
   "signup.notYou": "Nicht du?",
 
