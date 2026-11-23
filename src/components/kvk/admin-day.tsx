@@ -93,12 +93,13 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
 
   // One dropdown row: name on the left, speedups for this day on the right.
   // Players who already hold another turn are dimmed and show where they would move from.
-  const optionItem = (p: (typeof sorted)[number]) => {
+  const optionItem = (p: (typeof sorted)[number], slot: number) => {
     const held = turnOf.get(p.gameId);
+    const elsewhere = held !== undefined && held !== slot;
     return (
       <SelectItem key={p.gameId} value={p.gameId}>
-        <PlayerName player={p} className={cn("flex-1", held !== undefined && "opacity-60")} />
-        {held !== undefined && (
+        <PlayerName player={p} className={cn("flex-1", elsewhere && "opacity-60")} />
+        {elsewhere && (
           <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">at {slotUtc(held)}</span>
         )}
         {day === "d1" && (
@@ -118,12 +119,19 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
   const optionGroups = (slot: number) => {
     const current = bySlot.get(slot)?.gameId;
     const isFree = (p: (typeof sorted)[number]) => !turnOf.has(p.gameId) || p.gameId === current;
-    const picked = pickedBy.get(slot) ?? [];
+    const onTurn = sorted.filter((p) => p.gameId === current);
+    const picked = (pickedBy.get(slot) ?? []).filter((p) => p.gameId !== current);
     const pickedIds = new Set(picked.map((p) => p.gameId));
+    // The player on this turn is always listed first, in either view, even if they didn't pick
+    // this time. Without it the dropdown has no matching option and can wipe the turn.
     const groups = [
+      { label: "On this turn", players: onTurn },
       { label: "Picked this time", players: picked.filter(isFree) },
       { label: "Picked this time · already has a turn", players: picked.filter((p) => !isFree(p)) },
-      { label: "Didn\u2019t pick this time", players: showAll ? sorted.filter((p) => !pickedIds.has(p.gameId)) : [] },
+      {
+        label: "Didn\u2019t pick this time",
+        players: showAll ? sorted.filter((p) => !pickedIds.has(p.gameId) && p.gameId !== current) : [],
+      },
     ].filter((g) => g.players.length > 0);
     return (
       <>
@@ -138,7 +146,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           <SelectGroup key={g.label}>
             <SelectSeparator />
             <SelectLabel>{g.label}</SelectLabel>
-            {g.players.map(optionItem)}
+            {g.players.map((p) => optionItem(p, slot))}
           </SelectGroup>
         ))}
       </>
@@ -323,9 +331,14 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                     <div key={slot} className="relative">
                       <Select
                         value={turn?.gameId ?? EMPTY}
-                        onValueChange={(v) =>
-                          run(() => setTurn({ password, day, slot, gameId: !v || v === EMPTY ? null : v }))
-                        }
+                        onValueChange={(v) => {
+                          // Act only on a real change: re-selecting the current player, or the
+                          // dropdown resetting itself, must never clear or move a turn.
+                          if (!v) return; // a reset, not a choice; only "Empty" clears a turn
+                          const next = v === EMPTY ? null : v;
+                          if (next === (turn?.gameId ?? null)) return;
+                          void run(() => setTurn({ password, day, slot, gameId: next }));
+                        }}
                       >
                         <SelectTrigger
                           aria-label={`${slotRangeUtc(slot)} UTC: ${turn ? (nameOf(turn.gameId) ?? "") : "empty"}`}
