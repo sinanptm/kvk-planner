@@ -23,9 +23,10 @@ export const MAX_TRUEGOLD = 1_000_000_000;
 export const MAX_ALLIANCES = 8;
 export const MAX_KINGDOM = 99_999;
 export const isKingdomNumber = (n: number) => Number.isInteger(n) && n >= 1 && n <= MAX_KINGDOM;
-// Alliance tags are 1-4 letters or digits, kept in upper case. Returns null when one is invalid.
+// Alliance tags are 1-4 letters or digits. Case matters in the game ("BTF" and "btf" are different
+// alliances), so tags are kept exactly as the game writes them. Returns null when one is invalid.
 export function cleanAlliances(tags: string[]): string[] | null {
-  const clean = [...new Set(tags.map((t) => t.trim().toUpperCase()).filter(Boolean))];
+  const clean = [...new Set(tags.map((t) => t.trim()).filter(Boolean))];
   if (clean.length === 0 || clean.length > MAX_ALLIANCES) return null;
   return clean.every((t) => /^[\p{L}\p{N}]{1,4}$/u.test(t)) ? clean : null;
 }

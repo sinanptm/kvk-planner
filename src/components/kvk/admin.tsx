@@ -1,11 +1,11 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useAction, useConvexAuth, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { Ban, CalendarCheck, CalendarDays, Hourglass, CircleCheck, EyeOff, KeyRound, Send, Shield, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,11 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { errorMessage } from "@/lib/client";
-import { DAYS, DAY_KEYS, MAX_ALLIANCES, SLOTS, cleanAlliances, dayDate } from "@/lib/kvk";
+import { DAYS, DAY_KEYS, SLOTS, dayDate } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AdminDay } from "./admin-day";
 import { AdminMissing } from "./admin-missing";
 import { AdminPlayers } from "./admin-players";
+import { AlliancePicker } from "./alliance-picker";
 import { useKingdom } from "./kingdom-context";
 
 export type Dashboard = NonNullable<FunctionReturnType<typeof api.kvk.admin.dashboard>>;
@@ -300,22 +301,20 @@ function EventDates({ kingdom, data }: { kingdom: number; data: Dashboard }) {
   );
 }
 
-// The alliances whose members may sign up. Players outside them are turned away at sign-up.
+// The alliances whose members may sign up, picked from the kingdom's top alliances in the game.
 function AllianceSettings({ kingdom, data }: { kingdom: number; data: Dashboard }) {
   const update = useMutation(api.kvk.kingdoms.update);
-  const saved = data.kingdom.alliances.join(", ");
-  const [value, setValue] = useState(saved);
+  const load = useAction(api.kvk.lookup.loadTopAlliances);
+  const saved = data.kingdom.alliances;
+  const [picked, setPicked] = useState(saved);
   const [busy, setBusy] = useState(false);
+  const changed = picked.length !== saved.length || picked.some((t) => !saved.includes(t));
 
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    const tags = cleanAlliances(value.split(/[\s,]+/));
-    if (!tags) return void toast.error(`Enter 1 to ${MAX_ALLIANCES} alliance tags, like VIK, TEA.`);
+  const run = async (fn: () => Promise<unknown>, done?: string) => {
     setBusy(true);
     try {
-      await update({ kingdom, alliances: tags });
-      setValue(tags.join(", "));
-      toast.success("Alliances saved.");
+      await fn();
+      if (done) toast.success(done);
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -325,33 +324,46 @@ function AllianceSettings({ kingdom, data }: { kingdom: number; data: Dashboard 
 
   return (
     <Card size="sm">
-      <CardContent>
-        <form onSubmit={save} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex flex-1 items-center gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
               <Users className="size-5" />
             </span>
             <div>
               <p className="font-semibold">Alliances</p>
-              <p className="text-sm text-muted-foreground">Only members of these alliances can sign up.</p>
+              <p className="text-sm text-muted-foreground">
+                {saved.length ? `Taking part: ${saved.join(", ")}. ` : ""}Only their members can sign up.
+              </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Label htmlFor="alliances" className="sr-only">
-              Alliance tags
-            </Label>
-            <Input
-              id="alliances"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="VIK, TEA, BTF"
-              className="h-10 min-w-0 flex-1 font-mono uppercase sm:w-56 sm:flex-none"
-            />
-            <Button type="submit" variant="outline" className="h-10" disabled={busy || value.trim() === saved}>
+          {data.allianceOptions && (
+            <Button
+              variant={changed ? "default" : "outline"}
+              className="h-10"
+              disabled={busy || !changed || picked.length === 0}
+              onClick={() => run(() => update({ kingdom, alliances: picked }), "Alliances saved.")}
+            >
               Save
             </Button>
-          </div>
-        </form>
+          )}
+        </div>
+        {data.allianceOptions ? (
+          <AlliancePicker options={data.allianceOptions} picked={picked} onChange={setPicked} />
+        ) : (
+          <Button
+            variant="outline"
+            className="h-10 self-start"
+            disabled={busy}
+            onClick={() =>
+              run(async () => {
+                if ((await load({ kingdom })).length === 0) throw new Error("Couldn't reach the game. Try again in a minute.");
+              })
+            }
+          >
+            {busy ? "Loading…" : "Load alliances from the game"}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

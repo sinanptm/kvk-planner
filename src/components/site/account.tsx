@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { copyText, errorMessage } from "@/lib/client";
 import { MAX_ALLIANCES, cleanAlliances, isKingdomNumber, tcLabel } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
+import { AlliancePicker } from "@/components/kvk/alliance-picker";
 
 type Leader = FunctionReturnType<typeof api.kvk.lookup.leader>;
 
@@ -123,7 +124,7 @@ function CreateKingdom({ first }: { first: boolean }) {
   const [kingdom, setKingdom] = useState("");
   const [gameId, setGameId] = useState("");
   const [checked, setChecked] = useState<{ kingdom: string; gameId: string; result: Leader } | null>(null);
-  const [alliances, setAlliances] = useState("");
+  const [alliances, setAlliances] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
 
   const number = Number(kingdom);
@@ -138,7 +139,7 @@ function CreateKingdom({ first }: { first: boolean }) {
     try {
       const result = await checkLeader({ kingdom: number, gameId: gameId.trim() });
       setChecked({ kingdom, gameId: gameId.trim(), result });
-      if (result.status === "ok" && !alliances && result.alliance) setAlliances(result.alliance);
+      if (result.status === "ok" && alliances.length === 0 && result.alliance) setAlliances([result.alliance]);
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -148,8 +149,8 @@ function CreateKingdom({ first }: { first: boolean }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const tags = cleanAlliances(alliances.split(/[\s,]+/));
-    if (!tags) return void toast.error(`Enter 1 to ${MAX_ALLIANCES} alliance tags, like VIK, TEA.`);
+    const tags = cleanAlliances(alliances);
+    if (!tags) return void toast.error(`Pick 1 to ${MAX_ALLIANCES} alliances.`);
     setBusy(true);
     try {
       await create({ number, gameId: gameId.trim(), alliances: tags });
@@ -157,7 +158,7 @@ function CreateKingdom({ first }: { first: boolean }) {
       setChecked(null);
       setKingdom("");
       setGameId("");
-      setAlliances("");
+      setAlliances([]);
       setBusy(false);
     } catch (err) {
       toast.error(errorMessage(err));
@@ -232,19 +233,22 @@ function CreateKingdom({ first }: { first: boolean }) {
               </span>
             </p>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="alliances">Alliances taking part</Label>
-              <Input
-                id="alliances"
-                placeholder="VIK, TEA, BTF"
-                value={alliances}
-                onChange={(e) => setAlliances(e.target.value)}
-                className="h-11 font-mono uppercase"
-              />
+              <Label>Alliances taking part</Label>
               <p className="text-xs text-muted-foreground">
-                Alliance tags, separated by commas. Only their members can sign up. You can change them later.
+                Your kingdom&apos;s top alliances from the game. Only members of the ones you pick can sign up. You can
+                change this later.
               </p>
+              {checked.result.alliances?.length ? (
+                <AlliancePicker options={checked.result.alliances} picked={alliances} onChange={setAlliances} />
+              ) : (
+                <p className="text-sm text-destructive">Couldn&apos;t load your kingdom&apos;s alliances. Check again in a minute.</p>
+              )}
             </div>
-            <Button type="submit" className="h-11 text-base sm:self-start sm:px-8" disabled={busy}>
+            <Button
+              type="submit"
+              className="h-11 text-base sm:self-start sm:px-8"
+              disabled={busy || alliances.length === 0}
+            >
               {busy ? "Setting up…" : `Set up kingdom #${checked.kingdom}`}
             </Button>
           </form>

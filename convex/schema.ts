@@ -70,6 +70,14 @@ export default defineSchema({
     kid: v.optional(v.number()),
   }).index("by_gameId", ["gameId"]),
 
+  // A kingdom's top alliances by power, fetched from the game once (when the kingdom is first set up)
+  // so leaders pick the alliances taking part from a list instead of typing tags.
+  kingdomAlliances: defineTable({
+    kingdom: v.number(),
+    fetchedAt: v.number(),
+    alliances: v.array(v.object({ tag: v.string(), name: v.string(), members: v.number() })),
+  }).index("by_kingdom", ["kingdom"]),
+
   // Latest member list of an alliance in a kingdom, for the admin "Missing" tab.
   rosters: defineTable({
     kingdom: v.number(),

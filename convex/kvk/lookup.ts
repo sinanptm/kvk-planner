@@ -98,13 +98,76 @@ async function fetchPlayer(ctx: ActionCtx, gameId: string): Promise<GamePlayer> 
   const p = asRecord(asRecord(res.body).player);
   const found = {
     name: asString(p.nick_name).trim(),
-    alliance: asString(asRecord(p.alliance).abbr).trim().toUpperCase(),
+    alliance: asString(asRecord(p.alliance).abbr).trim(),
     tcLevel: asNumber(p.town_center_level),
     kid: asNumber(p.kid),
   };
   await ctx.runMutation(internal.kvk.lookup.storeLookup, { gameId, found: true, ...found });
   return { kind: "found", ...found };
 }
+
+// ---- The kingdom's top alliances, fetched once per kingdom ----
+
+const TOP_ALLIANCES = 20;
+const allianceOption = v.object({ tag: v.string(), name: v.string(), members: v.number() });
+export type AllianceOption = { tag: string; name: string; members: number };
+
+export const getTopAlliances = internalQuery({
+  args: { kingdom: v.number() },
+  handler: async (ctx, { kingdom }) =>
+    ctx.db
+      .query("kingdomAlliances")
+      .withIndex("by_kingdom", (q) => q.eq("kingdom", kingdom))
+      .unique(),
+});
+
+export const storeTopAlliances = internalMutation({
+  args: { kingdom: v.number(), alliances: v.array(allianceOption) },
+  handler: async (ctx, { kingdom, alliances }) => {
+    const existing = await ctx.db
+      .query("kingdomAlliances")
+      .withIndex("by_kingdom", (q) => q.eq("kingdom", kingdom))
+      .unique();
+    if (!existing) await ctx.db.insert("kingdomAlliances", { kingdom, alliances, fetchedAt: Date.now() });
+    return null;
+  },
+});
+
+// The kingdom's top 20 alliances by power. Only the first call for a kingdom uses the API;
+// after that the stored list is returned. Empty when the game couldn't be reached.
+async function topAlliances(ctx: ActionCtx, kingdom: number): Promise<AllianceOption[]> {
+  const stored: Doc<"kingdomAlliances"> | null = await ctx.runQuery(internal.kvk.lookup.getTopAlliances, { kingdom });
+  if (stored) return stored.alliances;
+  let res: { status: number; body: unknown };
+  try {
+    res = await callApi(`/kingdoms/${kingdom}/ranks?board=alliance_power&limit=${TOP_ALLIANCES}`);
+  } catch (err) {
+    if (err instanceof ConvexError) throw err;
+    return [];
+  }
+  const boards = asRecord(res.body).boards;
+  const rows = Array.isArray(boards) ? asRecord(boards[0]).rows : null;
+  if (res.status !== 200 || !Array.isArray(rows)) return [];
+  const alliances = rows
+    .map((row) => {
+      const r = asRecord(row);
+      return { tag: asString(r.abbr).trim(), name: asString(r.name).trim(), members: asNumber(r.member_count) };
+    })
+    .filter((a) => a.tag)
+    .slice(0, TOP_ALLIANCES);
+  if (alliances.length) await ctx.runMutation(internal.kvk.lookup.storeTopAlliances, { kingdom, alliances });
+  return alliances;
+}
+
+// For a kingdom's admin page when its list was never loaded (kingdoms set up before the list existed).
+export const loadTopAlliances = action({
+  args: { kingdom: v.number() },
+  returns: v.array(allianceOption),
+  handler: async (ctx, { kingdom }): Promise<AllianceOption[]> => {
+    await ctx.runQuery(internal.kvk.lookup.ownerAlliances, { kingdom });
+    return topAlliances(ctx, kingdom);
+  },
+});
 
 const lookupResult = v.object({
   status: v.union(
@@ -154,18 +217,20 @@ export const signedIn = internalQuery({
   handler: async (ctx) => (await getAuthUserId(ctx)) !== null,
 });
 
-// Kingdom setup: is this game ID (the leader's own) in the kingdom being set up?
+// Kingdom setup: is this game ID (the leader's own) in the kingdom being set up? When it is, also
+// returns the kingdom's top alliances to pick from.
 export const leader = action({
   args: { kingdom: v.number(), gameId: v.string() },
-  returns: lookupResult,
-  handler: async (ctx, args): Promise<LookupResult> => {
+  returns: v.object({ ...lookupResult.fields, alliances: v.optional(v.array(allianceOption)) }),
+  handler: async (ctx, args): Promise<LookupResult & { alliances?: AllianceOption[] }> => {
     const signedIn: boolean = await ctx.runQuery(internal.kvk.lookup.signedIn, {});
     if (!signedIn) throw new ConvexError("Log in first.");
     const gameId = cleanGameId(args.gameId);
     const p = await fetchPlayer(ctx, gameId);
     if (p.kind !== "found") return { status: p.kind };
     const { kind: _, ...info } = p;
-    return { status: p.kid === args.kingdom ? "ok" : "wrong_kingdom", ...info };
+    if (p.kid !== args.kingdom) return { status: "wrong_kingdom", ...info };
+    return { status: "ok", ...info, alliances: await topAlliances(ctx, args.kingdom) };
   },
 });
 
@@ -259,3 +324,4 @@ export const notSignedUp = query({
     );
   },
 });
+

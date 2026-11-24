@@ -25,9 +25,18 @@ export const dashboard = query({
   handler: async (ctx, { kingdom }) => {
     const k = await ownedKingdom(ctx, kingdom);
     if (!k) return null;
-    const [players, turns] = await Promise.all([listPlayers(ctx, kingdom), listAllTurns(ctx, kingdom)]);
+    const [players, turns, options] = await Promise.all([
+      listPlayers(ctx, kingdom),
+      listAllTurns(ctx, kingdom),
+      ctx.db
+        .query("kingdomAlliances")
+        .withIndex("by_kingdom", (q) => q.eq("kingdom", kingdom))
+        .unique(),
+    ]);
     return {
       kingdom: publicKingdom(k),
+      // The kingdom's top alliances from the game, to pick from. Null until loaded.
+      allianceOptions: options?.alliances ?? null,
       players: players.map(({ _id, kingdom: _, ...p }) => p),
       turns: turns.map(({ day, slot, gameId, locked }) => ({ day, slot, gameId, locked })),
     };

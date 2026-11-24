@@ -126,7 +126,7 @@ const cleanSlots = (slots: number[]) => [...new Set(slots.filter(isValidSlot))].
 export function cleanEntry(args: Infer<typeof entryValidator>, alliances: string[]) {
   const name = args.name.trim();
   if (!name || name.length > 40) throw new ConvexError("Enter the in-game name (max 40 characters).");
-  const alliance = args.alliance.trim().toUpperCase();
+  const alliance = args.alliance.trim();
   if (!alliances.includes(alliance)) throw new ConvexError(`Pick an alliance: ${alliances.join(", ")}.`);
   if (!Number.isInteger(args.tcLevel) || args.tcLevel < 1 || args.tcLevel > 60)
     throw new ConvexError("Pick a Town Center level.");

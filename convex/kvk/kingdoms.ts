@@ -1,11 +1,24 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { mutation, query, type QueryCtx } from "../_generated/server";
 import { cleanGameId, getKingdom, isDateString, publicKingdom, requireOwner } from "../lib/data";
 import { cleanAlliances, isKingdomNumber, MAX_ALLIANCES } from "../lib/kvk";
 import { LOOKUP_VALID_MS } from "./lookup";
 
 const MAX_KINGDOMS_PER_ACCOUNT = 3;
+
+// The picked tags must be valid and, when the kingdom's alliance list was loaded, come from it.
+async function checkAlliances(ctx: QueryCtx, kingdom: number, picked: string[]) {
+  const tags = cleanAlliances(picked);
+  if (!tags) throw new ConvexError(`Pick 1 to ${MAX_ALLIANCES} alliances.`);
+  const options = await ctx.db
+    .query("kingdomAlliances")
+    .withIndex("by_kingdom", (q) => q.eq("kingdom", kingdom))
+    .unique();
+  if (options && !tags.every((t) => options.alliances.some((a) => a.tag === t)))
+    throw new ConvexError("Pick alliances from the list.");
+  return tags;
+}
 
 // Public facts about a kingdom (null when nobody has set it up).
 export const get = query({
@@ -24,8 +37,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new ConvexError("Log in first.");
     if (!isKingdomNumber(args.number)) throw new ConvexError("Enter your kingdom number.");
-    const alliances = cleanAlliances(args.alliances);
-    if (!alliances) throw new ConvexError(`Enter 1 to ${MAX_ALLIANCES} alliance tags (letters and numbers, up to 4).`);
+    const alliances = await checkAlliances(ctx, args.number, args.alliances);
 
     if (await getKingdom(ctx, args.number))
       throw new ConvexError(`Kingdom ${args.number} is already set up. Ask its leader to give you access.`);
@@ -68,8 +80,7 @@ export const update = mutation({
   handler: async (ctx, { kingdom, schedulePublished, startDate, alliances }) => {
     const k = await requireOwner(ctx, kingdom);
     if (startDate !== undefined && !isDateString(startDate)) throw new ConvexError("Pick a valid date.");
-    const tags = alliances === undefined ? undefined : cleanAlliances(alliances);
-    if (tags === null) throw new ConvexError(`Enter 1 to ${MAX_ALLIANCES} alliance tags (letters and numbers, up to 4).`);
+    const tags = alliances === undefined ? undefined : await checkAlliances(ctx, kingdom, alliances);
     await ctx.db.patch("kingdoms", k._id, {
       ...(schedulePublished !== undefined && { schedulePublished }),
       ...(startDate !== undefined && { startDate }),
