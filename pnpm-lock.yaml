@@ -162,6 +162,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@convex-dev/auth@2.1.0': 572149f67e9630c8303bbd9eac1bdd3e0d7024274573aaa4cdf90367bec8356c
+
 importers:
 
   .:
@@ -174,7 +177,7 @@ importers:
         version: 1.9.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@convex-dev/auth':
         specifier: ^2.1.0
-        version: 2.1.0(convex@1.48.0(react@19.3.0))(next@16.4.6(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(prettier@3.9.10)(react@19.3.0)(typescript@5.9.3)(zod@4.6.7)
+        version: 2.1.0(patch_hash=572149f67e9630c8303bbd9eac1bdd3e0d7024274573aaa4cdf90367bec8356c)(convex@1.48.0(react@19.3.0))(next@16.4.6(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(prettier@3.9.10)(react@19.3.0)(typescript@5.9.3)(zod@4.6.7)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -3491,7 +3494,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  '@convex-dev/auth@2.1.0(convex@1.48.0(react@19.3.0))(next@16.4.6(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(prettier@3.9.10)(react@19.3.0)(typescript@5.9.3)(zod@4.6.7)':
+  '@convex-dev/auth@2.1.0(patch_hash=572149f67e9630c8303bbd9eac1bdd3e0d7024274573aaa4cdf90367bec8356c)(convex@1.48.0(react@19.3.0))(next@16.4.6(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(prettier@3.9.10)(react@19.3.0)(typescript@5.9.3)(zod@4.6.7)':
     dependencies:
       '@convex-dev/batch-worker': 0.3.6(convex@1.48.0(react@19.3.0))(prettier@3.9.10)(react@19.3.0)(typescript@5.9.3)(zod@4.6.7)
       '@convex-dev/rate-limiter': 0.3.2(convex@1.48.0(react@19.3.0))(react@19.3.0)

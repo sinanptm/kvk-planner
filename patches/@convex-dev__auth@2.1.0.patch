@@ -1,0 +1,24 @@
+diff --git a/dist/components/password/validation.js b/dist/components/password/validation.js
+index 44e8f3540ffdedd34a8119d383dc2169dba1c613..5df28f533ae481e204e5bbb78e823eaf030b7769 100644
+--- a/dist/components/password/validation.js
++++ b/dist/components/password/validation.js
+@@ -13,7 +13,7 @@ import { isCommonPassword } from "./commonPasswords.js";
+  * can verify the passwords of other systems with this minimum (for example,
+  * Convex Auth v1 accepts passwords of 8 characters).
+  */
+-export const MIN_PASSWORD_LENGTH = 8;
++export const MIN_PASSWORD_LENGTH = 4;
+ export const MAX_PASSWORD_LENGTH = 100;
+ /**
+  * A user-facing error about the format of a password.
+diff --git a/dist/lib/password.js b/dist/lib/password.js
+index e0facf8ba990466f8164dcc8c256ed0bdc5c5664..cdae747c2eb28085c72b0ae437420babf1621d41 100644
+--- a/dist/lib/password.js
++++ b/dist/lib/password.js
+@@ -9,5 +9,5 @@
+  * `components/password/validation.ts`). Thus the methods give this value to
+  * `validateNewPassword`.
+  */
+-export const DEFAULT_MIN_PASSWORD_LENGTH = 10;
++export const DEFAULT_MIN_PASSWORD_LENGTH = 4;
+ //# sourceMappingURL=password.js.map

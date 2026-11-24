@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-const MIN_PASSWORD = 10;
+const MIN_PASSWORD = 4;
 
 // Readable messages for Convex Auth's error codes.
 function authError(error: { error: string; minimumLength?: number; retryAfterMs?: number }) {
