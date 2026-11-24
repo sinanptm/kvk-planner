@@ -103,6 +103,13 @@ export const ALLIANCE_PALETTE: AllianceStyle[] = [
   { tag: "bg-cyan-500/15 text-cyan-300", tile: "border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20", dot: "bg-cyan-500" },
   { tag: "bg-lime-500/15 text-lime-300", tile: "border-lime-500/50 bg-lime-500/10 hover:bg-lime-500/20", dot: "bg-lime-500" },
   { tag: "bg-orange-500/15 text-orange-300", tile: "border-orange-500/50 bg-orange-500/10 hover:bg-orange-500/20", dot: "bg-orange-500" },
+  { tag: "bg-pink-500/15 text-pink-300", tile: "border-pink-500/50 bg-pink-500/10 hover:bg-pink-500/20", dot: "bg-pink-500" },
+  { tag: "bg-teal-500/15 text-teal-300", tile: "border-teal-500/50 bg-teal-500/10 hover:bg-teal-500/20", dot: "bg-teal-500" },
+  { tag: "bg-indigo-500/15 text-indigo-300", tile: "border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20", dot: "bg-indigo-500" },
+  { tag: "bg-yellow-500/15 text-yellow-300", tile: "border-yellow-500/50 bg-yellow-500/10 hover:bg-yellow-500/20", dot: "bg-yellow-500" },
+  { tag: "bg-fuchsia-500/15 text-fuchsia-300", tile: "border-fuchsia-500/50 bg-fuchsia-500/10 hover:bg-fuchsia-500/20", dot: "bg-fuchsia-500" },
+  { tag: "bg-blue-500/15 text-blue-300", tile: "border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/20", dot: "bg-blue-500" },
+  { tag: "bg-green-500/15 text-green-300", tile: "border-green-500/50 bg-green-500/10 hover:bg-green-500/20", dot: "bg-green-500" },
 ];
 
 // Tags that aren't (or are no longer) one of the kingdom's alliances stay grey.
