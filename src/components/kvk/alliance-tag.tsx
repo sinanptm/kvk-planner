@@ -1,14 +1,17 @@
-import { ALLIANCE_STYLES } from "@/lib/kvk";
-import { cn } from "@/lib/utils";
+"use client";
 
-// Alliance tag in its alliance colour. Tags outside the four known alliances (old entries) stay grey.
+import { cn } from "@/lib/utils";
+import { useAllianceStyle } from "./kingdom-context";
+
+// Alliance tag in its alliance colour. Tags outside the kingdom's alliances stay grey.
 export function AllianceTag({ alliance, className }: { alliance: string; className?: string }) {
+  const styleOf = useAllianceStyle();
   if (!alliance) return null;
   return (
     <span
       className={cn(
         "inline-flex h-5 shrink-0 items-center rounded-md px-1.5 font-mono text-[11px] font-semibold",
-        ALLIANCE_STYLES[alliance]?.tag ?? "bg-muted text-muted-foreground",
+        styleOf(alliance).tag,
         className,
       )}
     >

@@ -8,9 +8,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { copyText, errorMessage } from "@/lib/client";
-import { ALLIANCES, ALLIANCE_STYLES, tcLabel } from "@/lib/kvk";
+import { tcLabel } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
+import { useAllianceStyle, useKingdom } from "./kingdom-context";
 
 const timeAgo = (ms: number) => {
   const minutes = Math.round((Date.now() - ms) / 60_000);
@@ -30,11 +31,14 @@ const TC_GROUPS = [
 type TcGroup = (typeof TC_GROUPS)[number]["key"];
 
 // One alliance at a time: members in the game who have not signed up, filterable by Town Center level.
-export function AdminMissing({ password }: { password: string }) {
-  const data = useQuery(api.kvk.lookup.notSignedUp, { password });
+export function AdminMissing({ kingdom }: { kingdom: number }) {
+  const data = useQuery(api.kvk.lookup.notSignedUp, { kingdom });
   const refresh = useAction(api.kvk.lookup.refreshRosters);
   const [busy, setBusy] = useState(false);
-  const [alliance, setAlliance] = useState<string>(ALLIANCES[0]);
+  const { alliances } = useKingdom();
+  const styleOf = useAllianceStyle();
+  const [picked, setAlliance] = useState<string>(alliances[0]);
+  const alliance = alliances.includes(picked) ? picked : alliances[0];
   const [tc, setTc] = useState<TcGroup[]>([]);
 
   const current = data?.find((a) => a.alliance === alliance);
@@ -51,7 +55,7 @@ export function AdminMissing({ password }: { password: string }) {
   const runRefresh = async () => {
     setBusy(true);
     try {
-      const res = await refresh({ password });
+      const res = await refresh({ kingdom });
       if (res.failed.length) toast.error(`Couldn't update ${res.failed.join(", ")}. Try again in a minute.`);
       else toast.success("Alliance member lists updated.");
     } catch (err) {
@@ -101,7 +105,7 @@ export function AdminMissing({ password }: { password: string }) {
               onClick={() => setAlliance(a.alliance)}
               className={cn(
                 "flex flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                on ? ALLIANCE_STYLES[a.alliance]?.tile : "hover:bg-muted/50",
+                on ? styleOf(a.alliance).tile : "hover:bg-muted/50",
               )}
             >
               <div className="flex items-center justify-between gap-2">
@@ -115,7 +119,7 @@ export function AdminMissing({ password }: { password: string }) {
               </span>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  className={cn("h-full rounded-full", ALLIANCE_STYLES[a.alliance]?.dot)}
+                  className={cn("h-full rounded-full", styleOf(a.alliance).dot)}
                   style={{ width: `${a.total ? (a.signedUp / a.total) * 100 : 0}%` }}
                 />
               </div>

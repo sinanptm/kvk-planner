@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/client";
-import { ALLIANCES, searchPlayers, tcLabel } from "@/lib/kvk";
+import { searchPlayers, tcLabel } from "@/lib/kvk";
 import { AllianceTag } from "./alliance-tag";
+import { useKingdom } from "./kingdom-context";
 import { EMPTY_ENTRY, EntryFields, type Entry } from "./entry-form";
 
 type Found = { gameId: string; name: string; alliance: string; tcLevel: number };
@@ -20,35 +21,35 @@ const MAX_RESULTS = 8;
 
 // Admin adds a player on their behalf: find them by name or ID, then fill in speedups and times.
 export function AddPlayer({
-  password,
+  kingdom,
   onDone,
   onEdit,
 }: {
-  password: string;
+  kingdom: number;
   onDone: () => void;
   onEdit: (gameId: string) => void;
 }) {
   const [picked, setPicked] = useState<Found | null>(null);
   return picked ? (
-    <AddForm password={password} player={picked} onBack={() => setPicked(null)} onDone={onDone} />
+    <AddForm kingdom={kingdom} player={picked} onBack={() => setPicked(null)} onDone={onDone} />
   ) : (
-    <FindPlayer password={password} onPick={setPicked} onEdit={onEdit} onDone={onDone} />
+    <FindPlayer kingdom={kingdom} onPick={setPicked} onEdit={onEdit} onDone={onDone} />
   );
 }
 
 // Searches every member of our alliances (from the last "Update from game"), or looks any game ID up.
 function FindPlayer({
-  password,
+  kingdom,
   onPick,
   onEdit,
   onDone,
 }: {
-  password: string;
+  kingdom: number;
   onPick: (p: Found) => void;
   onEdit: (gameId: string) => void;
   onDone: () => void;
 }) {
-  const rosters = useQuery(api.kvk.lookup.notSignedUp, { password });
+  const rosters = useQuery(api.kvk.lookup.notSignedUp, { kingdom });
   const lookup = useAction(api.kvk.lookup.player);
   const [query, setQuery] = useState("");
   const [looking, setLooking] = useState(false);
@@ -65,7 +66,7 @@ function FindPlayer({
   const lookUp = async () => {
     setLooking(true);
     try {
-      const res = await lookup({ gameId: id });
+      const res = await lookup({ kingdom, gameId: id });
       if (res.status === "ok") return onPick({ gameId: id, name: res.name ?? "", alliance: res.alliance ?? "", tcLevel: res.tcLevel ?? 0 });
       const why = {
         not_found: "No player with this ID in the game.",
@@ -163,17 +164,18 @@ function FindPlayer({
 }
 
 function AddForm({
-  password,
+  kingdom,
   player,
   onBack,
   onDone,
 }: {
-  password: string;
+  kingdom: number;
   player: Found;
   onBack: () => void;
   onDone: () => void;
 }) {
   const addPlayer = useMutation(api.kvk.admin.addPlayer);
+  const { alliances } = useKingdom();
   const [form, setForm] = useState<Entry>(() => ({
     ...EMPTY_ENTRY,
     name: player.name,
@@ -186,11 +188,11 @@ function AddForm({
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.tcLevel) return void toast.error("Pick this player's Town Center level.");
-    if (!ALLIANCES.includes(form.alliance as (typeof ALLIANCES)[number]))
+    if (!alliances.includes(form.alliance))
       return void toast.error("Pick an alliance for this player.");
     setSaving(true);
     try {
-      await addPlayer({ password, gameId: player.gameId, ...form });
+      await addPlayer({ kingdom, gameId: player.gameId, ...form });
       toast.success(`${form.name.trim()} added.`);
       onDone();
     } catch (err) {

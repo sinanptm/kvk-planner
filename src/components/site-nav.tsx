@@ -1,24 +1,37 @@
 "use client";
 
-import { CalendarDays, ClipboardPen, ShieldCheck } from "lucide-react";
+import { useConvexAuth } from "convex/react";
+import { CalendarDays, ClipboardPen, Gift, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "/", label: "nav.signup", icon: ClipboardPen },
-  { href: "/schedule", label: "nav.schedule", icon: CalendarDays },
-  { href: "/admin", label: "nav.admin", icon: ShieldCheck },
-] as const;
+type NavLink = { href: string; label: string; icon: typeof Gift };
 
-// Links to every page of the planner.
+// Inside a kingdom (/2323/...): that kingdom's pages. Elsewhere: support and the leader's account.
 export function SiteNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const kingdom = /^\/(\d{1,5})(\/|$)/.exec(pathname)?.[1];
+
+  const links: NavLink[] = kingdom
+    ? [
+        { href: `/${kingdom}`, label: t("nav.signup"), icon: ClipboardPen },
+        { href: `/${kingdom}/schedule`, label: t("nav.schedule"), icon: CalendarDays },
+        { href: `/${kingdom}/admin`, label: t("nav.admin"), icon: ShieldCheck },
+      ]
+    : [
+        { href: "/support", label: "Support", icon: Gift },
+        isAuthenticated || isLoading
+          ? { href: "/account", label: "My kingdoms", icon: UserRound }
+          : { href: "/login", label: "Log in", icon: UserRound },
+      ];
+
   return (
     <nav className="flex gap-0.5 rounded-xl bg-muted p-1 min-[360px]:gap-1">
-      {LINKS.map(({ href, label, icon: Icon }) => {
+      {links.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;
         return (
           <Link
@@ -31,7 +44,7 @@ export function SiteNav() {
             )}
           >
             <Icon className="hidden size-4 sm:block" />
-            {t(label)}
+            {label}
           </Link>
         );
       })}

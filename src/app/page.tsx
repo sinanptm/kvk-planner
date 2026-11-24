@@ -1,5 +1,5 @@
-import { KvkSignup } from "@/components/kvk/signup";
+import { Landing } from "@/components/site/landing";
 
 export default function HomePage() {
-  return <KvkSignup />;
+  return <Landing />;
 }

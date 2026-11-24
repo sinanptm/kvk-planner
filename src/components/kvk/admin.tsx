@@ -1,118 +1,106 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvex, useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarCheck, CalendarDays, CircleCheck, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarDays, CircleCheck, EyeOff, KeyRound, Send, Shield, Users, type LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { errorMessage, useStoredString } from "@/lib/client";
-import { DAYS, DAY_KEYS, SLOTS, dayDate } from "@/lib/kvk";
+import { errorMessage } from "@/lib/client";
+import { DAYS, DAY_KEYS, MAX_ALLIANCES, SLOTS, cleanAlliances, dayDate } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AdminDay } from "./admin-day";
 import { AdminMissing } from "./admin-missing";
 import { AdminPlayers } from "./admin-players";
+import { useKingdom } from "./kingdom-context";
 
 export type Dashboard = NonNullable<FunctionReturnType<typeof api.kvk.admin.dashboard>>;
 
+// The kingdom's control room. Only the account that set the kingdom up can use it.
 export function KvkAdmin() {
-  const [password, setPassword] = useStoredString("kvk:adminPassword");
+  const { number } = useKingdom();
+  const { isLoading, isAuthenticated } = useConvexAuth();
 
   return (
     <>
-      <PageHeader eyebrow="Admin" title="KvK control room" description="Run sign-ups, assign turns and publish the schedule.">
-        {password && (
-          <Button variant="outline" onClick={() => setPassword(null)}>
-            <LogOut data-icon="inline-start" />
-            Log out
-          </Button>
-        )}
-      </PageHeader>
-      {password === undefined ? null : password ? (
-        <AdminDashboard password={password} onLogout={() => setPassword(null)} />
+      <PageHeader
+        eyebrow={`Kingdom #${number} · Admin`}
+        title="KvK control room"
+        description="Run sign-ups, assign turns and publish the schedule."
+      />
+      {isLoading ? null : isAuthenticated ? (
+        <AdminDashboard kingdom={number} />
       ) : (
-        <AdminLogin onLogin={setPassword} />
+        <Gate
+          icon={KeyRound}
+          title="Log in to manage this kingdom"
+          description={`Only the leader who set up kingdom #${number} can open its admin page.`}
+          href={`/login?next=/${number}/admin`}
+          action="Log in"
+        />
       )}
     </>
   );
 }
 
-function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
-  const convex = useConvex();
-  const [value, setValue] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      if (await convex.query(api.kvk.admin.verify, { password: value })) onLogin(value);
-      else toast.error("Wrong password.");
-    } catch (err) {
-      toast.error(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
+function Gate({
+  icon: Icon,
+  title,
+  description,
+  href,
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  href: string;
+  action: string;
+}) {
   return (
-    <Card className="mx-auto w-full max-w-md">
-      <CardHeader className="items-center text-center">
+    <Card className="mx-auto w-full max-w-md text-center">
+      <CardHeader className="items-center">
         <span className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <KeyRound className="size-6" />
+          <Icon className="size-6" />
         </span>
-        <CardTitle className="text-xl">Admin login</CardTitle>
+        <CardTitle className="text-xl">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="flex flex-col gap-3">
-          <Label htmlFor="admin-password" className="sr-only">
-            Password
-          </Label>
-          <Input
-            id="admin-password"
-            type="password"
-            placeholder="Password"
-            autoComplete="current-password"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="h-11"
-          />
-          <Button type="submit" className="h-11 text-base" disabled={!value || busy}>
-            Log in
-          </Button>
-        </form>
+        <Link href={href} className={cn(buttonVariants(), "h-11 w-full text-base")}>
+          {action}
+        </Link>
       </CardContent>
     </Card>
   );
 }
 
-function AdminDashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
-  const data = useQuery(api.kvk.admin.dashboard, { password });
+function AdminDashboard({ kingdom }: { kingdom: number }) {
+  const data = useQuery(api.kvk.admin.dashboard, { kingdom });
 
   if (data === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (data === null)
     return (
-      <Card className="max-w-md">
-        <CardHeader>
-          <CardTitle>Password no longer valid</CardTitle>
-          <CardDescription>The admin password was changed. Log in again.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={onLogout}>Log in again</Button>
-        </CardContent>
-      </Card>
+      <Gate
+        icon={Shield}
+        title="Not your kingdom"
+        description={`This account doesn\u2019t run kingdom #${kingdom}. Log in with the account that set it up.`}
+        href="/account"
+        action="Go to my kingdoms"
+      />
     );
 
   return (
     <>
-      <PublishBanner password={password} data={data} />
-      <EventDates password={password} data={data} />
+      <PublishBanner kingdom={kingdom} data={data} />
+      <EventDates kingdom={kingdom} data={data} />
+      <AllianceSettings kingdom={kingdom} data={data} />
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Stat icon={Users} label="Players signed up" shortLabel="Players" value={data.players.length} />
         {DAY_KEYS.map((day) => {
@@ -145,14 +133,14 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
         </TabsList>
         {DAY_KEYS.map((day) => (
           <TabsContent key={day} value={day} className="mt-4">
-            <AdminDay password={password} day={day} data={data} />
+            <AdminDay kingdom={kingdom} day={day} data={data} />
           </TabsContent>
         ))}
         <TabsContent value="players" className="mt-4">
-          <AdminPlayers password={password} data={data} />
+          <AdminPlayers kingdom={kingdom} data={data} />
         </TabsContent>
         <TabsContent value="missing" className="mt-4">
-          <AdminMissing password={password} />
+          <AdminMissing kingdom={kingdom} />
         </TabsContent>
       </Tabs>
     </>
@@ -196,15 +184,15 @@ function Stat({
 }
 
 // Says in words whether players can see the schedule, with the one button that changes it.
-function PublishBanner({ password, data }: { password: string; data: Dashboard }) {
-  const update = useMutation(api.kvk.admin.updateSettings);
+function PublishBanner({ kingdom, data }: { kingdom: number; data: Dashboard }) {
+  const update = useMutation(api.kvk.kingdoms.update);
   const [busy, setBusy] = useState(false);
-  const published = data.settings.schedulePublished;
+  const published = data.kingdom.schedulePublished;
 
   const setPublished = async (schedulePublished: boolean) => {
     setBusy(true);
     try {
-      await update({ password, schedulePublished });
+      await update({ kingdom, schedulePublished });
       toast.success(schedulePublished ? "Schedule published." : "Schedule hidden.");
     } catch (err) {
       toast.error(errorMessage(err));
@@ -252,15 +240,15 @@ function PublishBanner({ password, data }: { password: string; data: Dashboard }
 }
 
 // The date of Day 1, shown to players next to each day so they know when to be online. Day 4 follows from it.
-function EventDates({ password, data }: { password: string; data: Dashboard }) {
-  const update = useMutation(api.kvk.admin.updateSettings);
-  const startDate = data.settings.startDate;
+function EventDates({ kingdom, data }: { kingdom: number; data: Dashboard }) {
+  const update = useMutation(api.kvk.kingdoms.update);
+  const startDate = data.kingdom.startDate;
 
   const save = async (value: string) => {
     // Typing a year digit by digit passes through dates like 0002-11-30; wait for a real one.
     if (!value || value === startDate || Number(value.slice(0, 4)) < 2024) return;
     try {
-      await update({ password, startDate: value });
+      await update({ kingdom, startDate: value });
       toast.success(`Day 1 set to ${dayDate(value, "d1", "en", true)}.`);
     } catch (err) {
       toast.error(errorMessage(err));
@@ -293,6 +281,63 @@ function EventDates({ password, data }: { password: string; data: Dashboard }) {
             onChange={(e) => void save(e.target.value)}
           />
         </Label>
+      </CardContent>
+    </Card>
+  );
+}
+
+// The alliances whose members may sign up. Players outside them are turned away at sign-up.
+function AllianceSettings({ kingdom, data }: { kingdom: number; data: Dashboard }) {
+  const update = useMutation(api.kvk.kingdoms.update);
+  const saved = data.kingdom.alliances.join(", ");
+  const [value, setValue] = useState(saved);
+  const [busy, setBusy] = useState(false);
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    const tags = cleanAlliances(value.split(/[\s,]+/));
+    if (!tags) return void toast.error(`Enter 1 to ${MAX_ALLIANCES} alliance tags, like VIK, TEA.`);
+    setBusy(true);
+    try {
+      await update({ kingdom, alliances: tags });
+      setValue(tags.join(", "));
+      toast.success("Alliances saved.");
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card size="sm">
+      <CardContent>
+        <form onSubmit={save} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-1 items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Users className="size-5" />
+            </span>
+            <div>
+              <p className="font-semibold">Alliances</p>
+              <p className="text-sm text-muted-foreground">Only members of these alliances can sign up.</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Label htmlFor="alliances" className="sr-only">
+              Alliance tags
+            </Label>
+            <Input
+              id="alliances"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="VIK, TEA, BTF"
+              className="h-10 min-w-0 flex-1 font-mono uppercase sm:w-56 sm:flex-none"
+            />
+            <Button type="submit" variant="outline" className="h-10" disabled={busy || value.trim() === saved}>
+              Save
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

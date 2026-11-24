@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { copyText, errorMessage } from "@/lib/client";
 import {
-  ALLIANCES,
   DAYS,
   DAY_KEYS,
   dayScore,
@@ -25,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
 import { AddPlayer } from "./admin-add-player";
+import { useKingdom } from "./kingdom-context";
 import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
 import { EntryFields, toEntry, type Entry } from "./entry-form";
@@ -34,7 +34,7 @@ const csvCell = (v: string | number) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-export function AdminPlayers({ password, data }: { password: string; data: Dashboard }) {
+export function AdminPlayers({ kingdom, data }: { kingdom: number; data: Dashboard }) {
   const deletePlayer = useMutation(api.kvk.admin.deletePlayer);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -51,7 +51,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       "Your KvK appointment turns (UTC):",
       ...DAY_KEYS.map((day) => {
         const turn = turnOf(p.gameId, day);
-        const date = dayDate(data.settings.startDate, day);
+        const date = dayDate(data.kingdom.startDate, day);
         return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].position}: ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
       }),
       "Please be online at the start of your turn.",
@@ -116,12 +116,12 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
 
   const editing = players.find((p) => p.gameId === editingId);
   if (adding && !editing)
-    return <AddPlayer password={password} onDone={() => setAdding(false)} onEdit={setEditingId} />;
+    return <AddPlayer kingdom={kingdom} onDone={() => setAdding(false)} onEdit={setEditingId} />;
   if (editing)
     return (
       <EditPlayer
         key={editing.gameId}
-        password={password}
+        kingdom={kingdom}
         player={editing}
         onDone={() => {
           setEditingId(null);
@@ -194,7 +194,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                       className={cn("h-8 gap-1 px-2.5", p.informed && "bg-success text-background hover:bg-success/90")}
                       onClick={() =>
                         run(
-                          () => setInformed({ password, gameId: p.gameId, informed: !p.informed }),
+                          () => setInformed({ kingdom, gameId: p.gameId, informed: !p.informed }),
                           p.informed ? `${p.name} marked not informed` : `${p.name} marked informed`,
                         )
                       }
@@ -216,7 +216,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                       title={`Delete ${p.name}?`}
                       description="Removes their entry and any turns they have."
                       actionLabel="Delete"
-                      onConfirm={() => run(() => deletePlayer({ password, gameId: p.gameId }), `${p.name} deleted.`)}
+                      onConfirm={() => run(() => deletePlayer({ kingdom, gameId: p.gameId }), `${p.name} deleted.`)}
                     >
                       <Trash2 aria-label="Delete player" />
                     </ConfirmButton>
@@ -257,15 +257,16 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
 
 // Admin-only edit of a player's entry. The game ID cannot be changed.
 function EditPlayer({
-  password,
+  kingdom,
   player,
   onDone,
 }: {
-  password: string;
+  kingdom: number;
   player: Dashboard["players"][number];
   onDone: () => void;
 }) {
   const updatePlayer = useMutation(api.kvk.admin.updatePlayer);
+  const { alliances } = useKingdom();
   const [form, setForm] = useState<Entry>(() => toEntry(player));
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Entry>(key: K, value: Entry[K]) => setForm((f) => ({ ...f, [key]: value }));
@@ -273,11 +274,11 @@ function EditPlayer({
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.tcLevel) return void toast.error("Pick this player's Town Center level.");
-    if (!ALLIANCES.includes(form.alliance as (typeof ALLIANCES)[number]))
+    if (!alliances.includes(form.alliance))
       return void toast.error("Pick an alliance for this player.");
     setSaving(true);
     try {
-      await updatePlayer({ password, gameId: player.gameId, ...form });
+      await updatePlayer({ kingdom, gameId: player.gameId, ...form });
       toast.success(`${form.name.trim()} updated.`);
       onDone();
     } catch (err) {

@@ -30,8 +30,6 @@ import {
 import { errorMessage } from "@/lib/client";
 import {
   DAYS,
-  ALLIANCES,
-  ALLIANCE_STYLES,
   SLOTS,
   assignDay,
   dayScore,
@@ -50,6 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
 import { PlayerName } from "./alliance-tag";
+import { useAllianceStyle } from "./kingdom-context";
 import { ConfirmButton } from "./confirm-button";
 
 const EMPTY = "__empty";
@@ -63,7 +62,8 @@ const PERIODS = ["00:00–06:00", "06:00–12:00", "12:00–18:00", "18:00–24:
   slots: SLOTS.slice(i * 12, i * 12 + 12),
 }));
 
-export function AdminDay({ password, day, data }: { password: string; day: DayKey; data: Dashboard }) {
+export function AdminDay({ kingdom, day, data }: { kingdom: number; day: DayKey; data: Dashboard }) {
+  const styleOf = useAllianceStyle();
   const autoAssign = useMutation(api.kvk.admin.autoAssign);
   const setTurn = useMutation(api.kvk.admin.setTurn);
   const setLocked = useMutation(api.kvk.admin.setLocked);
@@ -192,7 +192,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
   const runAutoAssign = async () => {
     setAssigning(true);
     await run(async () => {
-      const res = await autoAssign({ password, day });
+      const res = await autoAssign({ kingdom, day });
       toast.success(`${res.filled}/${SLOTS.length} turns filled · ${res.waitlisted} on waitlist`);
     });
     setAssigning(false);
@@ -206,7 +206,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           {DAYS[day].label} · {DAYS[day].title}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {dayDate(data.settings.startDate, day, "en", true) && `${dayDate(data.settings.startDate, day, "en", true)} · `}
+          {dayDate(data.kingdom.startDate, day, "en", true) && `${dayDate(data.kingdom.startDate, day, "en", true)} · `}
           {DAYS[day].position}. Score = {DAYS[day].scoreHint.toLowerCase()}.
         </p>
       </div>
@@ -228,7 +228,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           description="Removes every turn on this day, including locked ones. Players stay signed up."
           actionLabel="Clear day"
           className="h-10"
-          onConfirm={() => run(() => clearDay({ password, day }), `${DAYS[day].label} cleared.`)}
+          onConfirm={() => run(() => clearDay({ kingdom, day }), `${DAYS[day].label} cleared.`)}
         >
           <Trash2 data-icon="inline-start" />
           Clear day
@@ -308,9 +308,9 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
             </div>
           </div>
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            {ALLIANCES.map((tag) => (
+            {data.kingdom.alliances.map((tag) => (
               <li key={tag} className="flex items-center gap-1.5">
-                <span className={cn("size-2 rounded-full", ALLIANCE_STYLES[tag].dot)} />
+                <span className={cn("size-2 rounded-full", styleOf(tag).dot)} />
                 <span className="font-mono font-semibold text-foreground">{tag}</span>
                 {[...bySlot.values()].filter((t) => byId.get(t.gameId)?.alliance === tag).length} turns
               </li>
@@ -339,7 +339,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           if (!v) return; // a reset, not a choice; only "Empty" clears a turn
                           const next = v === EMPTY ? null : v;
                           if (next === (turn?.gameId ?? null)) return;
-                          void run(() => setTurn({ password, day, slot, gameId: next }));
+                          void run(() => setTurn({ kingdom, day, slot, gameId: next }));
                         }}
                       >
                         <SelectTrigger
@@ -347,8 +347,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           className={cn(
                             "h-auto! w-full flex-col items-stretch gap-0.5 p-2.5 text-left whitespace-normal [&>svg]:hidden",
                             turn
-                              ? (ALLIANCE_STYLES[player?.alliance ?? ""]?.tile ??
-                                "border-primary/40 bg-primary/10 hover:bg-primary/15 dark:bg-primary/10 dark:hover:bg-primary/15")
+                              ? styleOf(player?.alliance ?? "").tile
                               : picked.length > 0
                                 ? "border-dashed border-primary/50"
                                 : "border-dashed",
@@ -385,7 +384,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                           size="icon-sm"
                           className="absolute top-1.5 right-1.5 size-6"
                           aria-label={turn.locked ? "Unlock turn" : "Lock turn"}
-                          onClick={() => run(() => setLocked({ password, day, slot, locked: !turn.locked }))}
+                          onClick={() => run(() => setLocked({ kingdom, day, slot, locked: !turn.locked }))}
                         >
                           {turn.locked ? <Lock className="size-3.5" /> : <LockOpen className="size-3.5 text-muted-foreground" />}
                         </Button>

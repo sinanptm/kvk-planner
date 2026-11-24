@@ -17,11 +17,13 @@ import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
 import { useDayDate } from "./day-date";
+import { useKingdom } from "./kingdom-context";
 
 export function PublicSchedule() {
-  const schedule = useQuery(api.kvk.schedule.published);
-  const [gameId] = useStoredString("kvk:gameId");
-  const myTurns = useQuery(api.kvk.players.myTurns, gameId ? { gameId } : "skip");
+  const { number: kingdom } = useKingdom();
+  const schedule = useQuery(api.kvk.schedule.published, { kingdom });
+  const [gameId] = useStoredString(`kvk:gameId:${kingdom}`);
+  const myTurns = useQuery(api.kvk.players.myTurns, gameId ? { kingdom, gameId } : "skip");
   const [search, setSearch] = useState("");
   const [filledOnly, setFilledOnly] = useState(false);
   const today = useToday();
@@ -33,7 +35,7 @@ export function PublicSchedule() {
   return (
     <>
       <PageHeader
-        eyebrow={schedule?.eventName ?? "KvK"}
+        eyebrow={`Kingdom #${kingdom}`}
         title={t("schedule.title")}
         description={`${t("schedule.desc")}${today ? ` ${t("schedule.descLocal", { tz: localTimeZone() })}` : ""}`}
       />

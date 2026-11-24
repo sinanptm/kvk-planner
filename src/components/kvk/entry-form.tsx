@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
-  ALLIANCES,
-  ALLIANCE_STYLES,
   DAYS,
   TC_MAX_LEVEL,
   TC_MIN_LEVEL,
@@ -22,6 +20,7 @@ import {
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useDayDate } from "./day-date";
+import { useAllianceStyle, useKingdom } from "./kingdom-context";
 import { DurationInput } from "./duration-input";
 import { SlotGrid } from "./slot-grid";
 
@@ -101,6 +100,8 @@ export function DetailsCard({
   title,
 }: FieldProps & { step: number; title: string }) {
   const { t } = useLanguage();
+  const { alliances } = useKingdom();
+  const styleOf = useAllianceStyle();
   return (
     <Card>
       <CardHeader>
@@ -122,7 +123,7 @@ export function DetailsCard({
         <div className="flex flex-col gap-2 sm:col-span-2">
           <Label id="alliance-label">{t("field.alliance")}</Label>
           <div role="radiogroup" aria-labelledby="alliance-label" className="grid grid-cols-4 gap-2">
-            {ALLIANCES.map((tag) => {
+            {alliances.map((tag) => {
               const on = form.alliance === tag;
               return (
                 <button
@@ -133,10 +134,10 @@ export function DetailsCard({
                   onClick={() => set("alliance", tag)}
                   className={cn(
                     "flex h-10 items-center justify-center gap-2 rounded-lg border font-mono text-sm font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                    on ? ALLIANCE_STYLES[tag].tile : "text-muted-foreground hover:text-foreground",
+                    on ? styleOf(tag).tile : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <span className={cn("size-2 rounded-full", ALLIANCE_STYLES[tag].dot)} />
+                  <span className={cn("size-2 rounded-full", styleOf(tag).dot)} />
                   {tag}
                 </button>
               );

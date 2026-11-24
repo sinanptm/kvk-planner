@@ -1,5 +1,6 @@
 import { Crown } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -11,10 +12,12 @@ export function SiteHeader() {
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Crown className="size-4.5" />
           </span>
-          <span className="hidden sm:inline">2323 Appointments</span>
+          <span className="hidden sm:inline">KvK Appointments</span>
         </Link>
         <div className="ml-auto flex items-center gap-1 min-[360px]:gap-2">
-          <SiteNav />
+          <Suspense fallback={<div className="h-10" />}>
+            <SiteNav />
+          </Suspense>
           <LanguageSwitcher />
         </div>
       </div>

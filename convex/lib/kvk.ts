@@ -3,9 +3,6 @@
 
 export const SLOT_COUNT = 48;
 
-// The kingdom taking part. Sign-ups are checked against it through the MightPulse API.
-export const KINGDOM_ID = 2323;
-
 // Town Center level as the game reports it: 1-30, then five steps per Truegold level
 // (31-35 = TG1, 36-40 = TG2, 41-45 = TG3, ...). Admins pick from TC 26 to TG3 when editing.
 export const TC_MIN_LEVEL = 26;
@@ -22,9 +19,16 @@ export const tcLabelFull = (level: number) => {
 };
 export const MAX_TRUEGOLD = 1_000_000_000;
 
-// The alliances taking part. Every player belongs to exactly one.
-export const ALLIANCES = ["VIK", "TEA", "BTF", "FFF"] as const;
-export type Alliance = (typeof ALLIANCES)[number];
+// Each kingdom lists the alliances that take part (set by its leader). Every player belongs to exactly one.
+export const MAX_ALLIANCES = 8;
+export const MAX_KINGDOM = 99_999;
+export const isKingdomNumber = (n: number) => Number.isInteger(n) && n >= 1 && n <= MAX_KINGDOM;
+// Alliance tags are 1-4 letters or digits, kept in upper case. Returns null when one is invalid.
+export function cleanAlliances(tags: string[]): string[] | null {
+  const clean = [...new Set(tags.map((t) => t.trim().toUpperCase()).filter(Boolean))];
+  if (clean.length === 0 || clean.length > MAX_ALLIANCES) return null;
+  return clean.every((t) => /^[\p{L}\p{N}]{1,4}$/u.test(t)) ? clean : null;
+}
 
 export type DayKey = "d1" | "d4";
 

@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "2323 Appointments", template: "%s · 2323 Appointments" },
-  description: "Sign up for Kingshot KvK appointment turns and see the schedule.",
+  title: { default: "KvK Appointments", template: "%s · KvK Appointments" },
+  description: "Free KvK appointment planner for Kingshot kingdoms: collect speedups, assign Chief Minister and Noble Advisor turns, publish the schedule.",
 };
 
 export const viewport: Viewport = {

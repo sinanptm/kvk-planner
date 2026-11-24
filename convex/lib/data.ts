@@ -1,61 +1,78 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { ALLIANCES, MAX_TRUEGOLD, isValidSlot, type DayKey } from "./kvk";
+import type { QueryCtx } from "../_generated/server";
+import { MAX_TRUEGOLD, isValidSlot, type DayKey } from "./kvk";
 
 // Upper bounds for reads. A kingdom never has anywhere near this many players.
 export const MAX_PLAYERS = 2000;
 const MAX_TURNS = 200;
 
-export const DEFAULT_SETTINGS = {
-  eventName: "KvK",
-  schedulePublished: false,
-};
+export const getKingdom = (ctx: QueryCtx, number: number) =>
+  ctx.db
+    .query("kingdoms")
+    .withIndex("by_number", (q) => q.eq("number", number))
+    .unique();
 
-export type Settings = typeof DEFAULT_SETTINGS & { startDate: string | null };
-
-export async function readSettings(ctx: QueryCtx): Promise<Settings> {
-  const row = await ctx.db.query("settings").first();
-  if (!row) return { ...DEFAULT_SETTINGS, startDate: null };
-  const { eventName, schedulePublished, startDate } = row;
-  return { eventName, schedulePublished, startDate: startDate ?? null };
+// The kingdom, if the signed-in account runs it; otherwise null.
+export async function ownedKingdom(ctx: QueryCtx, number: number): Promise<Doc<"kingdoms"> | null> {
+  const [userId, kingdom] = await Promise.all([getAuthUserId(ctx), getKingdom(ctx, number)]);
+  return userId !== null && kingdom?.ownerId === userId ? kingdom : null;
 }
+
+export async function requireOwner(ctx: QueryCtx, number: number): Promise<Doc<"kingdoms">> {
+  const kingdom = await ownedKingdom(ctx, number);
+  if (!kingdom) throw new ConvexError("Log in with the account that runs this kingdom.");
+  return kingdom;
+}
+
+// What players and the public may see about a kingdom.
+export const publicKingdom = (k: Doc<"kingdoms">) => ({
+  number: k.number,
+  alliances: k.alliances,
+  schedulePublished: k.schedulePublished,
+  startDate: k.startDate ?? null,
+});
+
+export const listPlayers = (ctx: QueryCtx, kingdom: number) =>
+  ctx.db
+    .query("players")
+    .withIndex("by_kingdom_and_gameId", (q) => q.eq("kingdom", kingdom))
+    .take(MAX_PLAYERS);
+
+export const getPlayer = (ctx: QueryCtx, kingdom: number, gameId: string) =>
+  ctx.db
+    .query("players")
+    .withIndex("by_kingdom_and_gameId", (q) => q.eq("kingdom", kingdom).eq("gameId", gameId))
+    .unique();
+
+export const listAllTurns = (ctx: QueryCtx, kingdom: number) =>
+  ctx.db
+    .query("assignments")
+    .withIndex("by_kingdom_and_day_and_slot", (q) => q.eq("kingdom", kingdom))
+    .take(MAX_TURNS * 2);
+
+export const listTurns = (ctx: QueryCtx, kingdom: number, day: DayKey) =>
+  ctx.db
+    .query("assignments")
+    .withIndex("by_kingdom_and_day_and_slot", (q) => q.eq("kingdom", kingdom).eq("day", day))
+    .take(MAX_TURNS);
+
+export const turnAt = (ctx: QueryCtx, kingdom: number, day: DayKey, slot: number) =>
+  ctx.db
+    .query("assignments")
+    .withIndex("by_kingdom_and_day_and_slot", (q) => q.eq("kingdom", kingdom).eq("day", day).eq("slot", slot))
+    .first();
+
+export const playerTurns = (ctx: QueryCtx, kingdom: number, gameId: string) =>
+  ctx.db
+    .query("assignments")
+    .withIndex("by_kingdom_and_gameId", (q) => q.eq("kingdom", kingdom).eq("gameId", gameId))
+    .take(10);
 
 // A real calendar date written as YYYY-MM-DD.
 export const isDateString = (s: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T00:00:00Z`).toISOString().startsWith(s);
-
-export async function settingsRow(ctx: MutationCtx): Promise<Doc<"settings">> {
-  const row = await ctx.db.query("settings").first();
-  if (row) return row;
-  const id = await ctx.db.insert("settings", DEFAULT_SETTINGS);
-  return (await ctx.db.get("settings", id))!;
-}
-
-export function requireAdmin(password: string) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) throw new ConvexError("ADMIN_PASSWORD is not set in the Convex dashboard.");
-  if (password !== expected) throw new ConvexError("Wrong admin password.");
-}
-
-export const isAdmin = (password: string) =>
-  !!process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD;
-
-export const listPlayers = (ctx: QueryCtx) => ctx.db.query("players").take(MAX_PLAYERS);
-
-export const listAllTurns = (ctx: QueryCtx) => ctx.db.query("assignments").take(MAX_TURNS * 2);
-
-export const listTurns = (ctx: QueryCtx, day: DayKey) =>
-  ctx.db
-    .query("assignments")
-    .withIndex("by_day_and_slot", (q) => q.eq("day", day))
-    .take(MAX_TURNS);
-
-export const turnAt = (ctx: QueryCtx, day: DayKey, slot: number) =>
-  ctx.db
-    .query("assignments")
-    .withIndex("by_day_and_slot", (q) => q.eq("day", day).eq("slot", slot))
-    .first();
 
 // What a player (or an admin on their behalf) fills in. The game ID is passed separately.
 export const entryValidator = v.object({
@@ -78,12 +95,11 @@ const cleanMinutes = (n: number) => (Number.isFinite(n) ? Math.min(Math.max(Math
 
 const cleanSlots = (slots: number[]) => [...new Set(slots.filter(isValidSlot))].sort((a, b) => a - b);
 
-export function cleanEntry(args: Infer<typeof entryValidator>) {
+export function cleanEntry(args: Infer<typeof entryValidator>, alliances: string[]) {
   const name = args.name.trim();
   if (!name || name.length > 40) throw new ConvexError("Enter the in-game name (max 40 characters).");
   const alliance = args.alliance.trim().toUpperCase();
-  if (!(ALLIANCES as readonly string[]).includes(alliance))
-    throw new ConvexError(`Pick an alliance: ${ALLIANCES.join(", ")}.`);
+  if (!alliances.includes(alliance)) throw new ConvexError(`Pick an alliance: ${alliances.join(", ")}.`);
   if (!Number.isInteger(args.tcLevel) || args.tcLevel < 1 || args.tcLevel > 60)
     throw new ConvexError("Pick a Town Center level.");
   return {
@@ -101,9 +117,9 @@ export function cleanEntry(args: Infer<typeof entryValidator>) {
   };
 }
 
-// Players saved before Town Center level and Truegold existed have neither; show them as 0.
-export const withTc = <P extends { tcLevel?: number; truegold?: number }>(p: P) => ({
-  ...p,
-  tcLevel: p.tcLevel ?? 0,
-  truegold: p.truegold ?? 0,
-});
+// Game IDs are digits; checked before calling the API so junk input costs nothing.
+export const cleanGameId = (raw: string) => {
+  const id = raw.trim();
+  if (!/^\d{3,15}$/.test(id)) throw new ConvexError("Enter your game ID (numbers only).");
+  return id;
+};

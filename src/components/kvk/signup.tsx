@@ -29,7 +29,6 @@ import {
   formatSlotLocal,
   playerLabel,
   slotRangeUtc,
-  KINGDOM_ID,
   slotUtc,
   tcLabel,
   useToday,
@@ -41,20 +40,21 @@ import { PlayerName } from "./alliance-tag";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDayDate } from "./day-date";
+import { useKingdom } from "./kingdom-context";
 import { DayCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
 
 export function KvkSignup() {
-  const settings = useQuery(api.kvk.schedule.settings);
+  const { number: kingdom } = useKingdom();
   // The game ID this browser signed up with (or looked up), so the entry and turn show on return visits.
-  const [gameId, setGameId] = useStoredString("kvk:gameId");
-  const entry = useQuery(api.kvk.players.get, gameId ? { gameId } : "skip");
+  const [gameId, setGameId] = useStoredString(`kvk:gameId:${kingdom}`);
+  const entry = useQuery(api.kvk.players.get, gameId ? { kingdom, gameId } : "skip");
   const loading = gameId === undefined || (!!gameId && entry === undefined);
   const { t } = useLanguage();
 
   return (
     <>
       <PageHeader
-        eyebrow={settings?.eventName ?? "KvK"}
+        eyebrow={`Kingdom #${kingdom}`}
         title={t("signup.title")}
         description={t("signup.desc")}
       />
@@ -68,7 +68,8 @@ export function KvkSignup() {
 }
 
 function PlayerArea({ gameId, entry, onSwitch }: { gameId: string; entry: Entry; onSwitch: () => void }) {
-  const turns = useQuery(api.kvk.players.myTurns, { gameId });
+  const { number: kingdom } = useKingdom();
+  const turns = useQuery(api.kvk.players.myTurns, { kingdom, gameId });
   const { t } = useLanguage();
 
   return (
@@ -228,6 +229,7 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
 // Asks for confirmation at the end because the entry cannot be edited afterwards.
 function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const convex = useConvex();
+  const { number: kingdom } = useKingdom();
   const save = useMutation(api.kvk.players.save);
   const lookupPlayer = useAction(api.kvk.lookup.player);
   const [rawGameId, setRawGameId] = useState("");
@@ -261,11 +263,11 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     if (!/^\d{3,15}$/.test(gameId)) return void toast.error(t("lookup.badId"));
     setSaving(true);
     try {
-      if (await convex.query(api.kvk.players.get, { gameId })) {
+      if (await convex.query(api.kvk.players.get, { kingdom, gameId })) {
         toast.info(t("toast.alreadySignedUp"));
         return onSignedUp(gameId);
       }
-      const result = await lookupPlayer({ gameId });
+      const result = await lookupPlayer({ kingdom, gameId });
       setLookup({ id: gameId, result });
       if (result.status === "ok")
         setForm((f) => ({ ...f, name: result.name ?? "", alliance: result.alliance ?? "", tcLevel: result.tcLevel ?? 0 }));
@@ -281,7 +283,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     setSaving(true);
     try {
       const { name: _name, alliance: _alliance, tcLevel: _tcLevel, ...rest } = form;
-      await save({ gameId, ...rest });
+      await save({ kingdom, gameId, ...rest });
       toast.success(t("toast.signedUp"));
       onSignedUp(gameId);
     } catch (err) {
@@ -408,12 +410,13 @@ function IdCheck({
   checking: boolean;
 }) {
   const { t } = useLanguage();
+  const { number: kingdom, alliances } = useKingdom();
   const problem =
     result && result.status !== "ok"
       ? {
           not_found: t("lookup.notFound"),
-          wrong_kingdom: t("lookup.wrongKingdom", { kid: result.kid ?? "?", ours: KINGDOM_ID }),
-          wrong_alliance: t("lookup.wrongAlliance", { alliance: result.alliance || "—" }),
+          wrong_kingdom: t("lookup.wrongKingdom", { kid: result.kid ?? "?", ours: kingdom }),
+          wrong_alliance: t("lookup.wrongAlliance", { alliance: result.alliance || "—", alliances: alliances.join(", ") }),
           pending: t("lookup.pending"),
           error: t("lookup.error"),
         }[result.status]
