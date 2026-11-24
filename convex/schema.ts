@@ -3,6 +3,9 @@ import { v } from "convex/values";
 
 export const dayValidator = v.union(v.literal("d1"), v.literal("d4"));
 
+// New kingdoms wait for the developer (super admin) to approve them before anyone can use them.
+export const kingdomStatusValidator = v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected"));
+
 // Every kingdom's data is kept apart by its kingdom number (`kingdom`).
 // Speedups are stored in minutes, slots are 0–47 (30-minute turns from 00:00 UTC).
 export default defineSchema({
@@ -18,11 +21,13 @@ export default defineSchema({
     // Alliance tags (upper case) whose members may sign up.
     alliances: v.array(v.string()),
     schedulePublished: v.boolean(),
+    status: kingdomStatusValidator,
     // Day 1 of KvK prep as "YYYY-MM-DD" (UTC). Day 4 is three days later.
     startDate: v.optional(v.string()),
   })
     .index("by_number", ["number"])
-    .index("by_ownerId", ["ownerId"]),
+    .index("by_ownerId", ["ownerId"])
+    .index("by_status", ["status"]),
 
   players: defineTable({
     kingdom: v.number(),

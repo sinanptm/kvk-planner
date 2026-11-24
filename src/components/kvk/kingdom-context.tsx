@@ -9,6 +9,7 @@ export type Kingdom = {
   number: number;
   alliances: string[];
   schedulePublished: boolean;
+  status: "pending" | "approved" | "rejected";
   startDate: string | null;
 };
 

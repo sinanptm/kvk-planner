@@ -7,7 +7,7 @@ import { copyText } from "@/lib/client";
 
 // Where donations go: the developer's own character in Kingshot.
 const DEV = { id: "372399873", kingdom: 2323, x: 690, y: 451 };
-const STORE_URL = "https://store.centurygames.com";
+const STORE_URL = "https://store.centurygames.com/kingshot";
 
 export function Support() {
   return (
@@ -40,17 +40,17 @@ export function Support() {
         <CardContent>
           <ol className="flex flex-col gap-4">
             <Step n={1} icon={ShoppingBag}>
-              Open the official Century Games store at{" "}
+              Open the official Kingshot store at{" "}
               <a
                 href={STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 font-medium text-primary underline underline-offset-4"
               >
-                store.centurygames.com
+                store.centurygames.com/kingshot
                 <ExternalLink className="size-3.5" />
-              </a>{" "}
-              and pick Kingshot.
+              </a>
+              .
             </Step>
             <Step n={2} icon={Gift}>
               Enter my player ID <span className="font-mono font-semibold">{DEV.id}</span> and check that the store

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 
 // Shown for /<number> when that kingdom hasn't been set up (or the number isn't a kingdom).
-export function KingdomMissing({ number }: { number: number | null }) {
+export function KingdomMissing({ number, waiting = false }: { number: number | null; waiting?: boolean }) {
   return (
     <Card className="mx-auto w-full max-w-md text-center">
       <CardHeader className="items-center">
@@ -15,16 +15,22 @@ export function KingdomMissing({ number }: { number: number | null }) {
           <MapPinOff className="size-6" />
         </span>
         <CardTitle className="text-xl">
-          {number === null ? "Page not found" : `Kingdom #${number} isn’t set up yet`}
+          {number === null
+            ? "Page not found"
+            : waiting
+              ? `Kingdom #${number} isn’t open yet`
+              : `Kingdom #${number} isn’t set up yet`}
         </CardTitle>
         <CardDescription>
           {number === null
             ? "Check the link, or pick your kingdom on the main page."
-            : "Ask your King or R4 for the right link. Are you the leader? Set your kingdom up in a minute."}
+            : waiting
+              ? "This kingdom is waiting for approval. Check back soon."
+              : "Ask your King or R4 for the right link. Are you the leader? Set your kingdom up in a minute."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        {number !== null && (
+        {number !== null && !waiting && (
           <Link href="/account" className={cn(buttonVariants(), "h-11 text-base")}>
             Set up kingdom #{number}
           </Link>

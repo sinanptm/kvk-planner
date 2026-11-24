@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { cleanEntry, cleanGameId, entryValidator, getKingdom, getPlayer, playerTurns } from "../lib/data";
+import { cleanEntry, cleanGameId, entryValidator, getPlayer, openKingdom, playerTurns } from "../lib/data";
 import { LOOKUP_VALID_MS } from "./lookup";
 
 // Game ID is the only "login" for players. Not secure on purpose: anyone who knows an ID can see that entry.
@@ -20,8 +20,8 @@ export const get = query({
 export const save = mutation({
   args: { kingdom: v.number(), gameId: v.string(), ...entryValidator.omit("name", "alliance", "tcLevel").fields },
   handler: async (ctx, { kingdom: number, gameId: rawGameId, ...args }) => {
-    const kingdom = await getKingdom(ctx, number);
-    if (!kingdom) throw new ConvexError("This kingdom isn't set up.");
+    const kingdom = await openKingdom(ctx, number);
+    if (!kingdom) throw new ConvexError("This kingdom isn't open for sign-ups.");
     const gameId = cleanGameId(rawGameId);
     const lookup = await ctx.db
       .query("playerLookups")
@@ -52,7 +52,7 @@ export const save = mutation({
 export const myTurns = query({
   args: { kingdom: v.number(), gameId: v.string() },
   handler: async (ctx, { kingdom, gameId }) => {
-    const k = await getKingdom(ctx, kingdom);
+    const k = await openKingdom(ctx, kingdom);
     if (!k?.schedulePublished) return null;
     const turns = await playerTurns(ctx, kingdom, gameId.trim());
     return turns.map(({ day, slot }) => ({ day, slot })).sort((a, b) => a.day.localeCompare(b.day) || a.slot - b.slot);

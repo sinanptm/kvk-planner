@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { internalMutation, query } from "./_generated/server";
+import { isSuperAdmin } from "./lib/data";
 
 // Called by Convex Auth when someone creates an account.
 export const create = internalMutation({
@@ -23,6 +24,10 @@ export const me = query({
         .withIndex("by_ownerId", (q) => q.eq("ownerId", userId))
         .take(10),
     ]);
-    return { email, kingdoms: kingdoms.map((k) => ({ number: k.number, alliances: k.alliances })) };
+    return {
+      email,
+      isSuperAdmin: await isSuperAdmin(ctx),
+      kingdoms: kingdoms.map((k) => ({ number: k.number, alliances: k.alliances, status: k.status })),
+    };
   },
 });

@@ -16,6 +16,7 @@ import type * as kvk_players from "../kvk/players.js";
 import type * as kvk_schedule from "../kvk/schedule.js";
 import type * as lib_data from "../lib/data.js";
 import type * as lib_kvk from "../lib/kvk.js";
+import type * as superAdmin from "../superAdmin.js";
 import type * as users from "../users.js";
 
 import type {
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   "kvk/schedule": typeof kvk_schedule;
   "lib/data": typeof lib_data;
   "lib/kvk": typeof lib_kvk;
+  superAdmin: typeof superAdmin;
   users: typeof users;
 }>;
 

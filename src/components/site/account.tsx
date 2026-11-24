@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useConvexAuth, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarDays, CircleCheck, ClipboardPen, LogOut, Search, ShieldCheck, TriangleAlert } from "lucide-react";
+import { Ban, CalendarDays, Crown, CircleCheck, Hourglass, ClipboardPen, LogOut, Search, ShieldCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -36,6 +36,12 @@ export function Account() {
   return (
     <>
       <PageHeader eyebrow="Account" title="My kingdoms" description={me.email ?? undefined}>
+        {me.isSuperAdmin && (
+          <Link href="/super" className={cn(buttonVariants(), "h-9")}>
+            <Crown data-icon="inline-start" />
+            Super admin
+          </Link>
+        )}
         <Button variant="outline" onClick={() => void signOut()}>
           <LogOut data-icon="inline-start" />
           Log out
@@ -43,7 +49,7 @@ export function Account() {
       </PageHeader>
 
       {me.kingdoms.map((k) => (
-        <KingdomCard key={k.number} number={k.number} alliances={k.alliances} />
+        <KingdomCard key={k.number} number={k.number} alliances={k.alliances} status={k.status} />
       ))}
 
       {me.kingdoms.length < 3 && <CreateKingdom first={me.kingdoms.length === 0} />}
@@ -51,7 +57,15 @@ export function Account() {
   );
 }
 
-function KingdomCard({ number, alliances }: { number: number; alliances: string[] }) {
+function KingdomCard({
+  number,
+  alliances,
+  status,
+}: {
+  number: number;
+  alliances: string[];
+  status: "pending" | "approved" | "rejected";
+}) {
   const link = typeof window === "undefined" ? `/${number}` : `${window.location.origin}/${number}`;
   return (
     <Card>
@@ -60,7 +74,20 @@ function KingdomCard({ number, alliances }: { number: number; alliances: string[
           <span className="font-mono">#{number}</span>
           <span className="text-sm font-normal text-muted-foreground">{alliances.join(" · ")}</span>
         </CardTitle>
-        <CardDescription>
+        {status !== "approved" && (
+          <p
+            className={cn(
+              "flex items-center gap-2 rounded-lg p-3 text-sm",
+              status === "pending" ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive",
+            )}
+          >
+            {status === "pending" ? <Hourglass className="size-4" /> : <Ban className="size-4" />}
+            {status === "pending"
+              ? "Waiting for approval. Your pages open as soon as the developer approves the kingdom."
+              : "This kingdom wasn\u2019t approved. Contact the developer through the Support page."}
+          </p>
+        )}
+        <CardDescription className={cn(status !== "approved" && "hidden")}>
           Share the sign-up link with your players:{" "}
           <button
             type="button"
@@ -71,7 +98,7 @@ function KingdomCard({ number, alliances }: { number: number; alliances: string[
           </button>
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2 sm:grid-cols-3">
+      <CardContent className={cn("grid gap-2 sm:grid-cols-3", status !== "approved" && "hidden")}>
         <Link href={`/${number}/admin`} className={cn(buttonVariants(), "h-11")}>
           <ShieldCheck data-icon="inline-start" />
           Admin
@@ -91,7 +118,6 @@ function KingdomCard({ number, alliances }: { number: number; alliances: string[
 
 // Two steps: prove you play in the kingdom (your game ID), then list the alliances that take part.
 function CreateKingdom({ first }: { first: boolean }) {
-  const router = useRouter();
   const checkLeader = useAction(api.kvk.lookup.leader);
   const create = useMutation(api.kvk.kingdoms.create);
   const [kingdom, setKingdom] = useState("");
@@ -127,8 +153,12 @@ function CreateKingdom({ first }: { first: boolean }) {
     setBusy(true);
     try {
       await create({ number, gameId: gameId.trim(), alliances: tags });
-      toast.success(`Kingdom #${number} is ready.`);
-      router.push(`/${number}/admin`);
+      toast.success(`Kingdom #${number} is set up. It opens once the developer approves it.`);
+      setChecked(null);
+      setKingdom("");
+      setGameId("");
+      setAlliances("");
+      setBusy(false);
     } catch (err) {
       toast.error(errorMessage(err));
       setBusy(false);

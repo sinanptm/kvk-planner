@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarCheck, CalendarDays, CircleCheck, EyeOff, KeyRound, Send, Shield, Users, type LucideIcon } from "lucide-react";
+import { Ban, CalendarCheck, CalendarDays, Hourglass, CircleCheck, EyeOff, KeyRound, Send, Shield, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -93,6 +93,20 @@ function AdminDashboard({ kingdom }: { kingdom: number }) {
         description={`This account doesn\u2019t run kingdom #${kingdom}. Log in with the account that set it up.`}
         href="/account"
         action="Go to my kingdoms"
+      />
+    );
+  if (data.kingdom.status !== "approved")
+    return (
+      <Gate
+        icon={data.kingdom.status === "pending" ? Hourglass : Ban}
+        title={data.kingdom.status === "pending" ? "Waiting for approval" : "Not approved"}
+        description={
+          data.kingdom.status === "pending"
+            ? `Kingdom #${kingdom} is set up. It opens for you and your players as soon as it\u2019s approved, usually within a day.`
+            : `Kingdom #${kingdom} wasn\u2019t approved. Contact the developer if you think this is a mistake.`
+        }
+        href="/support"
+        action="Contact the developer"
       />
     );
 

@@ -3,7 +3,7 @@ import { ConvexError, v, type Infer } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { action, internalMutation, internalQuery, query, type ActionCtx } from "../_generated/server";
-import { cleanGameId, getKingdom, listPlayers, ownedKingdom, requireOwner } from "../lib/data";
+import { cleanGameId, listPlayers, openKingdom, ownedKingdom, requireOwner } from "../lib/data";
 
 // Game IDs are looked up in the MightPulse API (https://api.mightpulse.com) so sign-ups use the
 // player's real name, alliance and Town Center level, and only members of a kingdom's alliances can
@@ -125,7 +125,7 @@ type LookupResult = Infer<typeof lookupResult>;
 export const kingdomInfo = internalQuery({
   args: { kingdom: v.number() },
   handler: async (ctx, { kingdom }) => {
-    const k = await getKingdom(ctx, kingdom);
+    const k = await openKingdom(ctx, kingdom);
     return k ? { alliances: k.alliances } : null;
   },
 });
@@ -139,7 +139,7 @@ export const player = action({
     const kingdom: { alliances: string[] } | null = await ctx.runQuery(internal.kvk.lookup.kingdomInfo, {
       kingdom: args.kingdom,
     });
-    if (!kingdom) throw new ConvexError("This kingdom isn't set up.");
+    if (!kingdom) throw new ConvexError("This kingdom isn't open for sign-ups.");
     const p = await fetchPlayer(ctx, gameId);
     if (p.kind !== "found") return { status: p.kind };
     const { kind: _, ...info } = p;
@@ -238,7 +238,7 @@ export const notSignedUp = query({
   args: { kingdom: v.number() },
   handler: async (ctx, { kingdom }) => {
     const k = await ownedKingdom(ctx, kingdom);
-    if (!k) return null;
+    if (!k || k.status !== "approved") return null;
     const players = await listPlayers(ctx, kingdom);
     const signedUp = new Set(players.map((p) => p.gameId));
     return Promise.all(

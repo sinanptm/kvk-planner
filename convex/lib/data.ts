@@ -1,5 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v, type Infer } from "convex/values";
+import { components } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { MAX_TRUEGOLD, isValidSlot, type DayKey } from "./kvk";
@@ -14,16 +15,42 @@ export const getKingdom = (ctx: QueryCtx, number: number) =>
     .withIndex("by_number", (q) => q.eq("number", number))
     .unique();
 
-// The kingdom, if the signed-in account runs it; otherwise null.
+// An approved kingdom, or null when it doesn't exist or is still waiting for approval (or was rejected).
+export async function openKingdom(ctx: QueryCtx, number: number): Promise<Doc<"kingdoms"> | null> {
+  const kingdom = await getKingdom(ctx, number);
+  return kingdom?.status === "approved" ? kingdom : null;
+}
+
+// The kingdom (in any approval state), if the signed-in account runs it; otherwise null.
 export async function ownedKingdom(ctx: QueryCtx, number: number): Promise<Doc<"kingdoms"> | null> {
   const [userId, kingdom] = await Promise.all([getAuthUserId(ctx), getKingdom(ctx, number)]);
   return userId !== null && kingdom?.ownerId === userId ? kingdom : null;
 }
 
+// The kingdom, if the signed-in account runs it and it has been approved.
 export async function requireOwner(ctx: QueryCtx, number: number): Promise<Doc<"kingdoms">> {
   const kingdom = await ownedKingdom(ctx, number);
   if (!kingdom) throw new ConvexError("Log in with the account that runs this kingdom.");
+  if (kingdom.status !== "approved") throw new ConvexError("This kingdom is waiting for approval.");
   return kingdom;
+}
+
+// The developer's accounts, by login email, from the Convex env var SUPER_ADMIN_EMAILS (comma separated).
+const superEmails = () =>
+  (process.env.SUPER_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+export async function isSuperAdmin(ctx: QueryCtx): Promise<boolean> {
+  const userId = await getAuthUserId(ctx);
+  if (userId === null) return false;
+  const email = await ctx.runQuery(components.authUsername.public.getUsername, { userId });
+  return !!email && superEmails().includes(email.toLowerCase());
+}
+
+export async function requireSuperAdmin(ctx: QueryCtx) {
+  if (!(await isSuperAdmin(ctx))) throw new ConvexError("Only the developer can do this.");
 }
 
 // What players and the public may see about a kingdom.
@@ -31,6 +58,7 @@ export const publicKingdom = (k: Doc<"kingdoms">) => ({
   number: k.number,
   alliances: k.alliances,
   schedulePublished: k.schedulePublished,
+  status: k.status,
   startDate: k.startDate ?? null,
 });
 

@@ -52,6 +52,7 @@ export const create = mutation({
       ownerGameId: gameId,
       alliances,
       schedulePublished: false,
+      status: "pending",
     });
     return null;
   },
