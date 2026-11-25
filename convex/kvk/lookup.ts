@@ -109,8 +109,13 @@ async function fetchPlayer(ctx: ActionCtx, gameId: string): Promise<GamePlayer> 
 // ---- The kingdom's top alliances, fetched once per kingdom ----
 
 const TOP_ALLIANCES = 20;
-const allianceOption = v.object({ tag: v.string(), name: v.string(), members: v.number() });
-export type AllianceOption = { tag: string; name: string; members: number };
+const allianceOption = v.object({
+  tag: v.string(),
+  name: v.string(),
+  members: v.number(),
+  power: v.optional(v.number()),
+});
+export type AllianceOption = { tag: string; name: string; members: number; power?: number };
 
 export const getTopAlliances = internalQuery({
   args: { kingdom: v.number() },
@@ -128,7 +133,9 @@ export const storeTopAlliances = internalMutation({
       .query("kingdomAlliances")
       .withIndex("by_kingdom", (q) => q.eq("kingdom", kingdom))
       .unique();
-    if (!existing) await ctx.db.insert("kingdomAlliances", { kingdom, alliances, fetchedAt: Date.now() });
+    const row = { kingdom, alliances, fetchedAt: Date.now() };
+    if (existing) await ctx.db.replace("kingdomAlliances", existing._id, row);
+    else await ctx.db.insert("kingdomAlliances", row);
     return null;
   },
 });
@@ -137,7 +144,8 @@ export const storeTopAlliances = internalMutation({
 // after that the stored list is returned. Empty when the game couldn't be reached.
 async function topAlliances(ctx: ActionCtx, kingdom: number): Promise<AllianceOption[]> {
   const stored: Doc<"kingdomAlliances"> | null = await ctx.runQuery(internal.kvk.lookup.getTopAlliances, { kingdom });
-  if (stored) return stored.alliances;
+  // Lists stored before alliance power was kept are fetched once more to get it.
+  if (stored && stored.alliances.every((a) => a.power !== undefined)) return stored.alliances;
   let res: { status: number; body: unknown };
   try {
     res = await callApi(`/kingdoms/${kingdom}/ranks?board=alliance_power&limit=${TOP_ALLIANCES}`);
@@ -151,7 +159,12 @@ async function topAlliances(ctx: ActionCtx, kingdom: number): Promise<AllianceOp
   const alliances = rows
     .map((row) => {
       const r = asRecord(row);
-      return { tag: asString(r.abbr).trim(), name: asString(r.name).trim(), members: asNumber(r.member_count) };
+      return {
+        tag: asString(r.abbr).trim(),
+        name: asString(r.name).trim(),
+        members: asNumber(r.member_count),
+        power: asNumber(r.score),
+      };
     })
     .filter((a) => a.tag)
     .slice(0, TOP_ALLIANCES);
@@ -324,4 +337,5 @@ export const notSignedUp = query({
     );
   },
 });
+
 

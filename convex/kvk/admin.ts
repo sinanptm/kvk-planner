@@ -36,7 +36,8 @@ export const dashboard = query({
     return {
       kingdom: publicKingdom(k),
       // The kingdom's top alliances from the game, to pick from. Null until loaded.
-      allianceOptions: options?.alliances ?? null,
+      // Null until loaded, or when stored before alliance power was kept (the admin reloads it once).
+      allianceOptions: options?.alliances.every((a) => a.power !== undefined) ? options.alliances : null,
       players: players.map(({ _id, kingdom: _, ...p }) => p),
       turns: turns.map(({ day, slot, gameId, locked }) => ({ day, slot, gameId, locked })),
     };

@@ -75,7 +75,10 @@ export default defineSchema({
   kingdomAlliances: defineTable({
     kingdom: v.number(),
     fetchedAt: v.number(),
-    alliances: v.array(v.object({ tag: v.string(), name: v.string(), members: v.number() })),
+    // power is the alliance power at fetch time; lists stored before it existed lack it.
+    alliances: v.array(
+      v.object({ tag: v.string(), name: v.string(), members: v.number(), power: v.optional(v.number()) }),
+    ),
   }).index("by_kingdom", ["kingdom"]),
 
   // Latest member list of an alliance in a kingdom, for the admin "Missing" tab.
