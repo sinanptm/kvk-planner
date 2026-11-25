@@ -1,7 +1,8 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { LANGUAGES, useLanguage, type Lang } from "@/lib/i18n";
+import { useEffect } from "react";
+import { LANGUAGES, RTL_LANGS, useLanguage, type Lang } from "@/lib/i18n";
 
 function Flag({ code }: { code: string }) {
   return (
@@ -14,6 +15,13 @@ function Flag({ code }: { code: string }) {
 export function LanguageSwitcher() {
   const { lang, setLang, t } = useLanguage();
   const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
+
+  // Tell the browser the page language, and flip the layout for right-to-left languages like Arabic.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = RTL_LANGS.includes(lang) ? "rtl" : "ltr";
+  }, [lang]);
+
   return (
     <Select value={lang} onValueChange={(value) => value && setLang(value as Lang)}>
       <SelectTrigger aria-label={t("lang.label")} className="h-9! gap-1.5 px-2 [&>svg]:hidden">

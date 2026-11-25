@@ -758,7 +758,114 @@ const es: Dictionary = {
   "schedule.noMatch": "Sin resultados el {day}.",
 };
 
-const DICTIONARIES = { en, id, zh, fr, tr, de, es } satisfies Record<string, Dictionary>;
+const ar: Dictionary = {
+  "nav.signup": "التسجيل",
+  "nav.schedule": "الجدول",
+  "nav.admin": "الإدارة",
+  "lang.label": "اللغة",
+
+  "day.d1": "اليوم 1",
+  "day.d4": "اليوم 4",
+  "day.d1.title": "البناء والبحث",
+  "day.d4.title": "التدريب",
+
+  "signup.title": "التسجيل في التعيينات",
+  "signup.desc": "أدخل تسريعاتك والأوقات التي يمكنك اللعب فيها. يمكنك الإرسال مرة واحدة فقط.",
+  "signup.signedUp": "تم التسجيل",
+  "signup.notYou": "لست أنت؟",
+
+  "final.title": "تسجيلك نهائي",
+  "final.body":
+    "لا يمكن تعديل التسجيل بعد إرساله. إذا كان هناك خطأ، اطلب من الملك أو R4 — المشرف فقط يمكنه تغييره.",
+  "final.line": "نهائي — لا يمكنك التعديل بعد التسجيل.",
+
+  "entry.title": "تسجيلك",
+  "entry.desc": "ما أرسلته. للقراءة فقط.",
+  "entry.total": "المجموع",
+  "entry.timesPicked": "تم اختيار {n} أوقات (UTC)",
+  "entry.noTimes": "لم يتم اختيار أي وقت",
+
+  "turns.title": "أدوارك",
+  "turns.desc": "تم نشر الجدول. كن متصلاً عند بداية دورك.",
+  "turns.yourTime": "توقيتك",
+  "turns.waitlist": "لا يوجد دور بعد — أنت في قائمة الانتظار.",
+  "turns.noTimes": "لم تختر أي وقت لهذا اليوم.",
+
+  "step.details": "البيانات",
+  "step.review": "المراجعة",
+  "step.next": "التالي: {step}",
+  "step.back": "رجوع",
+
+  "details.title": "بياناتك",
+  "lookup.check": "تحقق من المعرّف",
+  "lookup.checking": "جارٍ التحقق…",
+  "lookup.found": "وجدناك في اللعبة",
+  "lookup.badId": "أدخل معرّف اللعبة (أرقام فقط).",
+  "lookup.notFound": "لا يوجد لاعب بهذا المعرّف في اللعبة. تحقق من الرقم وحاول مرة أخرى.",
+  "lookup.wrongKingdom": "هذا اللاعب في المملكة {kid}. فقط المملكة {ours} يمكنها التسجيل.",
+  "lookup.wrongAlliance": "فقط أعضاء VIK وTEA وBTF وFFF يمكنهم التسجيل. تحالف هذا اللاعب: {alliance}.",
+  "lookup.pending": "اللعبة لا تزال تبحث عن هذا اللاعب. حاول مرة أخرى بعد ثوانٍ.",
+  "lookup.error": "تعذّر التحقق من المعرّف الآن. حاول مرة أخرى بعد دقيقة.",
+  "field.gameId": "معرّف اللعبة",
+  "field.gameIdPlaceholder": "معرّف لاعبك في Kingshot",
+  "field.name": "الاسم في اللعبة",
+  "field.namePlaceholder": "الاسم في Kingshot",
+  "field.alliance": "التحالف",
+
+  "day.appointment": "التعيين:",
+  "day.total": "مجموع {day}",
+  "speedup.d1Construction": "تسريعات البناء",
+  "speedup.d1Research": "تسريعات البحث",
+  "speedup.d1General": "تسريعات عامة لليوم 1",
+  "speedup.d4Training": "تسريعات التدريب",
+  "speedup.d4General": "تسريعات عامة لليوم 4",
+  "duration.days": "أيام",
+  "duration.hours": "ساعات",
+  "duration.minutes": "دقائق",
+  "tc.level": "مستوى مركز المدينة",
+  "tc.levelPlaceholder": "اختر مستواك",
+  "tc.truegold": "الذهب الحقيقي (TG) الذي لديك",
+  "entry.tc": "مركز المدينة",
+  "entry.truegold": "الذهب الحقيقي",
+  "toast.pickTc": "اختر مستوى مركز المدينة.",
+
+  "times.title": "الأوقات المتاحة",
+  "times.hint": "اختر دوراً واحداً على الأقل، وكل دور يناسبك. الأرقام الكبيرة بتوقيت UTC.",
+  "times.hintLocal": "الأرقام الصغيرة بتوقيتك ({tz}).",
+  "times.count": "تم اختيار {n} من {total} دور",
+  "times.selectAll": "تحديد الكل",
+  "times.clear": "مسح",
+  "times.pickAll": "اختيار الكل",
+  "times.clearThese": "مسح هذه",
+
+  "review.title": "راجع تسجيلك",
+  "review.desc": "تسجّل باسم {name} · المعرّف {id}. ارجع لتصحيح أي شيء الآن — لن تتمكن بعد الإرسال.",
+  "confirm.title": "إرسال تسجيلك؟ هذا نهائي.",
+  "confirm.desc": "لن تتمكن من تعديله بعد ذلك. فقط المشرف (الملك أو R4) يمكنه تغييره.",
+  "confirm.back": "ارجع وتحقق",
+  "confirm.submit": "إرسال — نهائي",
+  "action.signUp": "سجّل",
+  "action.saving": "جارٍ الحفظ…",
+
+  "toast.pickTime": "اختر وقتاً واحداً على الأقل لـ{day}.",
+  "toast.pickAlliance": "اختر تحالفك.",
+  "toast.alreadySignedUp": "معرّف اللعبة هذا مسجّل بالفعل. لا يمكن تعديل التسجيلات.",
+  "toast.signedUp": "تم تسجيلك",
+
+  "schedule.title": "جدول التعيينات",
+  "schedule.desc": "أدوار مدتها 30 دقيقة. الأوقات بتوقيت UTC.",
+  "schedule.descLocal": "توقيتك ({tz}) يظهر في الأسفل.",
+  "schedule.notPublished": "لم يُنشر بعد",
+  "schedule.notPublishedDesc": "سيظهر الجدول هنا بمجرد أن ينشره الملك.",
+  "schedule.search": "ابحث بالاسم أو التحالف",
+  "schedule.hideOpen": "إخفاء الأدوار الشاغرة",
+  "schedule.filled": "{n}/{total} مشغول",
+  "schedule.open": "شاغر",
+  "schedule.you": "أنت",
+  "schedule.noMatch": "لا توجد نتائج في {day}.",
+};
+
+const DICTIONARIES = { en, id, zh, fr, tr, de, es, ar } satisfies Record<string, Dictionary>;
 
 export type Lang = keyof typeof DICTIONARIES;
 
@@ -771,6 +878,7 @@ export const LANGUAGES: { code: Lang; name: string; flag: string }[] = [
   { code: "fr", name: "Français", flag: "fr" },
   { code: "tr", name: "Türkçe", flag: "tr" },
   { code: "de", name: "Deutsch", flag: "de" },
+  { code: "ar", name: "العربية", flag: "sa" },
 ];
 
 const isLang = (value: string | null | undefined): value is Lang => !!value && value in DICTIONARIES;
@@ -783,6 +891,9 @@ function resolveLang(stored: string | null | undefined): Lang {
   const browser = navigator.language.slice(0, 2).toLowerCase();
   return isLang(browser) ? browser : "en";
 }
+
+// Languages written right to left. The page layout flips for these.
+export const RTL_LANGS: readonly Lang[] = ["ar"];
 
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 

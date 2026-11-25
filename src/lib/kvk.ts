@@ -35,7 +35,7 @@ export function dayDate(startDate: string | null | undefined, day: DayKey, lang 
   if (!startDate) return null;
   const date = new Date(`${startDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + DAY_OFFSET[day]);
-  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : lang, {
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : lang === "ar" ? "ar-u-nu-latn" : lang, {
     timeZone: "UTC",
     weekday: long ? "long" : "short",
     day: "numeric",
