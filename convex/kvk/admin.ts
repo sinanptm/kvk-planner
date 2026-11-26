@@ -4,6 +4,7 @@ import { dayValidator } from "../schema";
 import {
   cleanEntry,
   entryFields,
+  canView,
   isAdmin,
   isDateString,
   listAllTurns,
@@ -25,7 +26,7 @@ export const verify = query({
   args: { password: v.string() },
   handler: async (_ctx, { password }) => {
     if (!process.env.ADMIN_PASSWORD) throw new ConvexError("ADMIN_PASSWORD is not set in the Convex dashboard.");
-    return isAdmin(password);
+    return canView(password);
   },
 });
 
@@ -33,9 +34,10 @@ export const verify = query({
 export const dashboard = query({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    if (!isAdmin(password)) return null;
+    if (!canView(password)) return null;
     const [settings, players, turns] = await Promise.all([readSettings(ctx), listPlayers(ctx), listAllTurns(ctx)]);
     return {
+      canEdit: isAdmin(password),
       settings,
       players: players.map(({ _id, ...p }) => withTc(p)),
       turns: turns.map(({ day, slot, gameId, locked }) => ({ day, slot, gameId, locked })),

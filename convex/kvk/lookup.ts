@@ -2,7 +2,7 @@ import { ConvexError, v, type Infer } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { action, internalMutation, internalQuery, query } from "../_generated/server";
-import { isAdmin, listPlayers, requireAdmin } from "../lib/data";
+import { canView, listPlayers, requireAdmin } from "../lib/data";
 import { ALLIANCES, KINGDOM_ID } from "../lib/kvk";
 
 // Game IDs are looked up in the MightPulse API (https://api.mightpulse.com) so sign-ups use the
@@ -200,7 +200,7 @@ export const refreshRosters = action({
 export const notSignedUp = query({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    if (!isAdmin(password)) return null;
+    if (!canView(password)) return null;
     const [players, rosters] = await Promise.all([listPlayers(ctx), ctx.db.query("rosters").take(ALLIANCES.length)]);
     const signedUp = new Set(players.map((p) => p.gameId));
     return ALLIANCES.map((tag) => {

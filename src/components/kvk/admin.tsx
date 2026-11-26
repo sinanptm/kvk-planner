@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CalendarCheck, CalendarDays, CircleCheck, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarDays, CircleCheck, Eye, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -121,6 +121,18 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
 
   return (
     <>
+      {!data.canEdit && (
+        <div className="flex items-center gap-3 rounded-xl border border-sky-500/40 bg-sky-500/10 px-4 py-3">
+          <Eye className="size-5 shrink-0 text-sky-400" />
+          <p className="text-sm">
+            <span className="font-semibold">View only.</span>{" "}
+            <span className="text-muted-foreground">
+              You can look at everything, but changes are blocked. Only the main admin can assign turns, edit players
+              or publish.
+            </span>
+          </p>
+        </div>
+      )}
       {/* Phones stack these; wide screens put status, dates and numbers in one row. */}
       <div className="grid gap-3 xl:grid-cols-12">
       <div className="xl:col-span-4">

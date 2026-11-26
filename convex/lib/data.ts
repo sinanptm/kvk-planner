@@ -32,14 +32,21 @@ export async function settingsRow(ctx: MutationCtx): Promise<Doc<"settings">> {
   return (await ctx.db.get("settings", id))!;
 }
 
-export function requireAdmin(password: string) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) throw new ConvexError("ADMIN_PASSWORD is not set in the Convex dashboard.");
-  if (password !== expected) throw new ConvexError("Wrong admin password.");
-}
-
+// Two passwords: ADMIN_PASSWORD can do everything; VIEWER_PASSWORD (optional) can open the
+// admin page and read everything, but every change is refused.
 export const isAdmin = (password: string) =>
   !!process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD;
+
+const isViewer = (password: string) =>
+  !!process.env.VIEWER_PASSWORD && password === process.env.VIEWER_PASSWORD;
+
+export const canView = (password: string) => isAdmin(password) || isViewer(password);
+
+export function requireAdmin(password: string) {
+  if (!process.env.ADMIN_PASSWORD) throw new ConvexError("ADMIN_PASSWORD is not set in the Convex dashboard.");
+  if (isViewer(password)) throw new ConvexError("View-only access: only the main admin can make changes.");
+  if (!isAdmin(password)) throw new ConvexError("Wrong admin password.");
+}
 
 export const listPlayers = (ctx: QueryCtx) => ctx.db.query("players").take(MAX_PLAYERS);
 
