@@ -304,7 +304,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
       }}
       className="flex flex-col gap-6"
     >
-      <ol className="grid grid-cols-4 gap-2">
+      <ol className="grid gap-2" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
         {steps.map((label, i) => (
           <li key={i} aria-current={i === step ? "step" : undefined}>
             <button
@@ -314,7 +314,9 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
               className="flex w-full flex-col gap-1.5 text-left disabled:cursor-default"
             >
               <span className={cn("h-1.5 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />
-              <span className={cn("text-xs font-medium", i === step ? "text-foreground" : "text-muted-foreground")}>
+              <span
+                className={cn("truncate text-xs font-medium", i === step ? "text-foreground" : "text-muted-foreground")}
+              >
                 {i + 1}. {label}
               </span>
             </button>

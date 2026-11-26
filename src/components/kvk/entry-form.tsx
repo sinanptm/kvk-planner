@@ -84,6 +84,8 @@ export const toEntry = (e: Entry): Entry => ({
   d4Slots: e.d4Slots,
 });
 
+const sameSlots = (a: number[], b: number[]) => a.length === b.length && a.every((s, i) => s === b[i]);
+
 type FieldProps = {
   form: Entry;
   set: <K extends keyof Entry>(key: K, value: Entry[K]) => void;
@@ -173,7 +175,12 @@ export function DayCard({
   const total = SPEEDUP_FIELDS[day].reduce((sum, key) => sum + form[key], 0);
   const slotsKey = SLOTS_KEY[day];
   // Later days can copy the times picked on an earlier day in one tap.
-  const copyFrom = DAY_KEYS.slice(0, DAY_KEYS.indexOf(day)).filter((d) => form[SLOTS_KEY[d]].length > 0);
+  // Days with the same times as an earlier day get one button, not two.
+  const copyFrom = DAY_KEYS.slice(0, DAY_KEYS.indexOf(day)).filter(
+    (d, i, days) =>
+      form[SLOTS_KEY[d]].length > 0 &&
+      !days.slice(0, i).some((e) => sameSlots(form[SLOTS_KEY[e]], form[SLOTS_KEY[d]])),
+  );
   return (
     <Card>
       <CardHeader>
@@ -220,9 +227,7 @@ export function DayCard({
         {copyFrom.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {copyFrom.map((d) => {
-              const same =
-                form[SLOTS_KEY[d]].length === form[slotsKey].length &&
-                form[SLOTS_KEY[d]].every((s, i) => s === form[slotsKey][i]);
+              const same = sameSlots(form[SLOTS_KEY[d]], form[slotsKey]);
               return (
                 <Button
                   key={d}
