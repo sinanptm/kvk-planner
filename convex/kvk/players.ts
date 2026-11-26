@@ -29,7 +29,9 @@ export const save = mutation({
       .query("playerLookups")
       .withIndex("by_gameId", (q) => q.eq("gameId", gameId))
       .unique();
-    if (!lookup || lookup.status !== "ok" || Date.now() - lookup.fetchedAt > LOOKUP_VALID_MS)
+    // A saved "wrong_alliance" may predate a newly added alliance; cleanEntry checks the alliance below.
+    const allowed = lookup?.status === "ok" || lookup?.status === "wrong_alliance";
+    if (!lookup || !allowed || Date.now() - lookup.fetchedAt > LOOKUP_VALID_MS)
       throw new ConvexError("Check your game ID again before signing up.");
     const entry = cleanEntry({
       ...args,

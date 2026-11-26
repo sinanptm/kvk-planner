@@ -81,7 +81,7 @@ const cleanSlots = (slots: number[]) => [...new Set(slots.filter(isValidSlot))].
 export function cleanEntry(args: Infer<typeof entryValidator>) {
   const name = args.name.trim();
   if (!name || name.length > 40) throw new ConvexError("Enter the in-game name (max 40 characters).");
-  const alliance = args.alliance.trim().toUpperCase();
+  const alliance = args.alliance.trim();
   if (!(ALLIANCES as readonly string[]).includes(alliance))
     throw new ConvexError(`Pick an alliance: ${ALLIANCES.join(", ")}.`);
   if (!Number.isInteger(args.tcLevel) || args.tcLevel < 1 || args.tcLevel > 60)

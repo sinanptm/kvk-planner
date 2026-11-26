@@ -112,6 +112,26 @@ export const ALLIANCE_STYLES: Record<string, { tag: string; tile: string; dot: s
     tile: "border-violet-500/50 bg-violet-500/10 hover:bg-violet-500/20 dark:bg-violet-500/10 dark:hover:bg-violet-500/20",
     dot: "bg-violet-500",
   },
+  btf: {
+    tag: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+    tile: "border-rose-500/50 bg-rose-500/10 hover:bg-rose-500/20 dark:bg-rose-500/10 dark:hover:bg-rose-500/20",
+    dot: "bg-rose-500",
+  },
+  ONX: {
+    tag: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+    tile: "border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20 dark:bg-cyan-500/10 dark:hover:bg-cyan-500/20",
+    dot: "bg-cyan-500",
+  },
+  BtF: {
+    tag: "bg-lime-500/15 text-lime-700 dark:text-lime-300",
+    tile: "border-lime-500/50 bg-lime-500/10 hover:bg-lime-500/20 dark:bg-lime-500/10 dark:hover:bg-lime-500/20",
+    dot: "bg-lime-500",
+  },
+  DEN: {
+    tag: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+    tile: "border-orange-500/50 bg-orange-500/10 hover:bg-orange-500/20 dark:bg-orange-500/10 dark:hover:bg-orange-500/20",
+    dot: "bg-orange-500",
+  },
 };
 
 export const playerLabel = (p: { name: string; alliance: string }) =>

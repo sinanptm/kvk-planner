@@ -23,7 +23,8 @@ export const tcLabelFull = (level: number) => {
 export const MAX_TRUEGOLD = 1_000_000_000;
 
 // The alliances taking part. Every player belongs to exactly one.
-export const ALLIANCES = ["VIK", "TEA", "BTF", "FFF"] as const;
+// The top 8 alliances of kingdom 2323 by power. Tags are case-sensitive in the game: BTF, btf and BtF are different alliances.
+export const ALLIANCES = ["TEA", "BTF", "VIK", "FFF", "btf", "ONX", "BtF", "DEN"] as const;
 export type Alliance = (typeof ALLIANCES)[number];
 
 export type DayKey = "d1" | "d4";

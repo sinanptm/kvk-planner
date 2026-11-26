@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { errorMessage, useStoredString } from "@/lib/client";
 import {
+  ALLIANCES,
   DAYS,
   DAY_KEYS,
   dayScoreOf,
@@ -413,7 +414,7 @@ function IdCheck({
       ? {
           not_found: t("lookup.notFound"),
           wrong_kingdom: t("lookup.wrongKingdom", { kid: result.kid ?? "?", ours: KINGDOM_ID }),
-          wrong_alliance: t("lookup.wrongAlliance", { alliance: result.alliance || "—" }),
+          wrong_alliance: t("lookup.wrongAlliance", { alliance: result.alliance || "—", alliances: ALLIANCES.join(", ") }),
           pending: t("lookup.pending"),
           error: t("lookup.error"),
         }[result.status]

@@ -84,8 +84,14 @@ export const storeLookup = internalMutation({
   },
 });
 
+// The alliance check is redone on every read, so a change to ALLIANCES applies to saved lookups too.
 const fromRow = (row: Doc<"playerLookups">): LookupResult => ({
-  status: row.status,
+  status:
+    row.status === "ok" || row.status === "wrong_alliance"
+      ? (ALLIANCES as readonly string[]).includes(row.alliance ?? "")
+        ? "ok"
+        : "wrong_alliance"
+      : row.status,
   name: row.name,
   alliance: row.alliance,
   tcLevel: row.tcLevel,
@@ -118,7 +124,7 @@ export const player = action({
 
     const p = asRecord(asRecord(res.body).player);
     const name = asString(p.nick_name).trim();
-    const alliance = asString(asRecord(p.alliance).abbr).trim().toUpperCase();
+    const alliance = asString(asRecord(p.alliance).abbr).trim();
     const tcLevel = asNumber(p.town_center_level);
     const kid = asNumber(p.kid);
     const status =
