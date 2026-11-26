@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Analytics } from "@vercel/analytics/next";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </ConvexClientProvider>
           </NuqsAdapter>
           <Toaster position="top-center" />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
