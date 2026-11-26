@@ -4,6 +4,7 @@ import { api } from "@convex/_generated/api";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { CalendarCheck, CalendarDays, CircleCheck, EyeOff, KeyRound, Send, LogOut, Users, type LucideIcon } from "lucide-react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -92,8 +93,15 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
   );
 }
 
+const ADMIN_TABS = ["d1", "d4", "players", "missing"] as const;
+
 function AdminDashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
   const data = useQuery(api.kvk.admin.dashboard, { password });
+  // The open tab lives in the URL (?tab=players), so reloads, links and the back button keep it.
+  const [tab, setTab] = useQueryState(
+    "tab",
+    parseAsStringLiteral(ADMIN_TABS).withDefault("d1").withOptions({ history: "push" }),
+  );
 
   if (data === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (data === null)
@@ -129,7 +137,7 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
           );
         })}
       </div>
-      <Tabs defaultValue="d1">
+      <Tabs value={tab} onValueChange={(value) => void setTab(value as (typeof ADMIN_TABS)[number])}>
         <TabsList className="w-full">
           {DAY_KEYS.map((day) => (
             <TabsTrigger key={day} value={day} className="flex-1">

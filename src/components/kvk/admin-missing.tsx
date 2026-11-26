@@ -3,6 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useAction, useQuery } from "convex/react";
 import { ClipboardCopy, RefreshCw } from "lucide-react";
+import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,15 +28,19 @@ const TC_GROUPS = [
   { key: "tg1", label: "TG1", test: (l: number) => l >= 31 && l <= 35 },
   { key: "tc", label: "TC 30 or lower", test: (l: number) => l <= 30 },
 ] as const;
-type TcGroup = (typeof TC_GROUPS)[number]["key"];
 
 // One alliance at a time: members in the game who have not signed up, filterable by Town Center level.
 export function AdminMissing({ password }: { password: string }) {
   const data = useQuery(api.kvk.lookup.notSignedUp, { password });
   const refresh = useAction(api.kvk.lookup.refreshRosters);
   const [busy, setBusy] = useState(false);
-  const [alliance, setAlliance] = useState<string>(ALLIANCES[0]);
-  const [tc, setTc] = useState<TcGroup[]>([]);
+  // Alliance and Town Center filters live in the URL, shared with the Players tab's alliance filter.
+  const [allianceParam, setAlliance] = useQueryState("alliance", parseAsStringLiteral(ALLIANCES));
+  const alliance = allianceParam ?? ALLIANCES[0];
+  const [tc, setTc] = useQueryState(
+    "tc",
+    parseAsArrayOf(parseAsStringLiteral(TC_GROUPS.map((g) => g.key))).withDefault([]),
+  );
 
   const current = data?.find((a) => a.alliance === alliance);
 
@@ -98,7 +103,7 @@ export function AdminMissing({ password }: { password: string }) {
               type="button"
               role="tab"
               aria-selected={on}
-              onClick={() => setAlliance(a.alliance)}
+              onClick={() => void setAlliance(a.alliance as (typeof ALLIANCES)[number])}
               className={cn(
                 "flex flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                 on ? ALLIANCE_STYLES[a.alliance]?.tile : "hover:bg-muted/50",
@@ -135,7 +140,7 @@ export function AdminMissing({ password }: { password: string }) {
           <CardContent className="flex flex-col gap-4">
             <FilterRow label="Level">
               {TC_GROUPS.map((g) => (
-                <Chip key={g.key} on={tc.includes(g.key)} onClick={() => setTc((x) => toggle(x, g.key))}>
+                <Chip key={g.key} on={tc.includes(g.key)} onClick={() => void setTc((x) => toggle(x, g.key))}>
                   {g.label}
                 </Chip>
               ))}

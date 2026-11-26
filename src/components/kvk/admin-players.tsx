@@ -3,6 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
 import { ArrowLeft, Check, Copy, FileSpreadsheet, Pencil, Search, Trash2, UserPlus } from "lucide-react";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,9 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   const deletePlayer = useMutation(api.kvk.admin.deletePlayer);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [search, setSearch] = useState("");
-  const [allianceFilter, setAllianceFilter] = useState<string | null>(null);
+  // Search and alliance filter live in the URL (?q=…&alliance=TEA), so they survive reloads and links.
+  const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
+  const [allianceFilter, setAllianceFilter] = useQueryState("alliance", parseAsStringLiteral(ALLIANCES));
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
   const turnOf = (gameId: string, day: "d1" | "d4") => data.turns.find((t) => t.gameId === gameId && t.day === day);
 
@@ -166,7 +168,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
               aria-label="Search players"
               placeholder="Search by name, alliance or game ID"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => void setSearch(e.target.value || null)}
               className="h-10 pl-9"
             />
           </div>
