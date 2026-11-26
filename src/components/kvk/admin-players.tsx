@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { copyText, errorMessage } from "@/lib/client";
 import {
   ALLIANCES,
+  ALLIANCE_STYLES,
   DAYS,
   DAY_KEYS,
   dayScore,
@@ -39,6 +40,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [search, setSearch] = useState("");
+  const [allianceFilter, setAllianceFilter] = useState<string | null>(null);
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
   const turnOf = (gameId: string, day: "d1" | "d4") => data.turns.find((t) => t.gameId === gameId && t.day === day);
 
@@ -112,7 +114,10 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
     return [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\n");
   };
 
-  const shown = searchPlayers(players, search);
+  const inAlliance = allianceFilter ? players.filter((p) => p.alliance === allianceFilter) : players;
+  const shown = searchPlayers(inAlliance, search);
+  const filtered = !!search.trim() || !!allianceFilter;
+  const allianceCount = (tag: string) => players.filter((p) => p.alliance === tag).length;
 
   const editing = players.find((p) => p.gameId === editingId);
   if (adding && !editing)
@@ -146,7 +151,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       <Card>
         <CardHeader>
           <CardTitle>
-            All players ({search.trim() ? `${shown.length} of ${players.length}` : players.length})
+            All players ({filtered ? `${shown.length} of ${players.length}` : players.length})
           </CardTitle>
           <CardDescription>
             In sign-up order · {informedCount}/{players.length} informed. Copy a player&apos;s turns to send them, then
@@ -164,6 +169,40 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
               onChange={(e) => setSearch(e.target.value)}
               className="h-10 pl-9"
             />
+          </div>
+          <div role="group" aria-label="Filter by alliance" className="mx-4 flex flex-wrap gap-1.5 sm:mx-0">
+            <button
+              type="button"
+              aria-pressed={!allianceFilter}
+              onClick={() => setAllianceFilter(null)}
+              className={cn(
+                "h-8 rounded-lg border px-3 text-sm font-medium transition-colors",
+                !allianceFilter ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              All · {players.length}
+            </button>
+            {ALLIANCES.map((tag) => {
+              const on = allianceFilter === tag;
+              const count = allianceCount(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  aria-pressed={on}
+                  disabled={count === 0 && !on}
+                  onClick={() => setAllianceFilter(on ? null : tag)}
+                  className={cn(
+                    "flex h-8 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-sm font-semibold transition-colors disabled:opacity-40",
+                    on ? ALLIANCE_STYLES[tag].tile : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <span className={cn("size-2 rounded-full", ALLIANCE_STYLES[tag].dot)} />
+                  {tag}
+                  <span className="font-sans font-normal">{count}</span>
+                </button>
+              );
+            })}
           </div>
           <ul className="flex flex-col divide-y px-4 sm:px-0">
             {shown.map((p) => (
@@ -245,7 +284,11 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
             ))}
             {shown.length === 0 && (
               <li className="py-6 text-center text-sm text-muted-foreground">
-                {players.length === 0 ? "No players yet." : "No player matches that search."}
+                {players.length === 0
+                  ? "No players yet."
+                  : search.trim()
+                    ? "No player matches that search."
+                    : `No players from ${allianceFilter} yet.`}
               </li>
             )}
           </ul>
