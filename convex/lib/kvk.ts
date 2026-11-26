@@ -29,6 +29,9 @@ export type Alliance = (typeof ALLIANCES)[number];
 
 export type DayKey = "d1" | "d4";
 
+// Players must pick at least this many times per day, so they have a good chance of getting a turn.
+export const MIN_SLOTS = 2;
+
 export const DAY_KEYS: DayKey[] = ["d1", "d4"];
 
 export interface PlayerSpeedups {

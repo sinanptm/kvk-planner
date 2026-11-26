@@ -76,7 +76,7 @@ const en = {
   "toast.pickTc": "Pick your Town Center level.",
 
   "times.title": "Times available",
-  "times.hint": "Pick at least one turn, and every turn that works. Big numbers are UTC.",
+  "times.hint": "Pick at least 2 turns, and every turn that works. Big numbers are UTC.",
   "times.hintLocal": "Small numbers are your time ({tz}).",
   "times.local": "local",
   "times.count": "{n} of {total} turns picked",
@@ -94,7 +94,7 @@ const en = {
   "action.signUp": "Sign up",
   "action.saving": "Saving…",
 
-  "toast.pickTime": "Pick at least one time for {day}.",
+  "toast.pickTime": "Pick at least 2 times for {day}.",
   "toast.pickAlliance": "Pick your alliance.",
   "toast.alreadySignedUp": "This game ID is already signed up. Entries can't be edited.",
   "toast.signedUp": "You're signed up",
@@ -187,7 +187,7 @@ const id: Dictionary = {
   "toast.pickTc": "Pilih level Town Center Anda.",
 
   "times.title": "Waktu tersedia",
-  "times.hint": "Pilih minimal satu giliran, dan semua giliran yang Anda bisa. Angka besar adalah UTC.",
+  "times.hint": "Pilih minimal 2 giliran, dan semua giliran yang Anda bisa. Angka besar adalah UTC.",
   "times.hintLocal": "Angka kecil adalah waktu Anda ({tz}).",
   "times.local": "lokal",
   "times.count": "{n} dari {total} giliran dipilih",
@@ -206,7 +206,7 @@ const id: Dictionary = {
   "action.signUp": "Daftar",
   "action.saving": "Menyimpan…",
 
-  "toast.pickTime": "Pilih minimal satu waktu untuk {day}.",
+  "toast.pickTime": "Pilih minimal 2 waktu untuk {day}.",
   "toast.pickAlliance": "Pilih aliansi Anda.",
   "toast.alreadySignedUp": "ID game ini sudah terdaftar. Data tidak bisa diubah.",
   "toast.signedUp": "Anda sudah terdaftar",
@@ -295,7 +295,7 @@ const zh: Dictionary = {
   "toast.pickTc": "请选择你的市政厅等级。",
 
   "times.title": "可用时间",
-  "times.hint": "至少选择一个时段，并选上所有你方便的时段。大号数字为 UTC 时间。",
+  "times.hint": "至少选择 2 个时段，并选上所有你方便的时段。大号数字为 UTC 时间。",
   "times.hintLocal": "小号数字为你的当地时间（{tz}）。",
   "times.local": "本地",
   "times.count": "已选 {n} / {total} 个时段",
@@ -313,7 +313,7 @@ const zh: Dictionary = {
   "action.signUp": "报名",
   "action.saving": "保存中…",
 
-  "toast.pickTime": "请为{day}至少选择一个时间。",
+  "toast.pickTime": "请为{day}至少选择 2 个时间。",
   "toast.pickAlliance": "请选择你的联盟。",
   "toast.alreadySignedUp": "该游戏 ID 已报名，无法修改。",
   "toast.signedUp": "报名成功",
@@ -403,7 +403,7 @@ const fr: Dictionary = {
   "toast.pickTc": "Choisissez le niveau de votre Centre-ville.",
 
   "times.title": "Créneaux disponibles",
-  "times.hint": "Choisissez au moins un créneau, et tous ceux qui vous conviennent. Les grands chiffres sont en UTC.",
+  "times.hint": "Choisissez au moins 2 créneaux, et tous ceux qui vous conviennent. Les grands chiffres sont en UTC.",
   "times.hintLocal": "Les petits chiffres sont votre heure ({tz}).",
   "times.local": "local",
   "times.count": "{n} créneaux choisis sur {total}",
@@ -422,7 +422,7 @@ const fr: Dictionary = {
   "action.signUp": "S'inscrire",
   "action.saving": "Enregistrement…",
 
-  "toast.pickTime": "Choisissez au moins un créneau pour le {day}.",
+  "toast.pickTime": "Choisissez au moins 2 créneaux pour le {day}.",
   "toast.pickAlliance": "Choisissez votre alliance.",
   "toast.alreadySignedUp": "Cet ID de jeu est déjà inscrit. Impossible de modifier.",
   "toast.signedUp": "Vous êtes inscrit",
@@ -512,7 +512,7 @@ const tr: Dictionary = {
   "toast.pickTc": "Şehir Merkezi seviyenizi seçin.",
 
   "times.title": "Uygun saatler",
-  "times.hint": "En az bir sıra seçin ve size uyan tüm sıraları işaretleyin. Büyük sayılar UTC'dir.",
+  "times.hint": "En az 2 sıra seçin ve size uyan tüm sıraları işaretleyin. Büyük sayılar UTC'dir.",
   "times.hintLocal": "Küçük sayılar sizin saatinizdir ({tz}).",
   "times.local": "yerel",
   "times.count": "{total} sıradan {n} tanesi seçildi",
@@ -530,7 +530,7 @@ const tr: Dictionary = {
   "action.signUp": "Kayıt ol",
   "action.saving": "Kaydediliyor…",
 
-  "toast.pickTime": "{day} için en az bir saat seçin.",
+  "toast.pickTime": "{day} için en az 2 saat seçin.",
   "toast.pickAlliance": "İttifakınızı seçin.",
   "toast.alreadySignedUp": "Bu oyun ID'si zaten kayıtlı. Kayıtlar düzenlenemez.",
   "toast.signedUp": "Kaydınız alındı",
@@ -620,7 +620,7 @@ const de: Dictionary = {
   "toast.pickTc": "Wähle deine Stadtzentrum-Stufe.",
 
   "times.title": "Verfügbare Zeiten",
-  "times.hint": "Wähle mindestens einen Slot und alle, die für dich passen. Große Zahlen sind UTC.",
+  "times.hint": "Wähle mindestens 2 Slots und alle, die für dich passen. Große Zahlen sind UTC.",
   "times.hintLocal": "Kleine Zahlen sind deine Ortszeit ({tz}).",
   "times.local": "lokal",
   "times.count": "{n} von {total} Slots gewählt",
@@ -639,7 +639,7 @@ const de: Dictionary = {
   "action.signUp": "Anmelden",
   "action.saving": "Speichern…",
 
-  "toast.pickTime": "Wähle mindestens eine Zeit für {day}.",
+  "toast.pickTime": "Wähle mindestens 2 Zeiten für {day}.",
   "toast.pickAlliance": "Wähle deine Allianz.",
   "toast.alreadySignedUp": "Diese Spiel-ID ist bereits angemeldet. Anmeldungen können nicht geändert werden.",
   "toast.signedUp": "Du bist angemeldet",
@@ -729,7 +729,7 @@ const es: Dictionary = {
   "toast.pickTc": "Elige el nivel de tu Centro Urbano.",
 
   "times.title": "Horas disponibles",
-  "times.hint": "Elige al menos un turno, y todos los que te vengan bien. Los números grandes son UTC.",
+  "times.hint": "Elige al menos 2 turnos, y todos los que te vengan bien. Los números grandes son UTC.",
   "times.hintLocal": "Los números pequeños son tu hora ({tz}).",
   "times.local": "local",
   "times.count": "{n} de {total} turnos elegidos",
@@ -747,7 +747,7 @@ const es: Dictionary = {
   "action.signUp": "Inscribirse",
   "action.saving": "Guardando…",
 
-  "toast.pickTime": "Elige al menos una hora para el {day}.",
+  "toast.pickTime": "Elige al menos 2 horas para el {day}.",
   "toast.pickAlliance": "Elige tu alianza.",
   "toast.alreadySignedUp": "Este ID de juego ya está inscrito. Las inscripciones no se pueden editar.",
   "toast.signedUp": "Te has inscrito",
@@ -837,7 +837,7 @@ const ar: Dictionary = {
   "toast.pickTc": "اختر مستوى مركز المدينة.",
 
   "times.title": "الأوقات المتاحة",
-  "times.hint": "اختر دوراً واحداً على الأقل، وكل دور يناسبك. الأرقام الكبيرة بتوقيت UTC.",
+  "times.hint": "اختر دورين على الأقل، وكل دور يناسبك. الأرقام الكبيرة بتوقيت UTC.",
   "times.hintLocal": "الأرقام الصغيرة بتوقيتك ({tz}).",
   "times.local": "محلي",
   "times.count": "تم اختيار {n} من {total} دور",
@@ -855,7 +855,7 @@ const ar: Dictionary = {
   "action.signUp": "سجّل",
   "action.saving": "جارٍ الحفظ…",
 
-  "toast.pickTime": "اختر وقتاً واحداً على الأقل لـ{day}.",
+  "toast.pickTime": "اختر وقتين على الأقل لـ{day}.",
   "toast.pickAlliance": "اختر تحالفك.",
   "toast.alreadySignedUp": "معرّف اللعبة هذا مسجّل بالفعل. لا يمكن تعديل التسجيلات.",
   "toast.signedUp": "تم تسجيلك",
@@ -945,7 +945,7 @@ const uk: Dictionary = {
   "toast.pickTc": "Виберіть рівень Ратуші.",
 
   "times.title": "Доступний час",
-  "times.hint": "Виберіть хоча б одну чергу, і всі, що вам підходять. Великі цифри — це UTC.",
+  "times.hint": "Виберіть щонайменше 2 черги, і всі, що вам підходять. Великі цифри — це UTC.",
   "times.hintLocal": "Маленькі цифри — ваш час ({tz}).",
   "times.local": "місц.",
   "times.count": "Вибрано {n} з {total} черг",
@@ -963,7 +963,7 @@ const uk: Dictionary = {
   "action.signUp": "Зареєструватися",
   "action.saving": "Збереження…",
 
-  "toast.pickTime": "Виберіть хоча б один час на {day}.",
+  "toast.pickTime": "Виберіть щонайменше 2 варіанти часу на {day}.",
   "toast.pickAlliance": "Виберіть свій альянс.",
   "toast.alreadySignedUp": "Цей ігровий ID уже зареєстровано. Заявки не можна змінювати.",
   "toast.signedUp": "Ви зареєструвалися",
@@ -1053,7 +1053,7 @@ const ru: Dictionary = {
   "toast.pickTc": "Выберите уровень Ратуши.",
 
   "times.title": "Доступное время",
-  "times.hint": "Выберите хотя бы одну очередь, и все, что вам подходят. Крупные цифры — это UTC.",
+  "times.hint": "Выберите не менее 2 очередей, и все, что вам подходят. Крупные цифры — это UTC.",
   "times.hintLocal": "Мелкие цифры — ваше время ({tz}).",
   "times.local": "местн.",
   "times.count": "Выбрано {n} из {total} очередей",
@@ -1071,7 +1071,7 @@ const ru: Dictionary = {
   "action.signUp": "Зарегистрироваться",
   "action.saving": "Сохранение…",
 
-  "toast.pickTime": "Выберите хотя бы одно время на {day}.",
+  "toast.pickTime": "Выберите не менее 2 вариантов времени на {day}.",
   "toast.pickAlliance": "Выберите свой альянс.",
   "toast.alreadySignedUp": "Этот игровой ID уже зарегистрирован. Заявки нельзя изменять.",
   "toast.signedUp": "Вы зарегистрировались",

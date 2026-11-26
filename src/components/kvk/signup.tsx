@@ -23,6 +23,7 @@ import { errorMessage, useStoredString } from "@/lib/client";
 import {
   ALLIANCES,
   DAYS,
+  MIN_SLOTS,
   DAY_KEYS,
   dayScoreOf,
   formatDuration,
@@ -254,7 +255,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     if (step > 0) {
       const day = DAY_KEYS[step - 1];
       const picked = day === "d1" ? form.d1Slots : form.d4Slots;
-      if (picked.length === 0) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
+      if (picked.length < MIN_SLOTS) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
       return go(step + 1);
     }
     // Step 1: the game ID must be found in the game, in our kingdom and alliances.

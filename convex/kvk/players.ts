@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { cleanEntry, entryValidator, readSettings, withTc } from "../lib/data";
+import { MIN_SLOTS } from "../lib/kvk";
 import { cleanLookupId } from "./lookup";
 
 // Game ID is the only "login". Not secure on purpose: anyone who knows an ID can see that entry.
@@ -39,8 +40,8 @@ export const save = mutation({
       alliance: lookup.alliance ?? "",
       tcLevel: lookup.tcLevel ?? 0,
     });
-    if (entry.d1Slots.length === 0 || entry.d4Slots.length === 0)
-      throw new ConvexError("Pick at least one time for Day 1 and for Day 4.");
+    if (entry.d1Slots.length < MIN_SLOTS || entry.d4Slots.length < MIN_SLOTS)
+      throw new ConvexError(`Pick at least ${MIN_SLOTS} times for Day 1 and for Day 4.`);
 
     const existing = await ctx.db
       .query("players")
