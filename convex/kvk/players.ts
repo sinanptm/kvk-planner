@@ -40,8 +40,11 @@ export const save = mutation({
       alliance: lookup.alliance ?? "",
       tcLevel: lookup.tcLevel ?? 0,
     });
-    if ([entry.d1Slots, entry.d2Slots, entry.d4Slots].some((slots) => slots.length < MIN_SLOTS))
-      throw new ConvexError(`Pick at least ${MIN_SLOTS} times for each day.`);
+    // A day with no times is skipped (no turn needed). Days taken need at least MIN_SLOTS times.
+    const daySlots = [entry.d1Slots, entry.d2Slots, entry.d4Slots];
+    if (daySlots.every((slots) => slots.length === 0)) throw new ConvexError("Pick times for at least one day.");
+    if (daySlots.some((slots) => slots.length > 0 && slots.length < MIN_SLOTS))
+      throw new ConvexError(`Pick at least ${MIN_SLOTS} times for each day you take part in.`);
 
     const existing = await ctx.db
       .query("players")

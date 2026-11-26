@@ -2,6 +2,7 @@
 
 import { CalendarDays, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -162,13 +163,22 @@ export function DetailsCard({
 
 // Speedups and available times for one day.
 // tcEditable is false at sign-up, where the Town Center level comes from the game.
+// With onSkipChange, the player can say they don't need a turn that day (skipped hides the fields).
 export function DayCard({
   day,
   form,
   set,
   step,
   tcEditable = true,
-}: FieldProps & { day: DayKey; step: number; tcEditable?: boolean }) {
+  skipped = false,
+  onSkipChange,
+}: FieldProps & {
+  day: DayKey;
+  step: number;
+  tcEditable?: boolean;
+  skipped?: boolean;
+  onSkipChange?: (skipped: boolean) => void;
+}) {
   const today = useToday();
   const { t } = useLanguage();
   const date = useDayDate()(day, true);
@@ -197,6 +207,26 @@ export function DayCard({
           </span>
         </CardDescription>
       </CardHeader>
+      {onSkipChange && (
+        <CardContent className="-mt-2">
+          <label
+            className={cn(
+              "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors",
+              skipped ? "border-primary/50 bg-primary/10" : "hover:bg-muted/50",
+            )}
+          >
+            <span className="flex-1 font-medium">{t("day.skip", { day: t(`day.${day}`) })}</span>
+            <Switch checked={skipped} onCheckedChange={(v) => onSkipChange(v)} />
+          </label>
+        </CardContent>
+      )}
+      {skipped ? (
+        <CardContent>
+          <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+            {t("day.skipped", { day: t(`day.${day}`) })}
+          </p>
+        </CardContent>
+      ) : (
       <CardContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-5">
           {SPEEDUP_FIELDS[day].map((key) => (
@@ -246,6 +276,7 @@ export function DayCard({
         )}
         <SlotGrid value={form[slotsKey]} onChange={(s) => set(slotsKey, s)} />
       </CardContent>
+      )}
     </Card>
   );
 }

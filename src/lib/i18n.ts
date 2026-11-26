@@ -32,6 +32,7 @@ const en = {
   "entry.total": "Total",
   "entry.timesPicked": "{n} times picked (UTC)",
   "entry.noTimes": "No times picked",
+  "entry.skipped": "No turn needed",
 
   "turns.title": "Your turns",
   "turns.desc": "The schedule is out. Be online at the start of your turn.",
@@ -61,6 +62,8 @@ const en = {
   "field.alliance": "Alliance",
 
   "day.appointment": "Appointment:",
+  "day.skip": "I don't need a turn on {day}",
+  "day.skipped": "Skipped — you won't get a turn on {day}. Turn the switch off if you need one.",
   "day.total": "{day} total",
   "speedup.d1Construction": "Construction speedups",
   "speedup.d2Research": "Research speedups",
@@ -100,6 +103,7 @@ const en = {
   "action.saving": "Saving…",
 
   "toast.pickTime": "Pick at least 2 times for {day}.",
+  "toast.allSkipped": "Pick times for at least one day.",
   "toast.pickAlliance": "Pick your alliance.",
   "toast.alreadySignedUp": "This game ID is already signed up. Entries can't be edited.",
   "toast.signedUp": "You're signed up",
@@ -148,6 +152,7 @@ const id: Dictionary = {
   "entry.total": "Total",
   "entry.timesPicked": "{n} waktu dipilih (UTC)",
   "entry.noTimes": "Tidak ada waktu dipilih",
+  "entry.skipped": "Tidak butuh giliran",
 
   "turns.title": "Giliran Anda",
   "turns.desc": "Jadwal sudah keluar. Online saat giliran Anda dimulai.",
@@ -177,6 +182,8 @@ const id: Dictionary = {
   "field.alliance": "Aliansi",
 
   "day.appointment": "Penunjukan:",
+  "day.skip": "Saya tidak butuh giliran di {day}",
+  "day.skipped": "Dilewati — Anda tidak akan mendapat giliran di {day}. Matikan sakelar jika butuh.",
   "day.total": "Total {day}",
   "speedup.d1Construction": "Percepatan konstruksi",
   "speedup.d2Research": "Percepatan riset",
@@ -217,6 +224,7 @@ const id: Dictionary = {
   "action.saving": "Menyimpan…",
 
   "toast.pickTime": "Pilih minimal 2 waktu untuk {day}.",
+  "toast.allSkipped": "Pilih waktu untuk minimal satu hari.",
   "toast.pickAlliance": "Pilih aliansi Anda.",
   "toast.alreadySignedUp": "ID game ini sudah terdaftar. Data tidak bisa diubah.",
   "toast.signedUp": "Anda sudah terdaftar",
@@ -261,6 +269,7 @@ const zh: Dictionary = {
   "entry.total": "合计",
   "entry.timesPicked": "已选 {n} 个时间（UTC）",
   "entry.noTimes": "未选择时间",
+  "entry.skipped": "不需要时段",
 
   "turns.title": "你的时段",
   "turns.desc": "时间表已公布。请在你的时段开始时在线。",
@@ -290,6 +299,8 @@ const zh: Dictionary = {
   "field.alliance": "联盟",
 
   "day.appointment": "任命：",
+  "day.skip": "我{day}不需要时段",
+  "day.skipped": "已跳过 — 你在{day}不会获得时段。如需要请关闭开关。",
   "day.total": "{day}合计",
   "speedup.d1Construction": "建造加速",
   "speedup.d2Research": "研究加速",
@@ -329,6 +340,7 @@ const zh: Dictionary = {
   "action.saving": "保存中…",
 
   "toast.pickTime": "请为{day}至少选择 2 个时间。",
+  "toast.allSkipped": "请至少为一天选择时间。",
   "toast.pickAlliance": "请选择你的联盟。",
   "toast.alreadySignedUp": "该游戏 ID 已报名，无法修改。",
   "toast.signedUp": "报名成功",
@@ -374,6 +386,7 @@ const fr: Dictionary = {
   "entry.total": "Total",
   "entry.timesPicked": "{n} créneaux choisis (UTC)",
   "entry.noTimes": "Aucun créneau choisi",
+  "entry.skipped": "Pas besoin de créneau",
 
   "turns.title": "Vos tours",
   "turns.desc": "Le planning est publié. Soyez en ligne au début de votre tour.",
@@ -403,6 +416,8 @@ const fr: Dictionary = {
   "field.alliance": "Alliance",
 
   "day.appointment": "Nomination :",
+  "day.skip": "Je n'ai pas besoin de créneau le {day}",
+  "day.skipped": "Ignoré — vous n'aurez pas de créneau le {day}. Désactivez l'interrupteur si besoin.",
   "day.total": "Total {day}",
   "speedup.d1Construction": "Accélérations de construction",
   "speedup.d2Research": "Accélérations de recherche",
@@ -443,6 +458,7 @@ const fr: Dictionary = {
   "action.saving": "Enregistrement…",
 
   "toast.pickTime": "Choisissez au moins 2 créneaux pour le {day}.",
+  "toast.allSkipped": "Choisissez des créneaux pour au moins un jour.",
   "toast.pickAlliance": "Choisissez votre alliance.",
   "toast.alreadySignedUp": "Cet ID de jeu est déjà inscrit. Impossible de modifier.",
   "toast.signedUp": "Vous êtes inscrit",
@@ -488,6 +504,7 @@ const tr: Dictionary = {
   "entry.total": "Toplam",
   "entry.timesPicked": "{n} saat seçildi (UTC)",
   "entry.noTimes": "Saat seçilmedi",
+  "entry.skipped": "Sıra gerekmiyor",
 
   "turns.title": "Sıralarınız",
   "turns.desc": "Program yayınlandı. Sıranız başlarken çevrimiçi olun.",
@@ -517,6 +534,8 @@ const tr: Dictionary = {
   "field.alliance": "İttifak",
 
   "day.appointment": "Atama:",
+  "day.skip": "{day} için sıraya ihtiyacım yok",
+  "day.skipped": "Atlandı — {day} için sıra almayacaksınız. Gerekirse anahtarı kapatın.",
   "day.total": "{day} toplamı",
   "speedup.d1Construction": "İnşaat hızlandırmaları",
   "speedup.d2Research": "Araştırma hızlandırmaları",
@@ -556,6 +575,7 @@ const tr: Dictionary = {
   "action.saving": "Kaydediliyor…",
 
   "toast.pickTime": "{day} için en az 2 saat seçin.",
+  "toast.allSkipped": "En az bir gün için saat seçin.",
   "toast.pickAlliance": "İttifakınızı seçin.",
   "toast.alreadySignedUp": "Bu oyun ID'si zaten kayıtlı. Kayıtlar düzenlenemez.",
   "toast.signedUp": "Kaydınız alındı",
@@ -601,6 +621,7 @@ const de: Dictionary = {
   "entry.total": "Gesamt",
   "entry.timesPicked": "{n} Zeiten gewählt (UTC)",
   "entry.noTimes": "Keine Zeiten gewählt",
+  "entry.skipped": "Kein Slot nötig",
 
   "turns.title": "Deine Slots",
   "turns.desc": "Der Zeitplan ist da. Sei zu Beginn deines Slots online.",
@@ -630,6 +651,8 @@ const de: Dictionary = {
   "field.alliance": "Allianz",
 
   "day.appointment": "Ernennung:",
+  "day.skip": "Ich brauche an {day} keinen Slot",
+  "day.skipped": "Übersprungen — du bekommst an {day} keinen Slot. Schalter ausschalten, falls doch.",
   "day.total": "{day} gesamt",
   "speedup.d1Construction": "Bau-Beschleunigungen",
   "speedup.d2Research": "Forschungs-Beschleunigungen",
@@ -670,6 +693,7 @@ const de: Dictionary = {
   "action.saving": "Speichern…",
 
   "toast.pickTime": "Wähle mindestens 2 Zeiten für {day}.",
+  "toast.allSkipped": "Wähle Zeiten für mindestens einen Tag.",
   "toast.pickAlliance": "Wähle deine Allianz.",
   "toast.alreadySignedUp": "Diese Spiel-ID ist bereits angemeldet. Anmeldungen können nicht geändert werden.",
   "toast.signedUp": "Du bist angemeldet",
@@ -715,6 +739,7 @@ const es: Dictionary = {
   "entry.total": "Total",
   "entry.timesPicked": "{n} horas elegidas (UTC)",
   "entry.noTimes": "Ninguna hora elegida",
+  "entry.skipped": "No necesita turno",
 
   "turns.title": "Tus turnos",
   "turns.desc": "El horario ya está publicado. Conéctate al inicio de tu turno.",
@@ -744,6 +769,8 @@ const es: Dictionary = {
   "field.alliance": "Alianza",
 
   "day.appointment": "Nombramiento:",
+  "day.skip": "No necesito turno el {day}",
+  "day.skipped": "Omitido: no tendrás turno el {day}. Desactiva el interruptor si lo necesitas.",
   "day.total": "Total del {day}",
   "speedup.d1Construction": "Aceleradores de construcción",
   "speedup.d2Research": "Aceleradores de investigación",
@@ -783,6 +810,7 @@ const es: Dictionary = {
   "action.saving": "Guardando…",
 
   "toast.pickTime": "Elige al menos 2 horas para el {day}.",
+  "toast.allSkipped": "Elige horas para al menos un día.",
   "toast.pickAlliance": "Elige tu alianza.",
   "toast.alreadySignedUp": "Este ID de juego ya está inscrito. Las inscripciones no se pueden editar.",
   "toast.signedUp": "Te has inscrito",
@@ -828,6 +856,7 @@ const ar: Dictionary = {
   "entry.total": "المجموع",
   "entry.timesPicked": "تم اختيار {n} أوقات (UTC)",
   "entry.noTimes": "لم يتم اختيار أي وقت",
+  "entry.skipped": "لا حاجة لدور",
 
   "turns.title": "أدوارك",
   "turns.desc": "تم نشر الجدول. كن متصلاً عند بداية دورك.",
@@ -857,6 +886,8 @@ const ar: Dictionary = {
   "field.alliance": "التحالف",
 
   "day.appointment": "التعيين:",
+  "day.skip": "لا أحتاج دوراً في {day}",
+  "day.skipped": "تم التخطي — لن تحصل على دور في {day}. أوقف المفتاح إذا احتجت دوراً.",
   "day.total": "مجموع {day}",
   "speedup.d1Construction": "تسريعات البناء",
   "speedup.d2Research": "تسريعات البحث",
@@ -896,6 +927,7 @@ const ar: Dictionary = {
   "action.saving": "جارٍ الحفظ…",
 
   "toast.pickTime": "اختر وقتين على الأقل لـ{day}.",
+  "toast.allSkipped": "اختر أوقاتاً ليوم واحد على الأقل.",
   "toast.pickAlliance": "اختر تحالفك.",
   "toast.alreadySignedUp": "معرّف اللعبة هذا مسجّل بالفعل. لا يمكن تعديل التسجيلات.",
   "toast.signedUp": "تم تسجيلك",
@@ -941,6 +973,7 @@ const uk: Dictionary = {
   "entry.total": "Разом",
   "entry.timesPicked": "Вибрано часу: {n} (UTC)",
   "entry.noTimes": "Час не вибрано",
+  "entry.skipped": "Черга не потрібна",
 
   "turns.title": "Ваші черги",
   "turns.desc": "Розклад опубліковано. Будьте онлайн на початку своєї черги.",
@@ -970,6 +1003,8 @@ const uk: Dictionary = {
   "field.alliance": "Альянс",
 
   "day.appointment": "Призначення:",
+  "day.skip": "Мені не потрібна черга в {day}",
+  "day.skipped": "Пропущено — у {day} ви не отримаєте черги. Вимкніть перемикач, якщо потрібно.",
   "day.total": "Разом за {day}",
   "speedup.d1Construction": "Прискорення будівництва",
   "speedup.d2Research": "Прискорення досліджень",
@@ -1009,6 +1044,7 @@ const uk: Dictionary = {
   "action.saving": "Збереження…",
 
   "toast.pickTime": "Виберіть щонайменше 2 варіанти часу на {day}.",
+  "toast.allSkipped": "Виберіть час хоча б для одного дня.",
   "toast.pickAlliance": "Виберіть свій альянс.",
   "toast.alreadySignedUp": "Цей ігровий ID уже зареєстровано. Заявки не можна змінювати.",
   "toast.signedUp": "Ви зареєструвалися",
@@ -1054,6 +1090,7 @@ const ru: Dictionary = {
   "entry.total": "Итого",
   "entry.timesPicked": "Выбрано времени: {n} (UTC)",
   "entry.noTimes": "Время не выбрано",
+  "entry.skipped": "Очередь не нужна",
 
   "turns.title": "Ваши очереди",
   "turns.desc": "Расписание опубликовано. Будьте в сети в начале своей очереди.",
@@ -1083,6 +1120,8 @@ const ru: Dictionary = {
   "field.alliance": "Альянс",
 
   "day.appointment": "Назначение:",
+  "day.skip": "Мне не нужна очередь в {day}",
+  "day.skipped": "Пропущено — в {day} вы не получите очередь. Выключите переключатель, если нужно.",
   "day.total": "Итого за {day}",
   "speedup.d1Construction": "Ускорения строительства",
   "speedup.d2Research": "Ускорения исследований",
@@ -1122,6 +1161,7 @@ const ru: Dictionary = {
   "action.saving": "Сохранение…",
 
   "toast.pickTime": "Выберите не менее 2 вариантов времени на {day}.",
+  "toast.allSkipped": "Выберите время хотя бы для одного дня.",
   "toast.pickAlliance": "Выберите свой альянс.",
   "toast.alreadySignedUp": "Этот игровой ID уже зарегистрирован. Заявки нельзя изменять.",
   "toast.signedUp": "Вы зарегистрировались",

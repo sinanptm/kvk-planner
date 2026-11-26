@@ -138,6 +138,10 @@ function EntrySummary({ entry, title, description }: { entry: Entry; title?: str
                 {t(`day.${day}`)}
                 {dateOf(day) && ` · ${dateOf(day)}`} · {t(`day.${day}.title`)}
               </p>
+              {slots.length === 0 ? (
+                <p className="py-4 text-center text-sm font-medium text-muted-foreground">{t("entry.skipped")}</p>
+              ) : (
+              <>
               <dl className="flex flex-col gap-1 text-sm">
                 {day === "d1" && (
                   <>
@@ -174,6 +178,8 @@ function EntrySummary({ entry, title, description }: { entry: Entry; title?: str
                   ))}
                 </div>
               </div>
+              </>
+              )}
             </div>
           );
         })}
@@ -237,6 +243,17 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   // Result of checking the game ID, and the ID it was for (typing a new ID clears it).
   const [lookup, setLookup] = useState<{ id: string; result: LookupResult } | null>(null);
   const [form, setForm] = useState<Entry>(EMPTY_ENTRY);
+  // Days the player said they don't need a turn on. Their speedups and times are cleared.
+  const [skipped, setSkipped] = useState<DayKey[]>([]);
+  const setSkip = (day: DayKey, skip: boolean) => {
+    setSkipped((s) => (skip ? [...s, day] : s.filter((d) => d !== day)));
+    if (skip)
+      setForm((f) => ({
+        ...f,
+        [SLOTS_KEY[day]]: [],
+        ...Object.fromEntries(SPEEDUP_FIELDS[day].map((key) => [key, 0])),
+      }));
+  };
   const [step, setStep] = useState(0);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -256,7 +273,9 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     if (step > 0) {
       const day = DAY_KEYS[step - 1];
       const picked = form[SLOTS_KEY[day]];
-      if (picked.length < MIN_SLOTS) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
+      if (!skipped.includes(day) && picked.length < MIN_SLOTS)
+        return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
+      if (step === DAY_KEYS.length && skipped.length === DAY_KEYS.length) return void toast.error(t("toast.allSkipped"));
       return go(step + 1);
     }
     // Step 1: the game ID must be found in the game, in our kingdom and alliances.
@@ -333,7 +352,19 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
         />
       )}
       {DAY_KEYS.map(
-        (day, i) => step === i + 1 && <DayCard key={day} day={day} form={form} set={set} step={i + 2} tcEditable={false} />,
+        (day, i) =>
+          step === i + 1 && (
+            <DayCard
+              key={day}
+              day={day}
+              form={form}
+              set={set}
+              step={i + 2}
+              tcEditable={false}
+              skipped={skipped.includes(day)}
+              onSkipChange={(skip) => setSkip(day, skip)}
+            />
+          ),
       )}
       {step === last && (
         <EntrySummary
