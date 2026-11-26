@@ -13,6 +13,9 @@ import { ALLIANCES, ALLIANCE_STYLES, tcLabel } from "@/lib/kvk";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
 
+// Two letters for the round badge; skips digits and symbols ("169Uno" → "UN"), "?" if none.
+const initials = (name: string) => (name.match(/\p{L}/gu) ?? ["?"]).slice(0, 2).join("");
+
 const timeAgo = (ms: number) => {
   const minutes = Math.round((Date.now() - ms) / 60_000);
   if (minutes < 1) return "just now";
@@ -199,7 +202,7 @@ export function AdminMissing({ password }: { password: string }) {
                     {g.members.map((m) => (
                       <li key={m.gameId} className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
-                          {[...m.name].slice(0, 2).join("")}
+                          {initials(m.name)}
                         </span>
                         <div className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm font-medium">{m.name}</span>
