@@ -203,6 +203,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold">
           {DAYS[day].label} · {DAYS[day].title}
@@ -235,6 +236,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           <Trash2 data-icon="inline-start" />
           Clear day
         </ConfirmButton>
+      </div>
       </div>
 
       <AlertDialog open={previewing} onOpenChange={setPreviewing}>

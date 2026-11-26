@@ -94,6 +94,8 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
 }
 
 const ADMIN_TABS = ["d1", "d4", "players", "missing"] as const;
+// Tabs share the width on phones and sit as a compact bar on wide screens.
+const TAB_CLASS = "flex-1 gap-1.5 lg:flex-none lg:px-6";
 
 function AdminDashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
   const data = useQuery(api.kvk.admin.dashboard, { password });
@@ -119,9 +121,15 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
 
   return (
     <>
-      <PublishBanner password={password} data={data} />
-      <EventDates password={password} data={data} />
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      {/* Phones stack these; wide screens put status, dates and numbers in one row. */}
+      <div className="grid gap-3 xl:grid-cols-12">
+      <div className="xl:col-span-4">
+        <PublishBanner password={password} data={data} />
+      </div>
+      <div className="xl:col-span-3">
+        <EventDates password={password} data={data} />
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 xl:col-span-5">
         <Stat icon={Users} label="Players signed up" shortLabel="Players" value={data.players.length} />
         {DAY_KEYS.map((day) => {
           const filled = data.turns.filter((t) => t.day === day).length;
@@ -137,17 +145,19 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
           );
         })}
       </div>
+      </div>
       <Tabs value={tab} onValueChange={(value) => void setTab(value as (typeof ADMIN_TABS)[number])}>
-        <TabsList className="w-full">
+        <TabsList className="w-full group-data-horizontal/tabs:h-10 lg:w-auto lg:self-start">
           {DAY_KEYS.map((day) => (
-            <TabsTrigger key={day} value={day} className="flex-1">
+            <TabsTrigger key={day} value={day} className={TAB_CLASS}>
               {DAYS[day].label}
             </TabsTrigger>
           ))}
-          <TabsTrigger value="players" className="flex-1">
+          <TabsTrigger value="players" className={TAB_CLASS}>
             Players
+            <span className="hidden font-mono text-xs text-muted-foreground sm:inline">{data.players.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="missing" className="flex-1">
+          <TabsTrigger value="missing" className={TAB_CLASS}>
             Missing
           </TabsTrigger>
         </TabsList>
@@ -224,7 +234,7 @@ function PublishBanner({ password, data }: { password: string; data: Dashboard }
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center",
+        "flex h-full flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center",
         published ? "border-success/40 bg-success/10" : "border-warning/40 bg-warning/10",
       )}
     >
@@ -245,12 +255,12 @@ function PublishBanner({ password, data }: { password: string; data: Dashboard }
         </div>
       </div>
       {published ? (
-        <Button variant="outline" className="h-11 px-5" disabled={busy} onClick={() => setPublished(false)}>
+        <Button variant="outline" className="h-11 shrink-0 px-5" disabled={busy} onClick={() => setPublished(false)}>
           <EyeOff data-icon="inline-start" />
           Unpublish
         </Button>
       ) : (
-        <Button className="h-11 px-6 text-base" disabled={busy} onClick={() => setPublished(true)}>
+        <Button className="h-11 shrink-0 px-6 text-base" disabled={busy} onClick={() => setPublished(true)}>
           <Send data-icon="inline-start" />
           Publish schedule
         </Button>
@@ -276,8 +286,8 @@ function EventDates({ password, data }: { password: string; data: Dashboard }) {
   };
 
   return (
-    <Card size="sm">
-      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <Card size="sm" className="h-full justify-center">
+      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center xl:flex-col xl:items-stretch 2xl:flex-row 2xl:items-center">
         <div className="flex flex-1 items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
             <CalendarDays className="size-5" />
