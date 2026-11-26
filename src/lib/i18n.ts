@@ -11,8 +11,10 @@ const en = {
   "lang.label": "Language",
 
   "day.d1": "Day 1",
+  "day.d2": "Day 2",
   "day.d4": "Day 4",
-  "day.d1.title": "Construction & Research",
+  "day.d1.title": "Construction",
+  "day.d2.title": "Research",
   "day.d4.title": "Training",
 
   "signup.title": "Appointment sign-up",
@@ -61,7 +63,8 @@ const en = {
   "day.appointment": "Appointment:",
   "day.total": "{day} total",
   "speedup.d1Construction": "Construction speedups",
-  "speedup.d1Research": "Research speedups",
+  "speedup.d2Research": "Research speedups",
+  "speedup.d2General": "General speedups for Day 2",
   "speedup.d1General": "General speedups for Day 1",
   "speedup.d4Training": "Training speedups",
   "speedup.d4General": "General speedups for Day 4",
@@ -84,6 +87,8 @@ const en = {
   "times.clear": "Clear",
   "times.pickAll": "Pick all",
   "times.clearThese": "Clear these",
+  "times.sameAs": "Same times as {day}",
+  "times.sameAsDone": "Same as {day}",
 
   "review.title": "Review your entry",
   "review.desc": "Signing up as {name} · ID {id}. Go back to fix anything now — you can't after you submit.",
@@ -122,8 +127,10 @@ const id: Dictionary = {
   "lang.label": "Bahasa",
 
   "day.d1": "Hari 1",
+  "day.d2": "Hari 2",
   "day.d4": "Hari 4",
-  "day.d1.title": "Konstruksi & Riset",
+  "day.d1.title": "Konstruksi",
+  "day.d2.title": "Riset",
   "day.d4.title": "Pelatihan",
 
   "signup.title": "Pendaftaran penunjukan",
@@ -172,7 +179,8 @@ const id: Dictionary = {
   "day.appointment": "Penunjukan:",
   "day.total": "Total {day}",
   "speedup.d1Construction": "Percepatan konstruksi",
-  "speedup.d1Research": "Percepatan riset",
+  "speedup.d2Research": "Percepatan riset",
+  "speedup.d2General": "Percepatan umum untuk Hari 2",
   "speedup.d1General": "Percepatan umum untuk Hari 1",
   "speedup.d4Training": "Percepatan pelatihan",
   "speedup.d4General": "Percepatan umum untuk Hari 4",
@@ -195,6 +203,8 @@ const id: Dictionary = {
   "times.clear": "Hapus",
   "times.pickAll": "Pilih semua",
   "times.clearThese": "Hapus ini",
+  "times.sameAs": "Waktu sama dengan {day}",
+  "times.sameAsDone": "Sama dengan {day}",
 
   "review.title": "Tinjau data Anda",
   "review.desc":
@@ -231,8 +241,10 @@ const zh: Dictionary = {
   "lang.label": "语言",
 
   "day.d1": "第1天",
+  "day.d2": "第2天",
   "day.d4": "第4天",
-  "day.d1.title": "建造与研究",
+  "day.d1.title": "建造",
+  "day.d2.title": "研究",
   "day.d4.title": "训练",
 
   "signup.title": "任命报名",
@@ -280,7 +292,8 @@ const zh: Dictionary = {
   "day.appointment": "任命：",
   "day.total": "{day}合计",
   "speedup.d1Construction": "建造加速",
-  "speedup.d1Research": "研究加速",
+  "speedup.d2Research": "研究加速",
+  "speedup.d2General": "用于第2天的通用加速",
   "speedup.d1General": "用于第1天的通用加速",
   "speedup.d4Training": "训练加速",
   "speedup.d4General": "用于第4天的通用加速",
@@ -303,6 +316,8 @@ const zh: Dictionary = {
   "times.clear": "清空",
   "times.pickAll": "全选",
   "times.clearThese": "清空这些",
+  "times.sameAs": "与{day}相同的时间",
+  "times.sameAsDone": "已与{day}相同",
 
   "review.title": "确认你的报名",
   "review.desc": "以 {name} · ID {id} 报名。现在可以返回修改，提交后无法修改。",
@@ -338,8 +353,10 @@ const fr: Dictionary = {
   "lang.label": "Langue",
 
   "day.d1": "Jour 1",
+  "day.d2": "Jour 2",
   "day.d4": "Jour 4",
-  "day.d1.title": "Construction et recherche",
+  "day.d1.title": "Construction",
+  "day.d2.title": "Recherche",
   "day.d4.title": "Entraînement",
 
   "signup.title": "Inscription aux nominations",
@@ -388,7 +405,8 @@ const fr: Dictionary = {
   "day.appointment": "Nomination :",
   "day.total": "Total {day}",
   "speedup.d1Construction": "Accélérations de construction",
-  "speedup.d1Research": "Accélérations de recherche",
+  "speedup.d2Research": "Accélérations de recherche",
+  "speedup.d2General": "Accélérations générales pour le Jour 2",
   "speedup.d1General": "Accélérations générales pour le Jour 1",
   "speedup.d4Training": "Accélérations d'entraînement",
   "speedup.d4General": "Accélérations générales pour le Jour 4",
@@ -411,6 +429,8 @@ const fr: Dictionary = {
   "times.clear": "Effacer",
   "times.pickAll": "Tout choisir",
   "times.clearThese": "Effacer ceux-ci",
+  "times.sameAs": "Mêmes créneaux que le {day}",
+  "times.sameAsDone": "Identique au {day}",
 
   "review.title": "Vérifiez votre inscription",
   "review.desc":
@@ -447,8 +467,10 @@ const tr: Dictionary = {
   "lang.label": "Dil",
 
   "day.d1": "1. Gün",
+  "day.d2": "2. Gün",
   "day.d4": "4. Gün",
-  "day.d1.title": "İnşaat ve Araştırma",
+  "day.d1.title": "İnşaat",
+  "day.d2.title": "Araştırma",
   "day.d4.title": "Eğitim",
 
   "signup.title": "Atama kaydı",
@@ -497,7 +519,8 @@ const tr: Dictionary = {
   "day.appointment": "Atama:",
   "day.total": "{day} toplamı",
   "speedup.d1Construction": "İnşaat hızlandırmaları",
-  "speedup.d1Research": "Araştırma hızlandırmaları",
+  "speedup.d2Research": "Araştırma hızlandırmaları",
+  "speedup.d2General": "2. Gün için genel hızlandırmalar",
   "speedup.d1General": "1. Gün için genel hızlandırmalar",
   "speedup.d4Training": "Eğitim hızlandırmaları",
   "speedup.d4General": "4. Gün için genel hızlandırmalar",
@@ -520,6 +543,8 @@ const tr: Dictionary = {
   "times.clear": "Temizle",
   "times.pickAll": "Tümünü seç",
   "times.clearThese": "Bunları temizle",
+  "times.sameAs": "{day} ile aynı saatler",
+  "times.sameAsDone": "{day} ile aynı",
 
   "review.title": "Kaydınızı kontrol edin",
   "review.desc": "{name} · ID {id} olarak kayıt oluyorsunuz. Şimdi geri dönüp düzeltin — gönderdikten sonra olmaz.",
@@ -555,8 +580,10 @@ const de: Dictionary = {
   "lang.label": "Sprache",
 
   "day.d1": "Tag 1",
+  "day.d2": "Tag 2",
   "day.d4": "Tag 4",
-  "day.d1.title": "Bau & Forschung",
+  "day.d1.title": "Bau",
+  "day.d2.title": "Forschung",
   "day.d4.title": "Training",
 
   "signup.title": "Anmeldung für Ernennungen",
@@ -605,7 +632,8 @@ const de: Dictionary = {
   "day.appointment": "Ernennung:",
   "day.total": "{day} gesamt",
   "speedup.d1Construction": "Bau-Beschleunigungen",
-  "speedup.d1Research": "Forschungs-Beschleunigungen",
+  "speedup.d2Research": "Forschungs-Beschleunigungen",
+  "speedup.d2General": "Allgemeine Beschleunigungen für Tag 2",
   "speedup.d1General": "Allgemeine Beschleunigungen für Tag 1",
   "speedup.d4Training": "Trainings-Beschleunigungen",
   "speedup.d4General": "Allgemeine Beschleunigungen für Tag 4",
@@ -628,6 +656,8 @@ const de: Dictionary = {
   "times.clear": "Leeren",
   "times.pickAll": "Alle wählen",
   "times.clearThese": "Diese leeren",
+  "times.sameAs": "Gleiche Zeiten wie {day}",
+  "times.sameAsDone": "Gleich wie {day}",
 
   "review.title": "Prüfe deine Anmeldung",
   "review.desc":
@@ -664,8 +694,10 @@ const es: Dictionary = {
   "lang.label": "Idioma",
 
   "day.d1": "Día 1",
+  "day.d2": "Día 2",
   "day.d4": "Día 4",
-  "day.d1.title": "Construcción e investigación",
+  "day.d1.title": "Construcción",
+  "day.d2.title": "Investigación",
   "day.d4.title": "Entrenamiento",
 
   "signup.title": "Inscripción a nombramientos",
@@ -714,7 +746,8 @@ const es: Dictionary = {
   "day.appointment": "Nombramiento:",
   "day.total": "Total del {day}",
   "speedup.d1Construction": "Aceleradores de construcción",
-  "speedup.d1Research": "Aceleradores de investigación",
+  "speedup.d2Research": "Aceleradores de investigación",
+  "speedup.d2General": "Aceleradores generales para el Día 2",
   "speedup.d1General": "Aceleradores generales para el Día 1",
   "speedup.d4Training": "Aceleradores de entrenamiento",
   "speedup.d4General": "Aceleradores generales para el Día 4",
@@ -737,6 +770,8 @@ const es: Dictionary = {
   "times.clear": "Borrar",
   "times.pickAll": "Elegir todos",
   "times.clearThese": "Borrar estos",
+  "times.sameAs": "Mismas horas que el {day}",
+  "times.sameAsDone": "Igual que el {day}",
 
   "review.title": "Revisa tu inscripción",
   "review.desc": "Te inscribes como {name} · ID {id}. Vuelve atrás para corregir algo ahora: no podrás después de enviarlo.",
@@ -772,8 +807,10 @@ const ar: Dictionary = {
   "lang.label": "اللغة",
 
   "day.d1": "اليوم 1",
+  "day.d2": "اليوم 2",
   "day.d4": "اليوم 4",
-  "day.d1.title": "البناء والبحث",
+  "day.d1.title": "البناء",
+  "day.d2.title": "البحث",
   "day.d4.title": "التدريب",
 
   "signup.title": "التسجيل في التعيينات",
@@ -822,7 +859,8 @@ const ar: Dictionary = {
   "day.appointment": "التعيين:",
   "day.total": "مجموع {day}",
   "speedup.d1Construction": "تسريعات البناء",
-  "speedup.d1Research": "تسريعات البحث",
+  "speedup.d2Research": "تسريعات البحث",
+  "speedup.d2General": "تسريعات عامة لليوم 2",
   "speedup.d1General": "تسريعات عامة لليوم 1",
   "speedup.d4Training": "تسريعات التدريب",
   "speedup.d4General": "تسريعات عامة لليوم 4",
@@ -845,6 +883,8 @@ const ar: Dictionary = {
   "times.clear": "مسح",
   "times.pickAll": "اختيار الكل",
   "times.clearThese": "مسح هذه",
+  "times.sameAs": "نفس أوقات {day}",
+  "times.sameAsDone": "مطابق لـ{day}",
 
   "review.title": "راجع تسجيلك",
   "review.desc": "تسجّل باسم {name} · المعرّف {id}. ارجع لتصحيح أي شيء الآن — لن تتمكن بعد الإرسال.",
@@ -880,8 +920,10 @@ const uk: Dictionary = {
   "lang.label": "Мова",
 
   "day.d1": "День 1",
+  "day.d2": "День 2",
   "day.d4": "День 4",
-  "day.d1.title": "Будівництво та дослідження",
+  "day.d1.title": "Будівництво",
+  "day.d2.title": "Дослідження",
   "day.d4.title": "Тренування",
 
   "signup.title": "Реєстрація на призначення",
@@ -930,7 +972,8 @@ const uk: Dictionary = {
   "day.appointment": "Призначення:",
   "day.total": "Разом за {day}",
   "speedup.d1Construction": "Прискорення будівництва",
-  "speedup.d1Research": "Прискорення досліджень",
+  "speedup.d2Research": "Прискорення досліджень",
+  "speedup.d2General": "Загальні прискорення на День 2",
   "speedup.d1General": "Загальні прискорення на День 1",
   "speedup.d4Training": "Прискорення тренування",
   "speedup.d4General": "Загальні прискорення на День 4",
@@ -953,6 +996,8 @@ const uk: Dictionary = {
   "times.clear": "Очистити",
   "times.pickAll": "Вибрати всі",
   "times.clearThese": "Очистити ці",
+  "times.sameAs": "Той самий час, що й {day}",
+  "times.sameAsDone": "Як у {day}",
 
   "review.title": "Перевірте заявку",
   "review.desc": "Ви реєструєтеся як {name} · ID {id}. Поверніться й виправте зараз — після надсилання не вийде.",
@@ -988,8 +1033,10 @@ const ru: Dictionary = {
   "lang.label": "Язык",
 
   "day.d1": "День 1",
+  "day.d2": "День 2",
   "day.d4": "День 4",
-  "day.d1.title": "Строительство и исследования",
+  "day.d1.title": "Строительство",
+  "day.d2.title": "Исследования",
   "day.d4.title": "Обучение",
 
   "signup.title": "Регистрация на назначения",
@@ -1038,7 +1085,8 @@ const ru: Dictionary = {
   "day.appointment": "Назначение:",
   "day.total": "Итого за {day}",
   "speedup.d1Construction": "Ускорения строительства",
-  "speedup.d1Research": "Ускорения исследований",
+  "speedup.d2Research": "Ускорения исследований",
+  "speedup.d2General": "Общие ускорения на День 2",
   "speedup.d1General": "Общие ускорения на День 1",
   "speedup.d4Training": "Ускорения обучения",
   "speedup.d4General": "Общие ускорения на День 4",
@@ -1061,6 +1109,8 @@ const ru: Dictionary = {
   "times.clear": "Очистить",
   "times.pickAll": "Выбрать все",
   "times.clearThese": "Очистить эти",
+  "times.sameAs": "То же время, что в {day}",
+  "times.sameAsDone": "Как в {day}",
 
   "review.title": "Проверьте заявку",
   "review.desc": "Вы регистрируетесь как {name} · ID {id}. Вернитесь и исправьте сейчас — после отправки не получится.",

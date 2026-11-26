@@ -1,22 +1,36 @@
 import { useSyncExternalStore } from "react";
 import { SLOT_COUNT, type DayKey } from "@convex/lib/kvk";
 
-export { ALLIANCES, DAY_KEYS, MIN_SLOTS, SLOT_COUNT, KINGDOM_ID, TC_MAX_LEVEL, TC_MIN_LEVEL, assignDay, tcLabel, tcLabelFull, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
+export { ALLIANCES, DAY_KEYS, MIN_SLOTS, SLOTS_KEY, SLOT_COUNT, KINGDOM_ID, TC_MAX_LEVEL, TC_MIN_LEVEL, assignDay, tcLabel, tcLabelFull, dayScore, rankPlayers, type DayKey } from "@convex/lib/kvk";
 
 // dayScore for objects that only carry the speedup fields (forms, summaries).
 export const dayScoreOf = (
-  e: { d1Construction: number; d1Research: number; d1General: number; d4Training: number; d4General: number },
+  e: {
+    d1Construction: number;
+    d1General: number;
+    d2Research: number;
+    d2General: number;
+    d4Training: number;
+    d4General: number;
+  },
   day: DayKey,
-) => (day === "d1" ? e.d1Construction + e.d1Research + e.d1General : e.d4Training + e.d4General);
+) =>
+  day === "d1" ? e.d1Construction + e.d1General : day === "d2" ? e.d2Research + e.d2General : e.d4Training + e.d4General;
 
 export const SLOTS = Array.from({ length: SLOT_COUNT }, (_, i) => i);
 
 export const DAYS: Record<DayKey, { label: string; title: string; position: string; scoreHint: string }> = {
   d1: {
     label: "Day 1",
-    title: "Construction & Research",
+    title: "Construction",
     position: "Chief Minister",
-    scoreHint: "Construction + research + general speedups",
+    scoreHint: "Construction + general speedups",
+  },
+  d2: {
+    label: "Day 2",
+    title: "Research",
+    position: "Chief Minister",
+    scoreHint: "Research + general speedups",
   },
   d4: {
     label: "Day 4",
@@ -27,7 +41,7 @@ export const DAYS: Record<DayKey, { label: string; title: string; position: stri
 };
 
 // Days after Day 1 that each prep day falls on.
-const DAY_OFFSET: Record<DayKey, number> = { d1: 0, d4: 3 };
+const DAY_OFFSET: Record<DayKey, number> = { d1: 0, d2: 1, d4: 3 };
 
 // The calendar date of a prep day, e.g. "Mon 30 Nov" (or "Monday 30 November" when long).
 // Null until an admin sets the Day 1 date. lang is a language code like "en" or "zh".

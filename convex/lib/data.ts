@@ -71,11 +71,13 @@ export const entryValidator = v.object({
   tcLevel: v.number(),
   truegold: v.number(),
   d1Construction: v.number(),
-  d1Research: v.number(),
   d1General: v.number(),
+  d2Research: v.number(),
+  d2General: v.number(),
   d4Training: v.number(),
   d4General: v.number(),
   d1Slots: v.array(v.number()),
+  d2Slots: v.array(v.number()),
   d4Slots: v.array(v.number()),
 });
 
@@ -99,11 +101,13 @@ export function cleanEntry(args: Infer<typeof entryValidator>) {
     tcLevel: args.tcLevel,
     truegold: Number.isFinite(args.truegold) ? Math.min(Math.max(Math.round(args.truegold), 0), MAX_TRUEGOLD) : 0,
     d1Construction: cleanMinutes(args.d1Construction),
-    d1Research: cleanMinutes(args.d1Research),
     d1General: cleanMinutes(args.d1General),
+    d2Research: cleanMinutes(args.d2Research),
+    d2General: cleanMinutes(args.d2General),
     d4Training: cleanMinutes(args.d4Training),
     d4General: cleanMinutes(args.d4General),
     d1Slots: cleanSlots(args.d1Slots),
+    d2Slots: cleanSlots(args.d2Slots),
     d4Slots: cleanSlots(args.d4Slots),
   };
 }

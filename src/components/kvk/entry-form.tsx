@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import {
   TC_MIN_LEVEL,
   tcLabelFull,
   DAY_KEYS,
+  SLOTS_KEY,
   formatDuration,
   localTimeZone,
   useToday,
@@ -31,11 +33,13 @@ export type Entry = {
   tcLevel: number;
   truegold: number;
   d1Construction: number;
-  d1Research: number;
   d1General: number;
+  d2Research: number;
+  d2General: number;
   d4Training: number;
   d4General: number;
   d1Slots: number[];
+  d2Slots: number[];
   d4Slots: number[];
 };
 
@@ -45,18 +49,21 @@ export const EMPTY_ENTRY: Entry = {
   tcLevel: 0,
   truegold: 0,
   d1Construction: 0,
-  d1Research: 0,
   d1General: 0,
+  d2Research: 0,
+  d2General: 0,
   d4Training: 0,
   d4General: 0,
   d1Slots: [],
+  d2Slots: [],
   d4Slots: [],
 };
 
-type SpeedupKey = "d1Construction" | "d1Research" | "d1General" | "d4Training" | "d4General";
+type SpeedupKey = "d1Construction" | "d1General" | "d2Research" | "d2General" | "d4Training" | "d4General";
 
 export const SPEEDUP_FIELDS: Record<DayKey, SpeedupKey[]> = {
-  d1: ["d1Construction", "d1Research", "d1General"],
+  d1: ["d1Construction", "d1General"],
+  d2: ["d2Research", "d2General"],
   d4: ["d4Training", "d4General"],
 };
 
@@ -67,11 +74,13 @@ export const toEntry = (e: Entry): Entry => ({
   tcLevel: e.tcLevel,
   truegold: e.truegold,
   d1Construction: e.d1Construction,
-  d1Research: e.d1Research,
   d1General: e.d1General,
+  d2Research: e.d2Research,
+  d2General: e.d2General,
   d4Training: e.d4Training,
   d4General: e.d4General,
   d1Slots: e.d1Slots,
+  d2Slots: e.d2Slots,
   d4Slots: e.d4Slots,
 });
 
@@ -162,7 +171,9 @@ export function DayCard({
   const { t } = useLanguage();
   const date = useDayDate()(day, true);
   const total = SPEEDUP_FIELDS[day].reduce((sum, key) => sum + form[key], 0);
-  const slotsKey = day === "d1" ? "d1Slots" : "d4Slots";
+  const slotsKey = SLOTS_KEY[day];
+  // Later days can copy the times picked on an earlier day in one tap.
+  const copyFrom = DAY_KEYS.slice(0, DAY_KEYS.indexOf(day)).filter((d) => form[SLOTS_KEY[d]].length > 0);
   return (
     <Card>
       <CardHeader>
@@ -206,6 +217,28 @@ export function DayCard({
             {today ? ` ${t("times.hintLocal", { tz: localTimeZone() })}` : ""}
           </p>
         </div>
+        {copyFrom.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {copyFrom.map((d) => {
+              const same =
+                form[SLOTS_KEY[d]].length === form[slotsKey].length &&
+                form[SLOTS_KEY[d]].every((s, i) => s === form[slotsKey][i]);
+              return (
+                <Button
+                  key={d}
+                  type="button"
+                  variant={same ? "secondary" : "default"}
+                  disabled={same}
+                  className="h-10"
+                  onClick={() => set(slotsKey, [...form[SLOTS_KEY[d]]])}
+                >
+                  {same ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
+                  {t(same ? "times.sameAsDone" : "times.sameAs", { day: t(`day.${d}`) })}
+                </Button>
+              );
+            })}
+          </div>
+        )}
         <SlotGrid value={form[slotsKey]} onChange={(s) => set(slotsKey, s)} />
       </CardContent>
     </Card>

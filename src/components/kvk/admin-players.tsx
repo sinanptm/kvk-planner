@@ -15,6 +15,8 @@ import {
   ALLIANCE_STYLES,
   DAYS,
   DAY_KEYS,
+  SLOTS_KEY,
+  type DayKey,
   dayScore,
   formatDuration,
   formatTruegold,
@@ -32,7 +34,7 @@ import { ConfirmButton } from "./confirm-button";
 import { EntryFields, toEntry, type Entry } from "./entry-form";
 
 type Player = Dashboard["players"][number];
-type TurnOf = (gameId: string, day: "d1" | "d4") => unknown;
+type TurnOf = (gameId: string, day: DayKey) => unknown;
 type StatusTest = (p: Player, turnOf: TurnOf) => boolean;
 
 // Quick filters for the player list. Each one is ?show=<key> in the URL.
@@ -40,6 +42,7 @@ const STATUSES = [
   { key: "not-informed", label: "Not informed", test: (p) => !p.informed },
   { key: "informed", label: "Informed", test: (p) => !!p.informed },
   { key: "no-d1", label: "No Day 1 turn", test: (p, turnOf) => !turnOf(p.gameId, "d1") },
+  { key: "no-d2", label: "No Day 2 turn", test: (p, turnOf) => !turnOf(p.gameId, "d2") },
   { key: "no-d4", label: "No Day 4 turn", test: (p, turnOf) => !turnOf(p.gameId, "d4") },
 ] as const satisfies readonly { key: string; label: string; test: StatusTest }[];
 const STATUS_KEYS = STATUSES.map((s) => s.key);
@@ -47,6 +50,7 @@ const STATUS_KEYS = STATUSES.map((s) => s.key);
 const SORTS = [
   { key: "signup", label: "Sign-up order" },
   { key: "d1", label: "Day 1 speedups" },
+  { key: "d2", label: "Day 2 speedups" },
   { key: "d4", label: "Day 4 speedups" },
 ] as const;
 const SORT_KEYS = SORTS.map((s) => s.key);
@@ -66,7 +70,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   const [statusFilter, setStatusFilter] = useQueryState("show", parseAsStringLiteral(STATUS_KEYS));
   const [sort, setSort] = useQueryState("sort", parseAsStringLiteral(SORT_KEYS).withDefault("signup"));
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
-  const turnOf = (gameId: string, day: "d1" | "d4") => data.turns.find((t) => t.gameId === gameId && t.day === day);
+  const turnOf = (gameId: string, day: DayKey) => data.turns.find((t) => t.gameId === gameId && t.day === day);
 
   const setInformed = useMutation(api.kvk.admin.setInformed);
   const informedCount = players.filter((p) => p.informed).length;
@@ -78,7 +82,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       ...DAY_KEYS.map((day) => {
         const turn = turnOf(p.gameId, day);
         const date = dayDate(data.settings.startDate, day);
-        return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].position}: ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
+        return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].title} (${DAYS[day].position}): ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
       }),
       "Please be online at the start of your turn.",
     ].join("\n");
@@ -100,11 +104,15 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       "tc_level",
       "truegold",
       "d1_construction_min",
-      "d1_research_min",
       "d1_general_min",
       "d1_total_min",
       "d1_times",
       "d1_turn_utc",
+      "d2_research_min",
+      "d2_general_min",
+      "d2_total_min",
+      "d2_times",
+      "d2_turn_utc",
       "d4_training_min",
       "d4_general_min",
       "d4_total_min",
@@ -113,8 +121,10 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       "signed_up",
     ];
     const rows = players.map((p) => {
-      const t1 = turnOf(p.gameId, "d1");
-      const t4 = turnOf(p.gameId, "d4");
+      const turnCell = (day: DayKey) => {
+        const t = turnOf(p.gameId, day);
+        return t ? slotUtc(t.slot) : "";
+      };
       return [
         p.gameId,
         p.name,
@@ -122,16 +132,20 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
         p.tcLevel ? tcLabel(p.tcLevel) : "",
         p.truegold,
         p.d1Construction,
-        p.d1Research,
         p.d1General,
         dayScore(p, "d1"),
         p.d1Slots.map(slotUtc).join(" "),
-        t1 ? slotUtc(t1.slot) : "",
+        turnCell("d1"),
+        p.d2Research,
+        p.d2General,
+        dayScore(p, "d2"),
+        p.d2Slots.map(slotUtc).join(" "),
+        turnCell("d2"),
         p.d4Training,
         p.d4General,
         dayScore(p, "d4"),
         p.d4Slots.map(slotUtc).join(" "),
-        t4 ? slotUtc(t4.slot) : "",
+        turnCell("d4"),
         new Date(p._creationTime).toISOString(),
       ];
     });
@@ -326,14 +340,14 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                     </ConfirmButton>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:w-72 sm:shrink-0">
-                  {(["d1", "d4"] as const).map((day) => {
+                <div className="grid grid-cols-3 gap-2 sm:w-[26rem] sm:shrink-0">
+                  {DAY_KEYS.map((day) => {
                     const turn = turnOf(p.gameId, day);
-                    const picked = day === "d1" ? p.d1Slots.length : p.d4Slots.length;
+                    const picked = p[SLOTS_KEY[day]].length;
                     return (
                       <div key={day} className="rounded-lg bg-muted px-2.5 py-1.5 text-xs">
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="whitespace-nowrap text-muted-foreground">{day === "d1" ? "Day 1" : "Day 4"}</span>
+                          <span className="whitespace-nowrap text-muted-foreground">{DAYS[day].label}</span>
                           <span className="font-mono text-sm font-medium whitespace-nowrap">
                             {formatDuration(dayScore(p, day)).split(" ").slice(0, 2).join(" ")}
                           </span>

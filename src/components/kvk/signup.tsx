@@ -23,6 +23,7 @@ import { errorMessage, useStoredString } from "@/lib/client";
 import {
   ALLIANCES,
   DAYS,
+  SLOTS_KEY,
   MIN_SLOTS,
   DAY_KEYS,
   dayScoreOf,
@@ -128,9 +129,9 @@ function EntrySummary({ entry, title, description }: { entry: Entry; title?: str
         <CardTitle>{title ?? t("entry.title")}</CardTitle>
         <CardDescription>{description ?? t("entry.desc")}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-2">
+      <CardContent className="grid gap-4 md:grid-cols-3">
         {DAY_KEYS.map((day) => {
-          const slots = day === "d1" ? entry.d1Slots : entry.d4Slots;
+          const slots = entry[SLOTS_KEY[day]];
           return (
             <div key={day} className="flex flex-col gap-3 rounded-lg bg-muted p-3">
               <p className="text-xs font-medium text-muted-foreground">
@@ -194,10 +195,10 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
         </CardTitle>
         <CardDescription>{t("turns.desc")}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2">
+      <CardContent className="grid gap-3 md:grid-cols-3">
         {DAY_KEYS.map((day) => {
           const mine = turns.filter((turn) => turn.day === day);
-          const signedUp = (day === "d1" ? entry.d1Slots : entry.d4Slots).length > 0;
+          const signedUp = entry[SLOTS_KEY[day]].length > 0;
           return (
             <div key={day} className="flex flex-col gap-1 rounded-lg bg-muted p-3">
               <p className="text-xs font-medium text-muted-foreground">
@@ -226,7 +227,7 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
   );
 }
 
-// First and only submission, one section at a time: details (with game ID), Day 1, Day 4, review.
+// First and only submission, one section at a time: details (with game ID), each day, review.
 // Asks for confirmation at the end because the entry cannot be edited afterwards.
 function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const convex = useConvex();
@@ -254,7 +255,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const next = async () => {
     if (step > 0) {
       const day = DAY_KEYS[step - 1];
-      const picked = day === "d1" ? form.d1Slots : form.d4Slots;
+      const picked = form[SLOTS_KEY[day]];
       if (picked.length < MIN_SLOTS) return void toast.error(t("toast.pickTime", { day: t(`day.${day}`) }));
       return go(step + 1);
     }

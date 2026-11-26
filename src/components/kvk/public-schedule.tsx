@@ -73,7 +73,7 @@ export function PublicSchedule() {
               {DAY_KEYS.map((day) => (
                 <TabsTrigger key={day} value={day} className="flex-1">
                   {t(`day.${day}`)}
-                  <span className="hidden text-muted-foreground min-[480px]:inline">&nbsp;· {DAYS[day].position}</span>
+                  <span className="hidden text-muted-foreground min-[480px]:inline">&nbsp;· {t(`day.${day}.title`)}</span>
                 </TabsTrigger>
               ))}
             </TabsList>

@@ -40,8 +40,8 @@ export const save = mutation({
       alliance: lookup.alliance ?? "",
       tcLevel: lookup.tcLevel ?? 0,
     });
-    if (entry.d1Slots.length < MIN_SLOTS || entry.d4Slots.length < MIN_SLOTS)
-      throw new ConvexError(`Pick at least ${MIN_SLOTS} times for Day 1 and for Day 4.`);
+    if ([entry.d1Slots, entry.d2Slots, entry.d4Slots].some((slots) => slots.length < MIN_SLOTS))
+      throw new ConvexError(`Pick at least ${MIN_SLOTS} times for each day.`);
 
     const existing = await ctx.db
       .query("players")

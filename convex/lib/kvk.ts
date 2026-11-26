@@ -27,21 +27,24 @@ export const MAX_TRUEGOLD = 1_000_000_000;
 export const ALLIANCES = ["TEA", "BTF", "VIK", "FFF", "btf", "ONX", "BtF", "DEN"] as const;
 export type Alliance = (typeof ALLIANCES)[number];
 
-export type DayKey = "d1" | "d4";
+// KvK prep days with appointments: Day 1 construction, Day 2 research, Day 4 training.
+export type DayKey = "d1" | "d2" | "d4";
 
 // Players must pick at least this many times per day, so they have a good chance of getting a turn.
 export const MIN_SLOTS = 2;
 
-export const DAY_KEYS: DayKey[] = ["d1", "d4"];
+export const DAY_KEYS: DayKey[] = ["d1", "d2", "d4"];
 
 export interface PlayerSpeedups {
   gameId: string;
   d1Construction: number;
-  d1Research: number;
   d1General: number;
+  d2Research: number;
+  d2General: number;
   d4Training: number;
   d4General: number;
   d1Slots: number[];
+  d2Slots: number[];
   d4Slots: number[];
   _creationTime: number;
 }
@@ -53,11 +56,15 @@ export interface Turn {
 }
 
 export function dayScore(p: PlayerSpeedups, day: DayKey): number {
-  return day === "d1" ? p.d1Construction + p.d1Research + p.d1General : p.d4Training + p.d4General;
+  if (day === "d1") return p.d1Construction + p.d1General;
+  if (day === "d2") return p.d2Research + p.d2General;
+  return p.d4Training + p.d4General;
 }
 
+export const SLOTS_KEY = { d1: "d1Slots", d2: "d2Slots", d4: "d4Slots" } as const satisfies Record<DayKey, string>;
+
 export function slotsFor(p: PlayerSpeedups, day: DayKey): number[] {
-  return day === "d1" ? p.d1Slots : p.d4Slots;
+  return p[SLOTS_KEY[day]];
 }
 
 export const isValidSlot = (s: number) => Number.isInteger(s) && s >= 0 && s < SLOT_COUNT;

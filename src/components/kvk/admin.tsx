@@ -135,13 +135,13 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
       )}
       {/* Phones stack these; wide screens put status, dates and numbers in one row. */}
       <div className="grid gap-3 xl:grid-cols-12">
-      <div className="xl:col-span-4">
+      <div className="xl:col-span-3">
         <PublishBanner password={password} data={data} />
       </div>
       <div className="xl:col-span-3">
         <EventDates password={password} data={data} />
       </div>
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 xl:col-span-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 xl:col-span-6">
         <Stat icon={Users} label="Players signed up" shortLabel="Players" value={data.players.length} />
         {DAY_KEYS.map((day) => {
           const filled = data.turns.filter((t) => t.day === day).length;
@@ -149,7 +149,7 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
             <Stat
               key={day}
               icon={CalendarCheck}
-              label={`${DAYS[day].label} · ${DAYS[day].position}`}
+              label={`${DAYS[day].label} · ${DAYS[day].title}`}
               shortLabel={DAYS[day].label}
               value={`${filled}/${SLOTS.length}`}
               progress={filled / SLOTS.length}
