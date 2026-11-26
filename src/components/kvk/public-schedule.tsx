@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStoredString } from "@/lib/client";
-import { DAYS, DAY_KEYS, SLOTS, formatSlotLocal, localTimeZone, slotRangeUtc, useToday } from "@/lib/kvk";
+import { DAYS, DAY_KEYS, SLOTS, formatSlotLocal, localTimeZone, localZoneAbbr, slotRangeUtc, useToday } from "@/lib/kvk";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
@@ -106,11 +106,15 @@ export function PublicSchedule() {
                             mine && "bg-primary/10",
                           )}
                         >
-                          <div className="w-28 shrink-0">
+                          <div className="w-32 shrink-0">
                             <p className={cn("font-mono text-sm font-semibold", mine && "text-primary")}>
-                              {slotRangeUtc(slot)}
+                              {slotRangeUtc(slot)} <span className="text-[10px] font-medium opacity-70">UTC</span>
                             </p>
-                            {today && <p className="text-xs text-muted-foreground">{formatSlotLocal(slot, today)}</p>}
+                            {today && (
+                              <p className="text-xs text-muted-foreground">
+                                {formatSlotLocal(slot, today)} {localZoneAbbr(today) ?? t("times.local")}
+                              </p>
+                            )}
                           </div>
                           {turn ? (
                             <div className="flex min-w-0 flex-1 items-center gap-2">

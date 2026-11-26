@@ -82,6 +82,15 @@ export function useToday(): Date | null {
 
 export const localTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+// Short name of the viewer's time zone, like "IST" or "CET". Null when the browser only
+// has a long form such as "GMT+5:30", which is too wide for a turn tile.
+export function localZoneAbbr(today: Date): string | null {
+  const name = new Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
+    .formatToParts(today)
+    .find((p) => p.type === "timeZoneName")?.value;
+  return name && /^[A-Za-z]{2,5}$/.test(name) ? name : null;
+}
+
 export function formatDuration(minutes: number) {
   if (minutes <= 0) return "0m";
   const d = Math.floor(minutes / 1440);

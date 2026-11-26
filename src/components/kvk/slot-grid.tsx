@@ -2,7 +2,7 @@
 
 import { Moon, Sun, Sunrise, Sunset } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SLOTS, slotLocal, slotUtc, useToday } from "@/lib/kvk";
+import { SLOTS, localZoneAbbr, slotLocal, slotUtc, useToday } from "@/lib/kvk";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +27,7 @@ export function SlotGrid({
   const today = useToday();
   const { t } = useLanguage();
   const selected = new Set(value);
+  const zone = today ? (localZoneAbbr(today) ?? t("times.local")) : "";
 
   const setSlots = (slots: number[], on: boolean) => {
     const next = new Set(selected);
@@ -84,11 +85,14 @@ export function SlotGrid({
                     onClick={() => setSlots([slot], !on)}
                     className={cn("h-auto flex-col gap-0 rounded-lg py-2", on && "shadow-sm shadow-primary/30")}
                   >
-                    <span className="font-mono text-sm font-semibold">{slotUtc(slot)}</span>
+                    <span className="flex items-baseline gap-1">
+                      <span className="font-mono text-sm font-semibold">{slotUtc(slot)}</span>
+                      <span className="text-[9px] font-medium tracking-wide opacity-70">UTC</span>
+                    </span>
                     <span
                       className={cn("text-[11px] font-normal", on ? "text-primary-foreground/80" : "text-muted-foreground")}
                     >
-                      {local ? `${local.time}${local.dayShift > 0 ? "⁺¹" : local.dayShift < 0 ? "⁻¹" : ""}` : " "}
+                      {local ? `${local.time}${local.dayShift > 0 ? "⁺¹" : local.dayShift < 0 ? "⁻¹" : ""} ${zone}` : " "}
                     </span>
                   </Button>
                 );
