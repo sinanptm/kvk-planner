@@ -78,11 +78,19 @@ export function AdminMissing({ password }: { password: string }) {
       "List copied",
     );
 
+  const groups = TC_GROUPS.map((g) => ({ ...g, members: shown.filter((m) => g.test(m.tcLevel)) })).filter(
+    (g) => g.members.length > 0,
+  );
+  const levelCount = (test: (l: number) => boolean) =>
+    (current?.members ?? []).filter((m) => !m.signedUp && test(m.tcLevel)).length;
+  const loaded = data.filter((a) => a.fetchedAt !== null);
+  const totals = loaded.reduce((t, a) => ({ in: t.in + a.signedUp, all: t.all + a.total }), { in: 0, all: 0 });
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Alliance sign-ups</h2>
+          <h2 className="text-lg font-semibold">Who hasn&apos;t signed up</h2>
           <p className="text-sm text-muted-foreground">
             {oldest ? `Member lists from the game, updated ${timeAgo(oldest)}.` : "Member lists haven't been loaded yet."}
           </p>
@@ -93,107 +101,128 @@ export function AdminMissing({ password }: { password: string }) {
         </Button>
       </div>
 
-      {/* Pick one alliance */}
-      <div role="tablist" aria-label="Alliance" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {data.map((a) => {
-          const on = a.alliance === alliance;
-          return (
-            <button
-              key={a.alliance}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => void setAlliance(a.alliance as (typeof ALLIANCES)[number])}
-              className={cn(
-                "flex flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                on ? ALLIANCE_STYLES[a.alliance]?.tile : "hover:bg-muted/50",
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <AllianceTag alliance={a.alliance} />
-                <span className="text-xs text-muted-foreground">
-                  {a.fetchedAt === null ? "not loaded" : `${a.total - a.signedUp} missing`}
-                </span>
-              </div>
-              <span className="font-mono text-lg font-bold">
-                {a.fetchedAt === null ? "—" : `${a.signedUp}/${a.total}`}
+      <div className="grid items-start gap-5 lg:grid-cols-[17rem_minmax(0,1fr)]">
+        {/* Alliances: a grid on phones, a side list on wide screens */}
+        <Card size="sm" className="lg:sticky lg:top-20">
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Signed up overall</span>
+              <span className="font-mono text-sm font-semibold">
+                {totals.in}/{totals.all}
               </span>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn("h-full rounded-full", ALLIANCE_STYLES[a.alliance]?.dot)}
-                  style={{ width: `${a.total ? (a.signedUp / a.total) * 100 : 0}%` }}
-                />
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {current?.fetchedAt === null ? (
-        <Card>
-          <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Press “Update from game” to load {alliance}&apos;s members.
+            </div>
+            <div role="tablist" aria-label="Alliance" className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-1">
+              {data.map((a) => {
+                const on = a.alliance === alliance;
+                const notLoaded = a.fetchedAt === null;
+                return (
+                  <button
+                    key={a.alliance}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => void setAlliance(a.alliance as (typeof ALLIANCES)[number])}
+                    className={cn(
+                      "flex flex-col gap-1.5 rounded-lg border px-3 py-2 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                      on ? ALLIANCE_STYLES[a.alliance]?.tile : "border-transparent hover:bg-muted/50",
+                      notLoaded && !on && "opacity-60",
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <AllianceTag alliance={a.alliance} />
+                      <span className="font-mono text-xs">
+                        {notLoaded ? (
+                          <span className="text-muted-foreground">not loaded</span>
+                        ) : (
+                          <>
+                            <span className="font-semibold">{a.signedUp}</span>
+                            <span className="text-muted-foreground">/{a.total}</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn("h-full rounded-full", ALLIANCE_STYLES[a.alliance]?.dot)}
+                        style={{ width: `${a.total ? (a.signedUp / a.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col gap-4">
-            <FilterRow label="Level">
-              {TC_GROUPS.map((g) => (
-                <Chip key={g.key} on={tc.includes(g.key)} onClick={() => void setTc((x) => toggle(x, g.key))}>
-                  {g.label}
-                </Chip>
-              ))}
-            </FilterRow>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+        {current?.fetchedAt === null ? (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+              <AllianceTag alliance={alliance} />
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{shown.length}</span> of {missingTotal} not signed up
+                {alliance}&apos;s members aren&apos;t loaded yet. Press “Update from game” to load them.
               </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={shown.length === 0} onClick={copy}>
-                  <ClipboardCopy data-icon="inline-start" />
-                  Copy names
-                </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col gap-4">
+              {/* Toolbar */}
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex items-center gap-2">
+                  <AllianceTag alliance={alliance} />
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{shown.length}</span>
+                    {shown.length === missingTotal ? "" : ` of ${missingTotal}`} not signed up
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {TC_GROUPS.map((g) => (
+                    <Chip key={g.key} on={tc.includes(g.key)} onClick={() => void setTc((x) => toggle(x, g.key))}>
+                      {g.label} <span className="opacity-60">{levelCount(g.test)}</span>
+                    </Chip>
+                  ))}
+                  <Button variant="outline" size="sm" className="ml-1" disabled={shown.length === 0} onClick={copy}>
+                    <ClipboardCopy data-icon="inline-start" />
+                    Copy names
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Members */}
-            <ul className="flex flex-col divide-y">
-              {shown.map((m) => (
-                <li key={m.gameId} className="flex items-center gap-3 py-2">
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm font-medium">{m.name}</span>
-                    <span className="font-mono text-xs text-muted-foreground">ID {m.gameId}</span>
-                  </div>
-                  {m.rank && (
-                    <span className="w-9 rounded-md bg-muted py-0.5 text-center font-mono text-xs font-semibold">
-                      {m.rank}
-                    </span>
-                  )}
-                  <span className="w-11 text-right font-mono text-xs text-muted-foreground">
-                    {m.tcLevel ? tcLabel(m.tcLevel) : ""}
-                  </span>
-                </li>
+              {/* Members, grouped by Town Center level */}
+              {groups.map((g) => (
+                <section key={g.key} className="flex flex-col gap-2 border-t pt-3">
+                  <h3 className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    {g.label}
+                    <span className="rounded-full bg-muted px-1.5 font-mono">{g.members.length}</span>
+                  </h3>
+                  <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {g.members.map((m) => (
+                      <li key={m.gameId} className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
+                          {[...m.name].slice(0, 2).join("")}
+                        </span>
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-sm font-medium">{m.name}</span>
+                          <span className="font-mono text-[11px] text-muted-foreground">{m.gameId}</span>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-0.5">
+                          <span className="font-mono text-xs font-semibold">{m.tcLevel ? tcLabel(m.tcLevel) : "—"}</span>
+                          {m.rank && <span className="text-[10px] text-muted-foreground">{m.rank}</span>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
               {shown.length === 0 && (
-                <li className="py-8 text-center text-sm text-muted-foreground">
+                <p className="border-t py-10 text-center text-sm text-muted-foreground">
                   {missingTotal === 0 ? `Everyone in ${alliance} has signed up.` : "Nobody at this level is missing."}
-                </li>
+                </p>
               )}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="w-12 shrink-0 text-xs font-medium text-muted-foreground">{label}</span>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
