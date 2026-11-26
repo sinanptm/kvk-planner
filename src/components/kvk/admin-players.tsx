@@ -31,6 +31,26 @@ import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
 import { EntryFields, toEntry, type Entry } from "./entry-form";
 
+type Player = Dashboard["players"][number];
+type TurnOf = (gameId: string, day: "d1" | "d4") => unknown;
+type StatusTest = (p: Player, turnOf: TurnOf) => boolean;
+
+// Quick filters for the player list. Each one is ?show=<key> in the URL.
+const STATUSES = [
+  { key: "not-informed", label: "Not informed", test: (p) => !p.informed },
+  { key: "informed", label: "Informed", test: (p) => !!p.informed },
+  { key: "no-d1", label: "No Day 1 turn", test: (p, turnOf) => !turnOf(p.gameId, "d1") },
+  { key: "no-d4", label: "No Day 4 turn", test: (p, turnOf) => !turnOf(p.gameId, "d4") },
+] as const satisfies readonly { key: string; label: string; test: StatusTest }[];
+const STATUS_KEYS = STATUSES.map((s) => s.key);
+
+const SORTS = [
+  { key: "signup", label: "Sign-up order" },
+  { key: "d1", label: "Day 1 speedups" },
+  { key: "d4", label: "Day 4 speedups" },
+] as const;
+const SORT_KEYS = SORTS.map((s) => s.key);
+
 const csvCell = (v: string | number) => {
   const s = String(v);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -43,6 +63,8 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   // Search and alliance filter live in the URL (?q=…&alliance=TEA), so they survive reloads and links.
   const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
   const [allianceFilter, setAllianceFilter] = useQueryState("alliance", parseAsStringLiteral(ALLIANCES));
+  const [statusFilter, setStatusFilter] = useQueryState("show", parseAsStringLiteral(STATUS_KEYS));
+  const [sort, setSort] = useQueryState("sort", parseAsStringLiteral(SORT_KEYS).withDefault("signup"));
   const players = [...data.players].sort((a, b) => a._creationTime - b._creationTime);
   const turnOf = (gameId: string, day: "d1" | "d4") => data.turns.find((t) => t.gameId === gameId && t.day === day);
 
@@ -117,8 +139,12 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   };
 
   const inAlliance = allianceFilter ? players.filter((p) => p.alliance === allianceFilter) : players;
-  const shown = searchPlayers(inAlliance, search);
-  const filtered = !!search.trim() || !!allianceFilter;
+  const status = STATUSES.find((s) => s.key === statusFilter);
+  const statusCount = (test: StatusTest) => inAlliance.filter((p) => test(p, turnOf)).length;
+  const unsorted = searchPlayers(status ? inAlliance.filter((p) => status.test(p, turnOf)) : inAlliance, search);
+  const shown =
+    sort === "signup" ? unsorted : [...unsorted].sort((a, b) => dayScore(b, sort) - dayScore(a, sort));
+  const filtered = !!search.trim() || !!allianceFilter || !!status;
   const allianceCount = (tag: string) => players.filter((p) => p.alliance === tag).length;
 
   const editing = players.find((p) => p.gameId === editingId);
@@ -156,7 +182,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
             All players ({filtered ? `${shown.length} of ${players.length}` : players.length})
           </CardTitle>
           <CardDescription>
-            In sign-up order · {informedCount}/{players.length} informed. Copy a player&apos;s turns to send them, then
+            {SORTS.find((s) => s.key === sort)?.label} · {informedCount}/{players.length} informed. Copy a player&apos;s turns to send them, then
             mark them informed.
           </CardDescription>
         </CardHeader>
@@ -205,6 +231,43 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                 </button>
               );
             })}
+          </div>
+          <div className="mx-4 flex flex-wrap items-center justify-between gap-2 sm:mx-0">
+            <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-1.5">
+              {STATUSES.map((s) => {
+                const on = statusFilter === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => void setStatusFilter(on ? null : s.key)}
+                    className={cn(
+                      "h-8 rounded-lg border px-3 text-sm font-medium transition-colors",
+                      on ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {s.label} · {statusCount(s.test)}
+                  </button>
+                );
+              })}
+            </div>
+            <div role="group" aria-label="Sort players" className="flex gap-1 rounded-lg bg-muted p-1">
+              {SORTS.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  aria-pressed={sort === s.key}
+                  onClick={() => void setSort(s.key)}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                    sort === s.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
           <ul className="flex flex-col divide-y px-4 sm:px-0">
             {shown.map((p) => (
@@ -288,9 +351,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
               <li className="py-6 text-center text-sm text-muted-foreground">
                 {players.length === 0
                   ? "No players yet."
-                  : search.trim()
-                    ? "No player matches that search."
-                    : `No players from ${allianceFilter} yet.`}
+                  : "No player matches these filters."}
               </li>
             )}
           </ul>

@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowRight, Check, Lock, LockOpen, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
+import { ArrowRight, Check, Lock, LockOpen, Search, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,7 @@ import {
   formatSlotLocal,
   playerLabel,
   rankPlayers,
+  searchPlayers,
   slotRangeUtc,
   slotUtc,
   tcLabel,
@@ -270,6 +272,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </AlertDialogContent>
       </AlertDialog>
 
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,30%)]">
       <Card>
         <CardHeader>
           <CardTitle>Turns</CardTitle>
@@ -324,7 +327,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                   {period.slots.filter((slot) => bySlot.has(slot)).length}/{period.slots.length} filled
                 </span>
               </p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-6">
                 {period.slots.map((slot) => {
                   const turn = bySlot.get(slot);
                   const player = turn && byId.get(turn.gameId);
@@ -399,43 +402,127 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ranking</CardTitle>
-          <CardDescription>
-            Players with speedups and at least one picked time, most speedups first. Ties go to who signed up first.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ol className="flex flex-col divide-y">
-            {ranked.map((r, i) => {
-              const slot = turnOf.get(r.player.gameId);
-              return (
-                <li key={r.player.gameId} className="flex items-center gap-3 py-2.5">
-                  <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">{i + 1}</span>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <PlayerName player={r.player} className="max-w-full font-medium" />
-                    <span className="text-xs text-muted-foreground">
-                      {formatDuration(r.score)} · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} ·{" "}
-                      {formatTruegold(r.player.truegold)} TG · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
-                    </span>
-                  </div>
-                  {slot !== undefined ? (
-                    <Badge variant="success">Turn {slotUtc(slot)}</Badge>
-                  ) : (
-                    <Badge variant="warning">Waiting</Badge>
-                  )}
-                </li>
-              );
-            })}
-            {ranked.length === 0 && (
-              <li className="py-6 text-center text-sm text-muted-foreground">
-                Nobody has signed up for {DAYS[day].label} yet.
-              </li>
-            )}
-          </ol>
-        </CardContent>
-      </Card>
+      <RankingCard day={day} ranked={ranked} turnOf={turnOf} />
+      </div>
     </div>
+  );
+}
+
+type Ranked = ReturnType<typeof rankPlayers<Dashboard["players"][number]>>[number];
+type RankStatus = "all" | "turn" | "waiting";
+
+// The day's ranking, with filters. Sits beside the turns on wide screens and scrolls on its own.
+function RankingCard({ day, ranked, turnOf }: { day: DayKey; ranked: Ranked[]; turnOf: Map<string, number> }) {
+  const [search, setSearch] = useState("");
+  const [alliance, setAlliance] = useState<string | null>(null);
+  const [status, setStatus] = useState<RankStatus>("all");
+
+  // Keep each player's real rank, so filtering never renumbers the list.
+  const rows = ranked.map((r, i) => ({ ...r, rank: i + 1 }));
+  const withTurn = rows.filter((r) => turnOf.has(r.player.gameId)).length;
+  const matches = searchPlayers(
+    rows.map((r) => ({ ...r, name: r.player.name, alliance: r.player.alliance, gameId: r.player.gameId })),
+    search,
+  );
+  const shown = matches.filter(
+    (r) =>
+      (!alliance || r.player.alliance === alliance) &&
+      (status === "all" || (status === "turn") === turnOf.has(r.player.gameId)),
+  );
+  const filtered = shown.length !== rows.length;
+  const statuses: { key: RankStatus; label: string; count: number }[] = [
+    { key: "all", label: "All", count: rows.length },
+    { key: "turn", label: "Has turn", count: withTurn },
+    { key: "waiting", label: "Waiting", count: rows.length - withTurn },
+  ];
+
+  return (
+    <Card className="xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6rem)] xl:overflow-hidden">
+      <CardHeader>
+        <CardTitle>Ranking ({filtered ? `${shown.length} of ${rows.length}` : rows.length})</CardTitle>
+        <CardDescription>
+          Most speedups first. Ties go to who signed up first. Players need speedups and at least one picked time.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex min-h-0 flex-col gap-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Search ranking"
+            placeholder="Search name or ID"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 pl-9"
+          />
+        </div>
+        <div role="group" aria-label="Filter by turn" className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+          {statuses.map(({ key, label, count }) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={status === key}
+              onClick={() => setStatus(key)}
+              className={cn(
+                "rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                status === key ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label} · {count}
+            </button>
+          ))}
+        </div>
+        <div role="group" aria-label="Filter by alliance" className="flex flex-wrap gap-1">
+          {ALLIANCES.map((tag) => {
+            const on = alliance === tag;
+            const count = rows.filter((r) => r.player.alliance === tag).length;
+            return (
+              <button
+                key={tag}
+                type="button"
+                aria-pressed={on}
+                disabled={count === 0 && !on}
+                onClick={() => setAlliance(on ? null : tag)}
+                className={cn(
+                  "flex h-7 items-center gap-1 rounded-md border px-2 font-mono text-xs font-semibold transition-colors disabled:opacity-40",
+                  on ? ALLIANCE_STYLES[tag].tile : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <span className={cn("size-1.5 rounded-full", ALLIANCE_STYLES[tag].dot)} />
+                {tag}
+                <span className="font-sans font-normal">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+        <ol className="-mx-4 flex min-h-0 flex-col divide-y overflow-y-auto border-t px-4">
+          {shown.map((r) => {
+            const slot = turnOf.get(r.player.gameId);
+            return (
+              <li key={r.player.gameId} className="flex items-center gap-3 py-2.5">
+                <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">{r.rank}</span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <PlayerName player={r.player} className="max-w-full font-medium" />
+                  <span className="text-xs text-muted-foreground">
+                    {shortDuration(r.score)} · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} ·{" "}
+                    {formatTruegold(r.player.truegold)} TG · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
+                  </span>
+                </div>
+                {slot !== undefined ? (
+                  <Badge variant="success">Turn {slotUtc(slot)}</Badge>
+                ) : (
+                  <Badge variant="warning">Waiting</Badge>
+                )}
+              </li>
+            );
+          })}
+          {shown.length === 0 && (
+            <li className="py-6 text-center text-sm text-muted-foreground">
+              {rows.length === 0 ? `Nobody has signed up for ${DAYS[day].label} yet.` : "No player matches these filters."}
+            </li>
+          )}
+        </ol>
+      </CardContent>
+    </Card>
   );
 }
