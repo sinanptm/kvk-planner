@@ -84,12 +84,13 @@ type FieldProps = {
 // the player sign-up shows the same cards one step at a time.
 export function EntryFields({ form, set, detailsTitle }: FieldProps & { detailsTitle: string }) {
   return (
-    <>
+    // Stacked on phones; on wide admin screens details, Day 1 and Day 4 sit side by side.
+    <div className="grid items-start gap-6 xl:grid-cols-2 2xl:grid-cols-3">
       <DetailsCard form={form} set={set} step={1} title={detailsTitle} />
       {DAY_KEYS.map((day, i) => (
         <DayCard key={day} day={day} form={form} set={set} step={i + 2} />
       ))}
-    </>
+    </div>
   );
 }
 

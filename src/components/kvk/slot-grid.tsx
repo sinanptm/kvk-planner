@@ -39,7 +39,7 @@ export function SlotGrid({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="@container flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className={cn("text-sm font-medium", value.length > 0 ? "text-primary" : "text-muted-foreground")}>
           {t("times.count", { n: value.length, total: SLOTS.length })}
@@ -71,7 +71,7 @@ export function SlotGrid({
                 {allOn ? t("times.clearThese") : t("times.pickAll")}
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+            <div className="grid grid-cols-4 gap-1.5 @xl:grid-cols-6">
               {period.slots.map((slot) => {
                 const on = selected.has(slot);
                 const local = today && slotLocal(slot, today);
