@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useAction, useConvex, useMutation, useQuery } from "convex/react";
 import { ArrowLeft, ArrowRight, CalendarClock, CircleAlert, CircleCheck, Lock, LogOut, Search, TriangleAlert } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { errorMessage, useStoredString } from "@/lib/client";
+import { errorMessage, storage, useStoredString } from "@/lib/client";
 import {
   ALLIANCES,
   DAYS,
@@ -235,16 +235,47 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
 
 // First and only submission, one section at a time: details (with game ID), each day, review.
 // Asks for confirmation at the end because the entry cannot be edited afterwards.
+// The unfinished sign-up is saved in this browser as the player goes, so a reload
+// (or a crash) brings them back to the same step with everything they entered.
+const DRAFT_KEY = "kvk:signupDraft";
+type Draft = {
+  rawGameId: string;
+  lookup: { id: string; result: LookupResult } | null;
+  form: Entry;
+  skipped: DayKey[];
+  step: number;
+};
+function readDraft(): Draft | null {
+  try {
+    const raw = storage.get(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Partial<Draft>;
+    // Ignore drafts from an older version of the form (different fields).
+    if (!d.form || !Object.keys(EMPTY_ENTRY).every((k) => k in d.form!)) return null;
+    return {
+      rawGameId: typeof d.rawGameId === "string" ? d.rawGameId : "",
+      lookup: d.lookup ?? null,
+      form: d.form,
+      skipped: Array.isArray(d.skipped) ? d.skipped.filter((x) => DAY_KEYS.includes(x)) : [],
+      step: typeof d.step === "number" && d.step >= 0 && d.step <= DAY_KEYS.length + 1 ? d.step : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const convex = useConvex();
   const save = useMutation(api.kvk.players.save);
   const lookupPlayer = useAction(api.kvk.lookup.player);
-  const [rawGameId, setRawGameId] = useState("");
+  // Only rendered in the browser (never on the server), so reading the draft here is safe.
+  const [draft] = useState(readDraft);
+  const [rawGameId, setRawGameId] = useState(draft?.rawGameId ?? "");
   // Result of checking the game ID, and the ID it was for (typing a new ID clears it).
-  const [lookup, setLookup] = useState<{ id: string; result: LookupResult } | null>(null);
-  const [form, set, setForm] = useEntryForm(EMPTY_ENTRY);
+  const [lookup, setLookup] = useState<{ id: string; result: LookupResult } | null>(draft?.lookup ?? null);
+  const [form, set, setForm] = useEntryForm(draft?.form ?? EMPTY_ENTRY);
   // Days the player said they don't need a turn on. Their speedups and times are cleared.
-  const [skipped, setSkipped] = useState<DayKey[]>([]);
+  const [skipped, setSkipped] = useState<DayKey[]>(draft?.skipped ?? []);
   const setSkip = (day: DayKey, skip: boolean) => {
     setSkipped((s) => (skip ? [...s, day] : s.filter((d) => d !== day)));
     if (skip)
@@ -254,8 +285,11 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
         ...Object.fromEntries(SPEEDUP_FIELDS[day].map((key) => [key, 0])),
       }));
   };
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(draft?.step ?? 0);
   const [confirming, setConfirming] = useState(false);
+  useEffect(() => {
+    storage.set(DRAFT_KEY, JSON.stringify({ rawGameId, lookup, form, skipped, step } satisfies Draft));
+  }, [rawGameId, lookup, form, skipped, step]);
   const [saving, setSaving] = useState(false);
   const { t } = useLanguage();
   const steps = [t("step.details"), ...DAY_KEYS.map((d) => t(`day.${d}`)), t("step.review")];
@@ -284,6 +318,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     try {
       if (await convex.query(api.kvk.players.get, { gameId })) {
         toast.info(t("toast.alreadySignedUp"));
+        storage.set(DRAFT_KEY, null);
         return onSignedUp(gameId);
       }
       const result = await lookupPlayer({ gameId });
@@ -304,6 +339,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
       const { name: _name, alliance: _alliance, tcLevel: _tcLevel, ...rest } = form;
       await save({ gameId, ...rest });
       toast.success(t("toast.signedUp"));
+      storage.set(DRAFT_KEY, null);
       onSignedUp(gameId);
     } catch (err) {
       toast.error(errorMessage(err));

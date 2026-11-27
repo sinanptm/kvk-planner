@@ -21,6 +21,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: { default: "2323 Appointments", template: "%s · 2323 Appointments" },
   description: "Sign up for Kingshot KvK appointment turns and see the schedule.",
+  // Stops Google Translate from rewriting the page (see translate="no" below).
+  other: { google: "notranslate" },
 };
 
 export const viewport: Viewport = {
@@ -32,8 +34,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // translate="no": the site has its own languages, and browser auto-translate rewrites
+    // the page behind React's back, which can crash it when the content changes.
     <html
       lang="en"
+      translate="no"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
