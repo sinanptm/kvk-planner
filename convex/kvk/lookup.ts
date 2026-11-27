@@ -115,24 +115,26 @@ export const findMember = internalQuery({
 });
 
 // Says whether a game ID may sign up, using as few API calls as possible:
-// 1. a saved answer from the last 24 hours (1 hour for "not found");
-// 2. the saved member lists of our alliances (refreshed daily), which cover nearly everyone;
+// 1. the saved member lists of our alliances (refreshed daily), which cover nearly everyone;
+// 2. a saved answer from the last 24 hours (1 hour for "not found");
 // 3. only then the MightPulse API.
 export const player = action({
   args: { gameId: v.string() },
   returns: lookupResult,
   handler: async (ctx, args): Promise<LookupResult> => {
     const gameId = cleanLookupId(args.gameId);
-    const cached: Doc<"playerLookups"> | null = await ctx.runQuery(internal.kvk.lookup.getLookup, { gameId });
-    const ttl = cached?.status === "not_found" ? NOT_FOUND_TTL_MS : LOOKUP_TTL_MS;
-    if (cached && Date.now() - cached.fetchedAt < ttl) return fromRow(cached);
-
+    // The member lists come first: they are free and newer than an older saved answer
+    // (e.g. a player who has since moved into one of our alliances).
     const member = await ctx.runQuery(internal.kvk.lookup.findMember, { gameId });
     if (member) {
       const result = { status: "ok", ...member, kid: KINGDOM_ID } as const;
       await ctx.runMutation(internal.kvk.lookup.storeLookup, { gameId, ...result });
       return result;
     }
+
+    const cached: Doc<"playerLookups"> | null = await ctx.runQuery(internal.kvk.lookup.getLookup, { gameId });
+    const ttl = cached?.status === "not_found" ? NOT_FOUND_TTL_MS : LOOKUP_TTL_MS;
+    if (cached && Date.now() - cached.fetchedAt < ttl) return fromRow(cached);
 
     let res: { status: number; body: unknown };
     try {
