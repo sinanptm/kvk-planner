@@ -23,6 +23,8 @@ export default defineSchema({
     d1Slots: v.array(v.number()),
     d2Slots: v.array(v.number()),
     d4Slots: v.array(v.number()),
+    // Days an admin took this player off: auto-assign never gives them a turn on these days.
+    excluded: v.optional(v.array(dayValidator)),
     // Set by an admin once the player has been told their turns.
     informed: v.optional(v.boolean()),
   }).index("by_gameId", ["gameId"]),

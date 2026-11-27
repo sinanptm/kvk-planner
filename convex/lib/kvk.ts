@@ -46,6 +46,9 @@ export interface PlayerSpeedups {
   d1Slots: number[];
   d2Slots: number[];
   d4Slots: number[];
+  truegold?: number;
+  // Days an admin has taken this player off (no turn even with picked times).
+  excluded?: DayKey[];
   _creationTime: number;
 }
 
@@ -61,6 +64,16 @@ export function dayScore(p: PlayerSpeedups, day: DayKey): number {
   return p.d4Training + p.d4General;
 }
 
+// Average construction speedup minutes needed per Truegold spent (from the kingdom's TG cost sheet).
+export const MINUTES_PER_TG = 22.18;
+
+// The value a turn is ranked by. Day 1: the Truegold a player can actually turn into points,
+// min(TG held, speedup minutes / 22.18). Other days: total speedup minutes for the day.
+export function rankScore(p: PlayerSpeedups, day: DayKey): number {
+  if (day !== "d1") return dayScore(p, day);
+  return Math.min(p.truegold ?? 0, dayScore(p, day) / MINUTES_PER_TG);
+}
+
 export const SLOTS_KEY = { d1: "d1Slots", d2: "d2Slots", d4: "d4Slots" } as const satisfies Record<DayKey, string>;
 
 export function slotsFor(p: PlayerSpeedups, day: DayKey): number[] {
@@ -69,14 +82,21 @@ export function slotsFor(p: PlayerSpeedups, day: DayKey): number[] {
 
 export const isValidSlot = (s: number) => Number.isInteger(s) && s >= 0 && s < SLOT_COUNT;
 
-// Most speedups first; earlier sign-up wins ties. Players with no picked times (skipped the day) are left out;
-// players who picked times but entered no speedups come last.
+// Highest rankScore first (usable Truegold on Day 1, speedups otherwise); ties go to more
+// speedups, then earlier sign-up. Left out: players with no picked times (skipped the day) and
+// players an admin excluded from the day. Players with nothing to rank by come last.
 export function rankPlayers<P extends PlayerSpeedups>(players: P[], day: DayKey) {
   return players
-    .map((player) => ({ player, score: dayScore(player, day), slots: slotsFor(player, day) }))
-    .filter((r) => r.slots.length > 0)
+    .map((player) => ({
+      player,
+      points: rankScore(player, day),
+      score: dayScore(player, day),
+      slots: slotsFor(player, day),
+    }))
+    .filter((r) => r.slots.length > 0 && !r.player.excluded?.includes(day))
     .sort(
       (a, b) =>
+        b.points - a.points ||
         b.score - a.score ||
         a.player._creationTime - b.player._creationTime ||
         a.player.gameId.localeCompare(b.player.gameId),

@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowRight, Check, Lock, LockOpen, Search, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
+import { ArrowRight, Ban, Check, Lock, LockOpen, Search, Sparkles, Trash2, Undo2, UserCheck, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -42,6 +42,8 @@ import {
   formatSlotLocal,
   playerLabel,
   rankPlayers,
+  rankScore,
+  MINUTES_PER_TG,
   searchPlayers,
   slotRangeUtc,
   slotUtc,
@@ -84,14 +86,22 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
 
   // Highest speedups for this day first; earlier sign-up wins ties.
   const sorted = useMemo(
-    () => [...players].sort((a, b) => dayScore(b, day) - dayScore(a, day) || a._creationTime - b._creationTime),
+    () =>
+      [...players].sort(
+        (a, b) =>
+          rankScore(b, day) - rankScore(a, day) ||
+          dayScore(b, day) - dayScore(a, day) ||
+          a._creationTime - b._creationTime,
+      ),
     [players, day],
   );
 
   // For each turn, the players who picked that time, in the order above.
   const pickedBy = useMemo(() => {
     const map = new Map<number, typeof sorted>(SLOTS.map((slot) => [slot, []]));
-    for (const p of sorted) for (const slot of p[SLOTS_KEY[day]]) map.get(slot)?.push(p);
+    // Players excluded from this day aren't offered for the times they picked.
+    for (const p of sorted)
+      if (!p.excluded?.includes(day)) for (const slot of p[SLOTS_KEY[day]]) map.get(slot)?.push(p);
     return map;
   }, [sorted, day]);
 
@@ -112,7 +122,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
           </span>
         )}
         <span className="w-16 shrink-0 text-right font-mono text-xs font-medium tabular-nums">
-          {shortDuration(dayScore(p, day))}
+          {day === "d1" ? `${tgPoints(rankScore(p, day))} TG` : shortDuration(dayScore(p, day))}
         </span>
       </SelectItem>
     );
@@ -405,46 +415,88 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </CardContent>
       </Card>
 
-      <RankingCard day={day} ranked={ranked} turnOf={turnOf} />
+      <RankingCard password={password} day={day} players={players} ranked={ranked} turnOf={turnOf} />
       </div>
     </div>
   );
 }
 
 type Ranked = ReturnType<typeof rankPlayers<Dashboard["players"][number]>>[number];
-type RankStatus = "all" | "turn" | "waiting";
+type RankStatus = "all" | "turn" | "waiting" | "excluded";
+
+// Day 1 ranks by usable Truegold; shown as a whole number.
+const tgPoints = (n: number) => Math.floor(n).toLocaleString("en-US");
 
 // The day's ranking, with filters. Sits beside the turns on wide screens and scrolls on its own.
-function RankingCard({ day, ranked, turnOf }: { day: DayKey; ranked: Ranked[]; turnOf: Map<string, number> }) {
+function RankingCard({
+  password,
+  day,
+  players,
+  ranked,
+  turnOf,
+}: {
+  password: string;
+  day: DayKey;
+  players: Dashboard["players"];
+  ranked: Ranked[];
+  turnOf: Map<string, number>;
+}) {
+  const setExcluded = useMutation(api.kvk.admin.setExcluded);
+  const toggleExcluded = async (p: Dashboard["players"][number], excluded: boolean) => {
+    try {
+      await setExcluded({ password, gameId: p.gameId, day, excluded });
+      toast.success(
+        excluded ? `${p.name} won't get a ${DAYS[day].label} turn.` : `${p.name} is back in the ${DAYS[day].label} ranking.`,
+      );
+    } catch (err) {
+      toast.error(errorMessage(err));
+    }
+  };
   const [search, setSearch] = useState("");
   const [alliance, setAlliance] = useState<string | null>(null);
   const [status, setStatus] = useState<RankStatus>("all");
 
   // Keep each player's real rank, so filtering never renumbers the list.
-  const rows = ranked.map((r, i) => ({ ...r, rank: i + 1 }));
+  const rows = ranked.map((r, i) => ({ ...r, rank: (i + 1) as number | null, excluded: false }));
+  // Players an admin took off this day (they picked times but get no turn), listed under "Excluded".
+  const excludedRows = players
+    .filter((p) => p.excluded?.includes(day) && p[SLOTS_KEY[day]].length > 0)
+    .map((p) => ({
+      player: p,
+      points: rankScore(p, day),
+      score: dayScore(p, day),
+      slots: p[SLOTS_KEY[day]],
+      rank: null as number | null,
+      excluded: true,
+    }));
   const withTurn = rows.filter((r) => turnOf.has(r.player.gameId)).length;
+  const pool = status === "excluded" ? excludedRows : rows;
   const matches = searchPlayers(
-    rows.map((r) => ({ ...r, name: r.player.name, alliance: r.player.alliance, gameId: r.player.gameId })),
+    pool.map((r) => ({ ...r, name: r.player.name, alliance: r.player.alliance, gameId: r.player.gameId })),
     search,
   );
   const shown = matches.filter(
     (r) =>
       (!alliance || r.player.alliance === alliance) &&
-      (status === "all" || (status === "turn") === turnOf.has(r.player.gameId)),
+      (status === "all" || status === "excluded" || (status === "turn") === turnOf.has(r.player.gameId)),
   );
-  const filtered = shown.length !== rows.length;
+  const filtered = shown.length !== pool.length;
   const statuses: { key: RankStatus; label: string; count: number }[] = [
     { key: "all", label: "All", count: rows.length },
     { key: "turn", label: "Has turn", count: withTurn },
     { key: "waiting", label: "Waiting", count: rows.length - withTurn },
+    { key: "excluded", label: "Excluded", count: excludedRows.length },
   ];
 
   return (
     <Card className="xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6rem)] xl:overflow-hidden">
       <CardHeader>
-        <CardTitle>Ranking ({filtered ? `${shown.length} of ${rows.length}` : rows.length})</CardTitle>
+        <CardTitle>Ranking ({filtered ? `${shown.length} of ${pool.length}` : pool.length})</CardTitle>
         <CardDescription>
-          Most speedups first. Ties go to who signed up first. Players who skipped this day aren&apos;t listed.
+          {day === "d1"
+            ? `Most usable Truegold first: the lower of TG held and construction + general speedup minutes ÷ ${MINUTES_PER_TG}.`
+            : "Most speedups first."}{" "}
+          Ties go to more speedups, then who signed up first. Use the ban button to keep someone off this day.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-col gap-3">
@@ -459,7 +511,7 @@ function RankingCard({ day, ranked, turnOf }: { day: DayKey; ranked: Ranked[]; t
             className="h-9 pl-9"
           />
         </div>
-        <div role="group" aria-label="Filter by turn" className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+        <div role="group" aria-label="Filter by turn" className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
           {statuses.map(({ key, label, count }) => (
             <button
               key={key}
@@ -502,26 +554,45 @@ function RankingCard({ day, ranked, turnOf }: { day: DayKey; ranked: Ranked[]; t
           {shown.map((r) => {
             const slot = turnOf.get(r.player.gameId);
             return (
-              <li key={r.player.gameId} className="flex items-center gap-3 py-2.5">
-                <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">{r.rank}</span>
+              <li key={r.player.gameId} className={cn("flex items-center gap-3 py-2.5", r.excluded && "opacity-70")}>
+                <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">{r.rank ?? "—"}</span>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <PlayerName player={r.player} className="max-w-full font-medium" />
                   <span className="text-xs text-muted-foreground">
+                    {day === "d1" && (
+                      <span className="font-medium text-foreground">{tgPoints(r.points)} usable TG · </span>
+                    )}
                     {shortDuration(r.score)} · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} ·{" "}
                     {formatTruegold(r.player.truegold)} TG · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
                   </span>
                 </div>
-                {slot !== undefined ? (
+                {r.excluded ? (
+                  <Badge variant="secondary">Excluded</Badge>
+                ) : slot !== undefined ? (
                   <Badge variant="success">Turn {slotUtc(slot)}</Badge>
                 ) : (
                   <Badge variant="warning">Waiting</Badge>
                 )}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0"
+                  aria-label={r.excluded ? `Put ${r.player.name} back on ${DAYS[day].label}` : `Exclude ${r.player.name} from ${DAYS[day].label}`}
+                  title={r.excluded ? `Put back on ${DAYS[day].label}` : `Exclude from ${DAYS[day].label}`}
+                  onClick={() => toggleExcluded(r.player, !r.excluded)}
+                >
+                  {r.excluded ? <Undo2 /> : <Ban className="text-muted-foreground" />}
+                </Button>
               </li>
             );
           })}
           {shown.length === 0 && (
             <li className="py-6 text-center text-sm text-muted-foreground">
-              {rows.length === 0 ? `Nobody has signed up for ${DAYS[day].label} yet.` : "No player matches these filters."}
+              {status === "excluded"
+                ? `Nobody is excluded from ${DAYS[day].label}.`
+                : rows.length === 0
+                  ? `Nobody has signed up for ${DAYS[day].label} yet.`
+                  : "No player matches these filters."}
             </li>
           )}
         </ol>

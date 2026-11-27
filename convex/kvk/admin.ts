@@ -17,7 +17,7 @@ import {
   turnAt,
 } from "../lib/data";
 import { cleanLookupId } from "./lookup";
-import { assignDay, isValidSlot } from "../lib/kvk";
+import { DAY_KEYS, assignDay, isValidSlot } from "../lib/kvk";
 
 // Admin functions take the password on every call; it is checked against the
 // ADMIN_PASSWORD environment variable set in the Convex dashboard.
@@ -122,6 +122,32 @@ export const clearDay = mutation({
   handler: async (ctx, { password, day }) => {
     requireAdmin(password);
     for (const t of await listTurns(ctx, day)) await ctx.db.delete("assignments", t._id);
+  },
+});
+
+// Take a player off a day (or put them back). Excluded players are skipped by auto-assign,
+// and any unlocked turn they hold that day is removed.
+export const setExcluded = mutation({
+  args: { password: v.string(), gameId: v.string(), day: dayValidator, excluded: v.boolean() },
+  handler: async (ctx, { password, gameId, day, excluded }) => {
+    requireAdmin(password);
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_gameId", (q) => q.eq("gameId", gameId))
+      .unique();
+    if (!player) throw new ConvexError("Player not found.");
+    const days = new Set(player.excluded ?? []);
+    if (excluded) days.add(day);
+    else days.delete(day);
+    await ctx.db.patch("players", player._id, { excluded: DAY_KEYS.filter((d) => days.has(d)) });
+    if (excluded) {
+      const turns = await ctx.db
+        .query("assignments")
+        .withIndex("by_gameId", (q) => q.eq("gameId", gameId))
+        .take(100);
+      for (const t of turns) if (t.day === day && !t.locked) await ctx.db.delete("assignments", t._id);
+    }
+    return null;
   },
 });
 
