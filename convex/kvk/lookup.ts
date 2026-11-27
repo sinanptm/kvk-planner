@@ -4,6 +4,7 @@ import type { Doc } from "../_generated/dataModel";
 import { action, internalMutation, internalQuery, query } from "../_generated/server";
 import { canView, listPlayers, requireAdmin } from "../lib/data";
 import { ALLIANCES, KINGDOM_ID } from "../lib/kvk";
+import { searchPlayers } from "../lib/search";
 
 // Game IDs are looked up in the MightPulse API (https://api.mightpulse.com) so sign-ups use the
 // player's real name, alliance and Town Center level, and only members of our alliances in our
@@ -214,5 +215,20 @@ export const notSignedUp = query({
         members,
       };
     });
+  },
+});
+
+// Sign-up helper: find yourself by in-game name among our alliances' members (from the last
+// "Update from game"). Returns at most 8 matches; names and game IDs are public in the game anyway.
+export const searchMembers = query({
+  args: { query: v.string() },
+  handler: async (ctx, { query: text }) => {
+    const q = text.trim().slice(0, 40);
+    if (q.length < 2) return [];
+    const rosters = await ctx.db.query("rosters").take(ALLIANCES.length);
+    const members = rosters.flatMap((r) =>
+      r.members.map((m) => ({ gameId: m.gameId, name: m.name, alliance: r.alliance, tcLevel: m.tcLevel })),
+    );
+    return searchPlayers(members, q).slice(0, 8);
   },
 });

@@ -314,15 +314,20 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
     // Step 1: the game ID must be found in the game, in our kingdom and alliances.
     if (lookup?.id === gameId && lookup.result.status === "ok") return go(1);
     if (!/^\d{3,15}$/.test(gameId)) return void toast.error(t("lookup.badId"));
+    await checkId(gameId);
+  };
+
+  // Looks a game ID up in the game. Also used when the player picks their name from the search.
+  const checkId = async (id: string) => {
     setSaving(true);
     try {
-      if (await convex.query(api.kvk.players.get, { gameId })) {
+      if (await convex.query(api.kvk.players.get, { gameId: id })) {
         toast.info(t("toast.alreadySignedUp"));
         storage.set(DRAFT_KEY, null);
-        return onSignedUp(gameId);
+        return onSignedUp(id);
       }
-      const result = await lookupPlayer({ gameId });
-      setLookup({ id: gameId, result });
+      const result = await lookupPlayer({ gameId: id });
+      setLookup({ id, result });
       if (result.status === "ok")
         setForm((f) => ({ ...f, name: result.name ?? "", alliance: result.alliance ?? "", tcLevel: result.tcLevel ?? 0 }));
     } catch (err) {
@@ -382,6 +387,10 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
         <IdCheck
           value={rawGameId}
           onChange={setRawGameId}
+          onPick={(id) => {
+            setRawGameId(id);
+            void checkId(id);
+          }}
           result={lookup?.id === gameId ? lookup.result : null}
           checking={saving}
         />
@@ -467,18 +476,25 @@ type LookupResult = {
 };
 
 // Step 1: the player types only their game ID. Name, alliance and Town Center level come from the game.
+// The game ID field. Typing a name instead searches our alliances' members, so players who
+// don't know their ID can tap their name.
 function IdCheck({
   value,
   onChange,
+  onPick,
   result,
   checking,
 }: {
   value: string;
   onChange: (value: string) => void;
+  onPick: (gameId: string) => void;
   result: LookupResult | null;
   checking: boolean;
 }) {
   const { t } = useLanguage();
+  const text = value.trim();
+  const isName = text.length >= 2 && !/^\d+$/.test(text);
+  const matches = useQuery(api.kvk.lookup.searchMembers, isName ? { query: text } : "skip");
   const problem =
     result && result.status !== "ok"
       ? {
@@ -505,16 +521,46 @@ function IdCheck({
           <Input
             id="game-id"
             required
-            maxLength={15}
-            inputMode="numeric"
+            maxLength={40}
             autoComplete="off"
             placeholder={t("field.gameIdPlaceholder")}
             value={value}
             disabled={checking}
-            onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
-            className="h-11 font-mono text-base"
+            onChange={(e) => onChange(e.target.value)}
+            className="h-11 text-base"
           />
         </div>
+        {isName && matches !== undefined && (
+          <div className="flex flex-col gap-2">
+            {matches.length > 0 ? (
+              <>
+                <p className="text-xs text-muted-foreground">{t("lookup.tapYou")}</p>
+                <ul className="flex flex-col divide-y rounded-lg border">
+                  {matches.map((m) => (
+                    <li key={m.gameId}>
+                      <button
+                        type="button"
+                        disabled={checking}
+                        onClick={() => onPick(m.gameId)}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 disabled:opacity-50"
+                      >
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <PlayerName player={m} className="max-w-full font-medium" />
+                          <span className="font-mono text-xs text-muted-foreground">ID {m.gameId}</span>
+                        </span>
+                        <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                          {m.tcLevel ? tcLabel(m.tcLevel) : ""}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("lookup.noNameMatch")}</p>
+            )}
+          </div>
+        )}
         {result?.status === "ok" && (
           <div className="flex items-center gap-3 rounded-lg border border-success/40 bg-success/10 p-3">
             <CircleCheck className="size-5 shrink-0 text-success" />

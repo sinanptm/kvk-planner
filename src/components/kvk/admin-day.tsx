@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { ArrowRight, Ban, Check, Lock, LockOpen, Search, Sparkles, Trash2, Undo2, UserCheck, Users } from "lucide-react";
+import { ArrowRight, Ban, Check, ChevronDown, Info, Lock, LockOpen, Search, Sparkles, Trash2, Undo2, UserCheck, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -273,10 +273,14 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {/* How the picking works, in the order it happens */}
-          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
-            <p className="mb-2 font-medium">How auto-assign picks</p>
-            <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground">
+          {/* How the picking works, in the order it happens. Closed until tapped. */}
+          <details className="group rounded-lg border bg-muted/40 text-sm">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+              <Info className="size-4 shrink-0" />
+              How does auto-assign pick?
+              <ChevronDown className="ml-auto size-4 shrink-0 transition-transform group-open:rotate-180" />
+            </summary>
+            <ol className="flex list-decimal flex-col gap-1.5 px-3 pb-3 pl-8 text-muted-foreground">
               <li>
                 <span className="text-foreground">Locked turns stay.</span> Players you placed or locked keep their turn.
               </li>
@@ -296,7 +300,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                 <span className="text-foreground">Nothing free?</span> The player goes on the waitlist.
               </li>
             </ol>
-          </div>
+          </details>
 
           <ul className="flex max-h-64 flex-col divide-y overflow-y-auto rounded-lg border text-sm">
             {plan.changes.map(({ slot, from, to }) => (

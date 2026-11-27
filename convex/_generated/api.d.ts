@@ -14,6 +14,7 @@ import type * as kvk_players from "../kvk/players.js";
 import type * as kvk_schedule from "../kvk/schedule.js";
 import type * as lib_data from "../lib/data.js";
 import type * as lib_kvk from "../lib/kvk.js";
+import type * as lib_search from "../lib/search.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   "kvk/schedule": typeof kvk_schedule;
   "lib/data": typeof lib_data;
   "lib/kvk": typeof lib_kvk;
+  "lib/search": typeof lib_search;
 }>;
 
 /**
