@@ -29,7 +29,11 @@ export function KvkAdmin() {
     <>
       <PageHeader eyebrow="Admin" title="KvK control room" description="Run sign-ups, assign turns and publish the schedule.">
         {password && (
-          <Button variant="outline" onClick={() => setPassword(null)}>
+          <Button
+            variant="outline"
+            className="h-10 border-destructive/50 px-4 font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setPassword(null)}
+          >
             <LogOut data-icon="inline-start" />
             Log out
           </Button>
