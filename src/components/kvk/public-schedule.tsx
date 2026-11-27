@@ -12,7 +12,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStoredString } from "@/lib/client";
-import { DAYS, DAY_KEYS, SLOTS, formatSlotLocal, localTimeZone, localZoneAbbr, slotRangeUtc, useToday } from "@/lib/kvk";
+import {
+  ALLIANCE_STYLES,
+  DAYS,
+  DAY_KEYS,
+  SLOTS,
+  formatSlotLocal,
+  localTimeZone,
+  localZoneAbbr,
+  slotRangeUtc,
+  slotUtc,
+  useToday,
+} from "@/lib/kvk";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AllianceTag } from "./alliance-tag";
@@ -68,7 +79,15 @@ export function PublicSchedule() {
               </Label>
             </div>
           </div>
-          <Tabs defaultValue="d1">
+          {/* Wide screens: all three days side by side as a calendar. Phones: one day at a time. */}
+          <ScheduleCalendar
+            turns={schedule.turns}
+            q={q}
+            filledOnly={filledOnly}
+            isMine={isMine}
+            today={today}
+          />
+          <Tabs defaultValue="d1" className="md:hidden">
             <TabsList className="w-full">
               {DAY_KEYS.map((day) => (
                 <TabsTrigger key={day} value={day} className="flex-1">
@@ -141,5 +160,108 @@ export function PublicSchedule() {
         </div>
       )}
     </>
+  );
+}
+
+type ScheduleTurn = { day: string; slot: number; name: string; alliance: string };
+
+// The three days as calendar columns, one row per 30-minute turn, grouped into quarters of the day.
+function ScheduleCalendar({
+  turns,
+  q,
+  filledOnly,
+  isMine,
+  today,
+}: {
+  turns: ScheduleTurn[];
+  q: string;
+  filledOnly: boolean;
+  isMine: (day: string, slot: number) => boolean;
+  today: Date | null;
+}) {
+  const { t } = useLanguage();
+  const dateOf = useDayDate();
+  const byDay = new Map(DAY_KEYS.map((day) => [day, new Map(turns.filter((x) => x.day === day).map((x) => [x.slot, x]))]));
+  const zone = today ? (localZoneAbbr(today) ?? t("times.local")) : "";
+  const matches = (turn: ScheduleTurn | undefined) =>
+    !q || (!!turn && `${turn.alliance} ${turn.name}`.toLowerCase().includes(q));
+
+  return (
+    <div className="hidden overflow-hidden rounded-xl border bg-card md:block">
+      {/* Day headers */}
+      <div className="sticky top-14 z-10 grid grid-cols-[7.5rem_repeat(3,minmax(0,1fr))] border-b bg-card/95 backdrop-blur">
+        <div className="px-3 py-3 text-xs font-medium text-muted-foreground">UTC</div>
+        {DAY_KEYS.map((day) => {
+          const filled = byDay.get(day)!.size;
+          return (
+            <div key={day} className="flex items-baseline justify-between gap-2 border-l px-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">
+                  {t(`day.${day}`)} · {t(`day.${day}.title`)}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {dateOf(day) ? `${dateOf(day)} · ` : ""}
+                  {DAYS[day].position}
+                </p>
+              </div>
+              <span className="shrink-0 text-xs font-medium text-primary">
+                {t("schedule.filled", { n: filled, total: SLOTS.length })}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {SLOTS.map((slot) => (
+        <div
+          key={slot}
+          className={cn(
+            "grid grid-cols-[7.5rem_repeat(3,minmax(0,1fr))]",
+            slot % 12 === 0 && slot > 0 ? "border-t-2" : slot % 2 === 0 && slot > 0 ? "border-t" : "",
+          )}
+        >
+          <div className="flex flex-col justify-center px-3 py-1">
+            <span className="font-mono text-xs font-semibold">{slotUtc(slot)}</span>
+            {today && (
+              <span className="text-[10px] text-muted-foreground">
+                {formatSlotLocal(slot, today)} {zone}
+              </span>
+            )}
+          </div>
+          {DAY_KEYS.map((day) => {
+            const turn = byDay.get(day)!.get(slot);
+            const mine = isMine(day, slot);
+            const dim = !matches(turn);
+            return (
+              <div key={day} className="border-l p-1">
+                {turn ? (
+                  <div
+                    className={cn(
+                      "flex h-9 items-center gap-1.5 rounded-md border px-2 transition-opacity",
+                      ALLIANCE_STYLES[turn.alliance]?.tile ?? "border-primary/40 bg-primary/10",
+                      mine && "ring-2 ring-primary",
+                      dim && "opacity-20",
+                    )}
+                  >
+                    <AllianceTag alliance={turn.alliance} />
+                    <span className="truncate text-sm font-medium">{turn.name}</span>
+                    {mine && <Badge className="ml-auto shrink-0">{t("schedule.you")}</Badge>}
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      "flex h-9 items-center rounded-md border border-dashed px-2 text-xs text-muted-foreground",
+                      (filledOnly || q) && "invisible",
+                    )}
+                  >
+                    {t("schedule.open")}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
   );
 }
