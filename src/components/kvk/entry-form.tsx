@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { CalendarDays, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -87,9 +88,23 @@ export const toEntry = (e: Entry): Entry => ({
 
 const sameSlots = (a: number[], b: number[]) => a.length === b.length && a.every((s, i) => s === b[i]);
 
+// A field's new value, or a function from its latest value (so quick taps build on each other).
+export type SetEntry = <K extends keyof Entry>(key: K, value: Entry[K] | ((prev: Entry[K]) => Entry[K])) => void;
+
+// Form state for an entry. Every update reads the latest form, never a stale copy.
+export function useEntryForm(initial: Entry | (() => Entry)) {
+  const [form, setForm] = useState<Entry>(initial);
+  const set: SetEntry = useCallback(
+    (key, value) =>
+      setForm((f) => ({ ...f, [key]: typeof value === "function" ? value(f[key]) : value })),
+    [],
+  );
+  return [form, set, setForm] as const;
+}
+
 type FieldProps = {
   form: Entry;
-  set: <K extends keyof Entry>(key: K, value: Entry[K]) => void;
+  set: SetEntry;
 };
 
 // All the editable cards of an entry on one page. Used by the admin's edit screen;
@@ -274,7 +289,7 @@ export function DayCard({
             })}
           </div>
         )}
-        <SlotGrid value={form[slotsKey]} onChange={(s) => set(slotsKey, s)} />
+        <SlotGrid value={form[slotsKey]} onChange={(update) => set(slotsKey, update)} />
       </CardContent>
       )}
     </Card>

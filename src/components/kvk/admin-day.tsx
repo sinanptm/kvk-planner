@@ -34,6 +34,7 @@ import {
   ALLIANCES,
   ALLIANCE_STYLES,
   SLOTS,
+  SLOTS_KEY,
   assignDay,
   dayScore,
   formatDuration,
@@ -90,7 +91,7 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
   // For each turn, the players who picked that time, in the order above.
   const pickedBy = useMemo(() => {
     const map = new Map<number, typeof sorted>(SLOTS.map((slot) => [slot, []]));
-    for (const p of sorted) for (const slot of day === "d1" ? p.d1Slots : p.d4Slots) map.get(slot)?.push(p);
+    for (const p of sorted) for (const slot of p[SLOTS_KEY[day]]) map.get(slot)?.push(p);
     return map;
   }, [sorted, day]);
 
@@ -443,7 +444,7 @@ function RankingCard({ day, ranked, turnOf }: { day: DayKey; ranked: Ranked[]; t
       <CardHeader>
         <CardTitle>Ranking ({filtered ? `${shown.length} of ${rows.length}` : rows.length})</CardTitle>
         <CardDescription>
-          Most speedups first. Ties go to who signed up first. Players need speedups and at least one picked time.
+          Most speedups first. Ties go to who signed up first. Players who skipped this day aren&apos;t listed.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-col gap-3">

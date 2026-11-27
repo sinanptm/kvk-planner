@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/client";
 import { ALLIANCES, searchPlayers, tcLabel } from "@/lib/kvk";
 import { AllianceTag } from "./alliance-tag";
-import { EMPTY_ENTRY, EntryFields, type Entry } from "./entry-form";
+import { EMPTY_ENTRY, EntryFields, useEntryForm } from "./entry-form";
 
 type Found = { gameId: string; name: string; alliance: string; tcLevel: number };
 
@@ -174,14 +174,13 @@ function AddForm({
   onDone: () => void;
 }) {
   const addPlayer = useMutation(api.kvk.admin.addPlayer);
-  const [form, setForm] = useState<Entry>(() => ({
+  const [form, set] = useEntryForm(() => ({
     ...EMPTY_ENTRY,
     name: player.name,
     alliance: player.alliance,
     tcLevel: player.tcLevel,
   }));
   const [saving, setSaving] = useState(false);
-  const set = <K extends keyof Entry>(key: K, value: Entry[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

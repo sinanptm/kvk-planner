@@ -44,7 +44,7 @@ import { PlayerName } from "./alliance-tag";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDayDate } from "./day-date";
-import { DayCard, EMPTY_ENTRY, SPEEDUP_FIELDS, type Entry } from "./entry-form";
+import { DayCard, EMPTY_ENTRY, SPEEDUP_FIELDS, useEntryForm, type Entry } from "./entry-form";
 
 export function KvkSignup() {
   const settings = useQuery(api.kvk.schedule.settings);
@@ -242,7 +242,7 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const [rawGameId, setRawGameId] = useState("");
   // Result of checking the game ID, and the ID it was for (typing a new ID clears it).
   const [lookup, setLookup] = useState<{ id: string; result: LookupResult } | null>(null);
-  const [form, setForm] = useState<Entry>(EMPTY_ENTRY);
+  const [form, set, setForm] = useEntryForm(EMPTY_ENTRY);
   // Days the player said they don't need a turn on. Their speedups and times are cleared.
   const [skipped, setSkipped] = useState<DayKey[]>([]);
   const setSkip = (day: DayKey, skip: boolean) => {
@@ -257,7 +257,6 @@ function SignupForm({ onSignedUp }: { onSignedUp: (gameId: string) => void }) {
   const [step, setStep] = useState(0);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
-  const set = <K extends keyof Entry>(key: K, value: Entry[K]) => setForm((f) => ({ ...f, [key]: value }));
   const { t } = useLanguage();
   const steps = [t("step.details"), ...DAY_KEYS.map((d) => t(`day.${d}`)), t("step.review")];
   const gameId = rawGameId.trim();

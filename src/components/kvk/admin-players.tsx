@@ -31,19 +31,20 @@ import type { Dashboard } from "./admin";
 import { AddPlayer } from "./admin-add-player";
 import { PlayerName } from "./alliance-tag";
 import { ConfirmButton } from "./confirm-button";
-import { EntryFields, toEntry, type Entry } from "./entry-form";
+import { EntryFields, toEntry, useEntryForm } from "./entry-form";
 
 type Player = Dashboard["players"][number];
 type TurnOf = (gameId: string, day: DayKey) => unknown;
 type StatusTest = (p: Player, turnOf: TurnOf) => boolean;
 
 // Quick filters for the player list. Each one is ?show=<key> in the URL.
+// "No Day X turn" only counts players who picked times that day (not those who skipped it).
 const STATUSES = [
   { key: "not-informed", label: "Not informed", test: (p) => !p.informed },
   { key: "informed", label: "Informed", test: (p) => !!p.informed },
-  { key: "no-d1", label: "No Day 1 turn", test: (p, turnOf) => !turnOf(p.gameId, "d1") },
-  { key: "no-d2", label: "No Day 2 turn", test: (p, turnOf) => !turnOf(p.gameId, "d2") },
-  { key: "no-d4", label: "No Day 4 turn", test: (p, turnOf) => !turnOf(p.gameId, "d4") },
+  { key: "no-d1", label: "No Day 1 turn", test: (p, turnOf) => p.d1Slots.length > 0 && !turnOf(p.gameId, "d1") },
+  { key: "no-d2", label: "No Day 2 turn", test: (p, turnOf) => p.d2Slots.length > 0 && !turnOf(p.gameId, "d2") },
+  { key: "no-d4", label: "No Day 4 turn", test: (p, turnOf) => p.d4Slots.length > 0 && !turnOf(p.gameId, "d4") },
 ] as const satisfies readonly { key: string; label: string; test: StatusTest }[];
 const STATUS_KEYS = STATUSES.map((s) => s.key);
 
@@ -82,7 +83,7 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
       ...DAY_KEYS.map((day) => {
         const turn = turnOf(p.gameId, day);
         const date = dayDate(data.settings.startDate, day);
-        return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].title} (${DAYS[day].position}): ${turn ? slotRangeUtc(turn.slot) : "no turn this time"}`;
+        return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].title} (${DAYS[day].position}): ${turn ? slotRangeUtc(turn.slot) : p[SLOTS_KEY[day]].length === 0 ? "skipped (no turn needed)" : "no turn this time"}`;
       }),
       "Please be online at the start of your turn.",
     ].join("\n");
@@ -353,7 +354,8 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
                           </span>
                         </div>
                         <div className="text-muted-foreground">
-                          {picked} times{turn ? ` · turn ${slotUtc(turn.slot)}` : ""}
+                          {picked === 0 ? "Skipped" : `${picked} times`}
+                          {turn ? ` · turn ${slotUtc(turn.slot)}` : ""}
                         </div>
                       </div>
                     );
@@ -386,9 +388,8 @@ function EditPlayer({
   onDone: () => void;
 }) {
   const updatePlayer = useMutation(api.kvk.admin.updatePlayer);
-  const [form, setForm] = useState<Entry>(() => toEntry(player));
+  const [form, set] = useEntryForm(() => toEntry(player));
   const [saving, setSaving] = useState(false);
-  const set = <K extends keyof Entry>(key: K, value: Entry[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

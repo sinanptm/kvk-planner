@@ -93,7 +93,8 @@ export function cleanEntry(args: Infer<typeof entryValidator>) {
   const alliance = args.alliance.trim();
   if (!(ALLIANCES as readonly string[]).includes(alliance))
     throw new ConvexError(`Pick an alliance: ${ALLIANCES.join(", ")}.`);
-  if (!Number.isInteger(args.tcLevel) || args.tcLevel < 1 || args.tcLevel > 60)
+  // 0 means the game didn't report a level; sign-up must not fail because of it.
+  if (!Number.isInteger(args.tcLevel) || args.tcLevel < 0 || args.tcLevel > 60)
     throw new ConvexError("Pick a Town Center level.");
   return {
     name,

@@ -21,7 +21,8 @@ export function SlotGrid({
   disabled,
 }: {
   value: number[];
-  onChange: (slots: number[]) => void;
+  // Gets a function from the latest selection to the new one.
+  onChange: (update: (slots: number[]) => number[]) => void;
   disabled?: boolean;
 }) {
   const today = useToday();
@@ -29,14 +30,15 @@ export function SlotGrid({
   const selected = new Set(value);
   const zone = today ? (localZoneAbbr(today) ?? t("times.local")) : "";
 
-  const setSlots = (slots: number[], on: boolean) => {
-    const next = new Set(selected);
-    for (const s of slots) {
-      if (on) next.add(s);
-      else next.delete(s);
-    }
-    onChange([...next].sort((a, b) => a - b));
-  };
+  const setSlots = (slots: number[], on: boolean) =>
+    onChange((current) => {
+      const next = new Set(current);
+      for (const s of slots) {
+        if (on) next.add(s);
+        else next.delete(s);
+      }
+      return [...next].sort((a, b) => a - b);
+    });
 
   return (
     <div className="@container flex flex-col gap-4">
@@ -45,10 +47,10 @@ export function SlotGrid({
           {t("times.count", { n: value.length, total: SLOTS.length })}
         </p>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => onChange([...SLOTS])}>
+          <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => onChange(() => [...SLOTS])}>
             {t("times.selectAll")}
           </Button>
-          <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onChange([])}>
+          <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onChange(() => [])}>
             {t("times.clear")}
           </Button>
         </div>

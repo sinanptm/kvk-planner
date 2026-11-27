@@ -69,11 +69,12 @@ export function slotsFor(p: PlayerSpeedups, day: DayKey): number[] {
 
 export const isValidSlot = (s: number) => Number.isInteger(s) && s >= 0 && s < SLOT_COUNT;
 
-// Most speedups first; earlier sign-up wins ties. Players with no speedups or no picked times are left out.
+// Most speedups first; earlier sign-up wins ties. Players with no picked times (skipped the day) are left out;
+// players who picked times but entered no speedups come last.
 export function rankPlayers<P extends PlayerSpeedups>(players: P[], day: DayKey) {
   return players
     .map((player) => ({ player, score: dayScore(player, day), slots: slotsFor(player, day) }))
-    .filter((r) => r.score > 0 && r.slots.length > 0)
+    .filter((r) => r.slots.length > 0)
     .sort(
       (a, b) =>
         b.score - a.score ||

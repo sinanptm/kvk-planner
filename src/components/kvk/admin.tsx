@@ -93,7 +93,7 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
   );
 }
 
-const ADMIN_TABS = ["d1", "d4", "players", "missing"] as const;
+const ADMIN_TABS = ["d1", "d2", "d4", "players", "missing"] as const;
 // Tabs share the width on phones and sit as a compact bar on wide screens.
 const TAB_CLASS = "flex-1 gap-1.5 lg:flex-none lg:px-6";
 
