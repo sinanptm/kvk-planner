@@ -178,8 +178,19 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
       const to = nextBySlot.get(slot);
       return from === to ? [] : [{ slot, from, to }];
     });
-    return { changes, filled: next.length, waitlist };
-  }, [players, day, bySlot]);
+    // Why each player lands where they do: their rank, and how many ranked players picked each time.
+    const rankOf = new Map(ranked.map((r, i) => [r.player.gameId, i + 1]));
+    const demand = new Array<number>(SLOTS.length).fill(0);
+    for (const r of ranked) for (const s of r.slots) demand[s]++;
+    return { changes, filled: next.length, waitlist, rankOf, demand };
+  }, [players, day, bySlot, ranked]);
+
+  // A player's ranking value in words: usable TG on Day 1, speedups on other days.
+  const scoreText = (gameId: string) => {
+    const p = byId.get(gameId);
+    if (!p) return "";
+    return day === "d1" ? `${tgPoints(rankScore(p, day))} usable TG` : shortDuration(dayScore(p, day));
+  };
 
   const nameOf = (gameId: string | undefined) => {
     if (gameId === undefined) return null;
@@ -251,31 +262,76 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
       </div>
 
       <AlertDialog open={previewing} onOpenChange={setPreviewing}>
-        <AlertDialogContent className="data-[size=default]:sm:max-w-lg">
+        <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto data-[size=default]:sm:max-w-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>
               Auto-assign {DAYS[day].label}: {plan.changes.length} {plan.changes.length === 1 ? "change" : "changes"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               Nothing is saved until you apply. After this, {plan.filled}/{SLOTS.length} turns are filled and{" "}
-              {plan.waitlist.length} {plan.waitlist.length === 1 ? "player is" : "players are"} on the waitlist. Locked
-              turns stay as they are.
+              {plan.waitlist.length} {plan.waitlist.length === 1 ? "player is" : "players are"} on the waitlist.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <ul className="flex max-h-72 flex-col divide-y overflow-y-auto rounded-lg border text-sm">
+
+          {/* How the picking works, in the order it happens */}
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="mb-2 font-medium">How auto-assign picks</p>
+            <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-muted-foreground">
+              <li>
+                <span className="text-foreground">Locked turns stay.</span> Players you placed or locked keep their turn.
+              </li>
+              <li>
+                <span className="text-foreground">Players are ranked</span>{" "}
+                {day === "d1"
+                  ? `by usable Truegold: the lower of their TG and their speedup minutes ÷ ${MINUTES_PER_TG}.`
+                  : "by their speedups for this day."}{" "}
+                Ties go to more speedups, then earlier sign-up. Excluded players and those who skipped the day are left out.
+              </li>
+              <li>
+                <span className="text-foreground">From #1 down, each player gets one turn</span> from the times they
+                picked that is still free. If several are free, they get the one the fewest other players picked, so
+                busy times stay open for people with no other choice.
+              </li>
+              <li>
+                <span className="text-foreground">Nothing free?</span> The player goes on the waitlist.
+              </li>
+            </ol>
+          </div>
+
+          <ul className="flex max-h-64 flex-col divide-y overflow-y-auto rounded-lg border text-sm">
             {plan.changes.map(({ slot, from, to }) => (
-              <li key={slot} className="flex items-center gap-2 px-3 py-2">
-                <span className="w-12 shrink-0 font-mono font-semibold">{slotUtc(slot)}</span>
-                <span className={cn("min-w-0 flex-1 truncate", from ? "line-through opacity-60" : "text-muted-foreground")}>
-                  {playerNode(from) ?? "Empty"}
-                </span>
-                <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className={cn("min-w-0 flex-1 truncate", to ? "font-medium text-primary" : "text-muted-foreground")}>
-                  {playerNode(to) ?? "Empty"}
-                </span>
+              <li key={slot} className="flex flex-col gap-0.5 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-12 shrink-0 font-mono font-semibold">{slotUtc(slot)}</span>
+                  <span
+                    className={cn("min-w-0 flex-1 truncate", from ? "line-through opacity-60" : "text-muted-foreground")}
+                  >
+                    {playerNode(from) ?? "Empty"}
+                  </span>
+                  <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className={cn("min-w-0 flex-1 truncate", to ? "font-medium text-primary" : "text-muted-foreground")}>
+                    {playerNode(to) ?? "Empty"}
+                  </span>
+                </div>
+                {to && (
+                  <p className="pl-14 text-xs text-muted-foreground">
+                    #{plan.rankOf.get(to)} · {scoreText(to)} · picked {byId.get(to)?.[SLOTS_KEY[day]].length ?? 0}{" "}
+                    times · {plan.demand[slot]} {plan.demand[slot] === 1 ? "player" : "players"} wanted {slotUtc(slot)}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
+
+          {plan.waitlist.length > 0 && (
+            <div className="text-sm">
+              <p className="mb-1 font-medium">Waitlist ({plan.waitlist.length})</p>
+              <p className="text-xs text-muted-foreground">
+                All their picked times are taken by higher-ranked players:{" "}
+                {plan.waitlist.map((id) => `${nameOf(id)} (#${plan.rankOf.get(id)})`).join(", ")}
+              </p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={assigning} onClick={runAutoAssign}>
