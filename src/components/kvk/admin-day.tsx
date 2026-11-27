@@ -491,6 +491,22 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
 type Ranked = ReturnType<typeof rankPlayers<Dashboard["players"][number]>>[number];
 type RankStatus = "all" | "turn" | "waiting" | "excluded";
 
+// The speedups each day is ranked on, as shown in the ranking rows.
+const DAY_SPEEDUPS = {
+  d1: [
+    { key: "d1Construction", label: "Construction" },
+    { key: "d1General", label: "General" },
+  ],
+  d2: [
+    { key: "d2Research", label: "Research" },
+    { key: "d2General", label: "General" },
+  ],
+  d4: [
+    { key: "d4Training", label: "Training" },
+    { key: "d4General", label: "General" },
+  ],
+} as const satisfies Record<DayKey, readonly { key: keyof Dashboard["players"][number]; label: string }[]>;
+
 // Day 1 ranks by usable Truegold; shown as a whole number.
 const tgPoints = (n: number) => Math.floor(n).toLocaleString("en-US");
 
@@ -567,7 +583,9 @@ function RankingCard({
         <CardDescription>
           {day === "d1"
             ? `Most usable Truegold first: the lower of TG held and construction + general speedup minutes ÷ ${MINUTES_PER_TG}.`
-            : "Most speedups first."}{" "}
+            : day === "d2"
+              ? "Most research + general speedups first."
+              : "Most training + general speedups first."}{" "}
           Ties go to more speedups, then who signed up first. Use the ban button to keep someone off this day.
         </CardDescription>
       </CardHeader>
@@ -637,12 +655,24 @@ function RankingCard({
                   className="flex min-w-0 flex-1 flex-col rounded-md text-left outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   <PlayerName player={r.player} className="max-w-full font-medium" />
+                  {/* This day's ranking value first, then the speedups it comes from. */}
                   <span className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      {day === "d1" ? `${tgPoints(r.points)} usable TG` : `${shortDuration(r.score)} total`}
+                    </span>
+                    {DAY_SPEEDUPS[day].map(({ key, label }) => (
+                      <span key={key}>
+                        {" "}
+                        · {label} {shortDuration(r.player[key])}
+                      </span>
+                    ))}
                     {day === "d1" && (
-                      <span className="font-medium text-foreground">{tgPoints(r.points)} usable TG · </span>
-                    )}
-                    {shortDuration(r.score)} · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} ·{" "}
-                    {formatTruegold(r.player.truegold)} TG · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
+                      <>
+                        {" "}
+                        · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} · {formatTruegold(r.player.truegold)} TG
+                      </>
+                    )}{" "}
+                    · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
                   </span>
                 </button>
                 {r.excluded ? (
