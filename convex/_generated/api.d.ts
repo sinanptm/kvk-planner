@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as kvk_admin from "../kvk/admin.js";
 import type * as kvk_lookup from "../kvk/lookup.js";
 import type * as kvk_players from "../kvk/players.js";
@@ -23,6 +24,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   "kvk/admin": typeof kvk_admin;
   "kvk/lookup": typeof kvk_lookup;
   "kvk/players": typeof kvk_players;

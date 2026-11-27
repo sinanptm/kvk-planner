@@ -1,7 +1,7 @@
 import { ConvexError, v, type Infer } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
-import { action, internalMutation, internalQuery, query } from "../_generated/server";
+import { action, internalAction, internalMutation, internalQuery, query, type ActionCtx } from "../_generated/server";
 import { canView, listPlayers, requireAdmin } from "../lib/data";
 import { ALLIANCES, KINGDOM_ID } from "../lib/kvk";
 import { searchPlayers } from "../lib/search";
@@ -11,7 +11,10 @@ import { searchPlayers } from "../lib/search";
 // kingdom can sign up. The key lives in the Convex env var MIGHTPULSE_API_KEY and never reaches the browser.
 
 const API = "https://api.mightpulse.com/v1";
-const LOOKUP_TTL_MS = 60 * 60 * 1000;
+// How long a saved answer is reused before asking the API again. "Not found" is retried sooner,
+// since a mistyped or brand-new ID may become valid.
+export const LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
+const NOT_FOUND_TTL_MS = 60 * 60 * 1000;
 
 // Game IDs are digits; checked before calling the API so junk input costs nothing.
 export const cleanLookupId = (raw: string) => {
@@ -99,15 +102,37 @@ const fromRow = (row: Doc<"playerLookups">): LookupResult => ({
   kid: row.kid,
 });
 
-// Looks a game ID up in the game (through MightPulse) and says whether it may sign up.
-// Results are kept for an hour, so repeat checks of the same ID do not use the API.
+// A member of one of our alliances, from the saved member lists (no API call).
+export const findMember = internalQuery({
+  args: { gameId: v.string() },
+  handler: async (ctx, { gameId }) => {
+    for (const roster of await ctx.db.query("rosters").take(ALLIANCES.length)) {
+      const m = roster.members.find((x) => x.gameId === gameId);
+      if (m) return { name: m.name, alliance: roster.alliance, tcLevel: m.tcLevel };
+    }
+    return null;
+  },
+});
+
+// Says whether a game ID may sign up, using as few API calls as possible:
+// 1. a saved answer from the last 24 hours (1 hour for "not found");
+// 2. the saved member lists of our alliances (refreshed daily), which cover nearly everyone;
+// 3. only then the MightPulse API.
 export const player = action({
   args: { gameId: v.string() },
   returns: lookupResult,
   handler: async (ctx, args): Promise<LookupResult> => {
     const gameId = cleanLookupId(args.gameId);
     const cached: Doc<"playerLookups"> | null = await ctx.runQuery(internal.kvk.lookup.getLookup, { gameId });
-    if (cached && Date.now() - cached.fetchedAt < LOOKUP_TTL_MS) return fromRow(cached);
+    const ttl = cached?.status === "not_found" ? NOT_FOUND_TTL_MS : LOOKUP_TTL_MS;
+    if (cached && Date.now() - cached.fetchedAt < ttl) return fromRow(cached);
+
+    const member = await ctx.runQuery(internal.kvk.lookup.findMember, { gameId });
+    if (member) {
+      const result = { status: "ok", ...member, kid: KINGDOM_ID } as const;
+      await ctx.runMutation(internal.kvk.lookup.storeLookup, { gameId, ...result });
+      return result;
+    }
 
     let res: { status: number; body: unknown };
     try {
@@ -160,11 +185,7 @@ export const storeRoster = internalMutation({
 });
 
 // Fetches the member list of each alliance (one API request per alliance).
-export const refreshRosters = action({
-  args: { password: v.string() },
-  returns: v.object({ updated: v.array(v.string()), failed: v.array(v.string()) }),
-  handler: async (ctx, { password }) => {
-    requireAdmin(password);
+async function fetchRosters(ctx: ActionCtx) {
     const updated: string[] = [];
     const failed: string[] = [];
     for (const tag of ALLIANCES) {
@@ -194,6 +215,24 @@ export const refreshRosters = action({
       updated.push(tag);
     }
     return { updated, failed };
+}
+
+// "Update from game" on the admin page.
+export const refreshRosters = action({
+  args: { password: v.string() },
+  returns: v.object({ updated: v.array(v.string()), failed: v.array(v.string()) }),
+  handler: async (ctx, { password }) => {
+    requireAdmin(password);
+    return fetchRosters(ctx);
+  },
+});
+
+// Daily refresh (see crons.ts): 8 API calls a day keep the member lists current.
+export const refreshRostersDaily = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    await fetchRosters(ctx);
+    return null;
   },
 });
 
