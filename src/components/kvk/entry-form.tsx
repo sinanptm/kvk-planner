@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { CalendarDays, Check, Copy } from "lucide-react";
+import { CalendarDays, CalendarOff, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -224,14 +224,22 @@ export function DayCard({
       </CardHeader>
       {onSkipChange && (
         <CardContent className="-mt-2">
+          {/* Sized to its text with the switch first, so it reads as one clear option. */}
           <label
             className={cn(
-              "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors",
-              skipped ? "border-primary/50 bg-primary/10" : "hover:bg-muted/50",
+              "flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-base transition-colors sm:w-fit sm:pr-6",
+              skipped
+                ? "border-primary bg-primary/15 text-foreground"
+                : "border-warning/50 bg-warning/10 hover:border-warning hover:bg-warning/15",
             )}
           >
-            <span className="flex-1 font-medium">{t("day.skip", { day: t(`day.${day}`) })}</span>
-            <Switch checked={skipped} onCheckedChange={(v) => onSkipChange(v)} />
+            <Switch
+              checked={skipped}
+              onCheckedChange={(v) => onSkipChange(v)}
+              className="scale-125 data-unchecked:bg-muted-foreground/40 dark:data-unchecked:bg-muted-foreground/40"
+            />
+            <CalendarOff className={cn("ml-1 size-5 shrink-0", skipped ? "text-primary" : "text-warning")} />
+            <span className="font-semibold">{t("day.skip", { day: t(`day.${day}`) })}</span>
           </label>
         </CardContent>
       )}
