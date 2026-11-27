@@ -475,7 +475,14 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </CardContent>
       </Card>
 
-      <RankingCard password={password} day={day} players={players} ranked={ranked} turnOf={turnOf} />
+      <RankingCard
+        password={password}
+        day={day}
+        players={players}
+        ranked={ranked}
+        turnOf={turnOf}
+        ownerOf={(slot) => bySlot.get(slot)?.gameId}
+      />
       </div>
     </div>
   );
@@ -494,13 +501,18 @@ function RankingCard({
   players,
   ranked,
   turnOf,
+  ownerOf,
 }: {
   password: string;
   day: DayKey;
   players: Dashboard["players"];
   ranked: Ranked[];
   turnOf: Map<string, number>;
+  // Who holds each turn this day, to show which of a player's picked times are still free.
+  ownerOf: (slot: number) => string | undefined;
 }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const nameById = new Map(players.map((p) => [p.gameId, p.name]));
   const setExcluded = useMutation(api.kvk.admin.setExcluded);
   const toggleExcluded = async (p: Dashboard["players"][number], excluded: boolean) => {
     try {
@@ -614,9 +626,16 @@ function RankingCard({
           {shown.map((r) => {
             const slot = turnOf.get(r.player.gameId);
             return (
-              <li key={r.player.gameId} className={cn("flex items-center gap-3 py-2.5", r.excluded && "opacity-70")}>
+              <li key={r.player.gameId} className="flex flex-col">
+              <div className={cn("flex items-center gap-3 py-2.5", r.excluded && "opacity-70")}>
                 <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">{r.rank ?? "—"}</span>
-                <div className="flex min-w-0 flex-1 flex-col">
+                <button
+                  type="button"
+                  aria-expanded={openId === r.player.gameId}
+                  title="Show picked times"
+                  onClick={() => setOpenId(openId === r.player.gameId ? null : r.player.gameId)}
+                  className="flex min-w-0 flex-1 flex-col rounded-md text-left outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
                   <PlayerName player={r.player} className="max-w-full font-medium" />
                   <span className="text-xs text-muted-foreground">
                     {day === "d1" && (
@@ -625,7 +644,7 @@ function RankingCard({
                     {shortDuration(r.score)} · {r.player.tcLevel ? tcLabel(r.player.tcLevel) : "TC ?"} ·{" "}
                     {formatTruegold(r.player.truegold)} TG · {r.slots.length} {r.slots.length === 1 ? "time" : "times"}
                   </span>
-                </div>
+                </button>
                 {r.excluded ? (
                   <Badge variant="secondary">Excluded</Badge>
                 ) : slot !== undefined ? (
@@ -643,6 +662,42 @@ function RankingCard({
                 >
                   {r.excluded ? <Undo2 /> : <Ban className="text-muted-foreground" />}
                 </Button>
+              </div>
+              {openId === r.player.gameId && (
+                <div className="mb-2.5 ml-9 flex flex-col gap-1.5 rounded-lg bg-muted/40 p-2.5">
+                  <p className="text-xs text-muted-foreground">
+                    Picked {r.slots.length} {r.slots.length === 1 ? "time" : "times"} (UTC)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {r.slots.map((s) => {
+                      const owner = ownerOf(s);
+                      const mine = owner === r.player.gameId;
+                      return (
+                        <span
+                          key={s}
+                          title={mine ? "Their turn" : owner ? `Taken by ${nameById.get(owner) ?? "someone"}` : "Free"}
+                          className={cn(
+                            "flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-xs",
+                            mine
+                              ? "border-success/50 bg-success/15 text-success"
+                              : owner
+                                ? "text-muted-foreground"
+                                : "border-primary/40 text-foreground",
+                          )}
+                        >
+                          <span className={cn(owner && !mine && "line-through")}>{slotUtc(s)}</span>
+                          {owner && !mine && (
+                            <span className="max-w-24 truncate font-sans">{nameById.get(owner)}</span>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Green = their turn · outlined = free · crossed out = taken by someone else
+                  </p>
+                </div>
+              )}
               </li>
             );
           })}
