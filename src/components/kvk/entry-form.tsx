@@ -111,8 +111,8 @@ type FieldProps = {
 // the player sign-up shows the same cards one step at a time.
 export function EntryFields({ form, set, detailsTitle }: FieldProps & { detailsTitle: string }) {
   return (
-    // Stacked on phones; on wide admin screens details, Day 1 and Day 4 sit side by side.
-    <div className="grid items-start gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+    // One card per row; each day card puts its speedups beside its times on wide screens.
+    <div className="flex flex-col gap-6">
       <DetailsCard form={form} set={set} step={1} title={detailsTitle} />
       {DAY_KEYS.map((day, i) => (
         <DayCard key={day} day={day} form={form} set={set} step={i + 2} />
@@ -134,8 +134,8 @@ export function DetailsCard({
       <CardHeader>
         <StepTitle step={step} title={title} />
       </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2 sm:col-span-2">
+      <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="name">{t("field.name")}</Label>
           <Input
             id="name"
@@ -147,9 +147,9 @@ export function DetailsCard({
             className="h-10"
           />
         </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
+        <div className="flex flex-col gap-2">
           <Label id="alliance-label">{t("field.alliance")}</Label>
-          <div role="radiogroup" aria-labelledby="alliance-label" className="grid grid-cols-4 gap-2">
+          <div role="radiogroup" aria-labelledby="alliance-label" className="grid grid-cols-4 gap-2 xl:grid-cols-8">
             {ALLIANCES.map((tag) => {
               const on = form.alliance === tag;
               return (
@@ -207,7 +207,7 @@ export function DayCard({
       !days.slice(0, i).some((e) => sameSlots(form[SLOTS_KEY[e]], form[SLOTS_KEY[d]])),
   );
   return (
-    <Card>
+    <Card className="@container/day">
       <CardHeader>
         <StepTitle step={step} title={`${t(`day.${day}`)} · ${t(`day.${day}.title`)}`} />
         <CardDescription className="flex flex-col gap-1 pl-10">
@@ -242,7 +242,9 @@ export function DayCard({
           </p>
         </CardContent>
       ) : (
-      <CardContent className="flex flex-col gap-6">
+      // Wide cards: speedups on the left, times on the right.
+      <CardContent className="grid gap-6 @4xl/day:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] @4xl/day:gap-8">
+        <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-5">
           {SPEEDUP_FIELDS[day].map((key) => (
             <DurationInput
@@ -259,7 +261,9 @@ export function DayCard({
           <span className="font-mono text-xl font-bold text-primary">{formatDuration(total)}</span>
         </div>
         {day === "d1" && <TownCenterFields form={form} set={set} tcEditable={tcEditable} />}
-        <Separator />
+        </div>
+        <Separator className="@4xl/day:hidden" />
+        <div className="flex min-w-0 flex-col gap-6 @4xl/day:border-l @4xl/day:pl-8">
         <div className="flex flex-col gap-1">
           <p className="font-medium">
             {t("times.title")} <span className="text-primary">*</span>
@@ -290,6 +294,7 @@ export function DayCard({
           </div>
         )}
         <SlotGrid value={form[slotsKey]} onChange={(update) => set(slotsKey, update)} />
+        </div>
       </CardContent>
       )}
     </Card>

@@ -42,12 +42,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
-      <body className="group/body flex min-h-full flex-col bg-background text-foreground">
+      <body className="flex min-h-full flex-col bg-background text-foreground">
         <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
           <NuqsAdapter>
             <ConvexClientProvider>
               <SiteHeader />
-              <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-6 sm:py-10 has-[[data-wide]]:max-w-[1800px] has-[[data-wide]]:sm:px-6">{children}</main>
+              <main className="mx-auto flex w-full max-w-[1800px] flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">{children}</main>
             </ConvexClientProvider>
           </NuqsAdapter>
           <Toaster position="top-center" />

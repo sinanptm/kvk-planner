@@ -5,9 +5,9 @@ import { KvkAdmin } from "@/components/kvk/admin";
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
 export default function AdminPage() {
-  // Admin is English only, so it stays left to right even in Arabic. data-wide gives it the full screen width.
+  // Admin is English only, so it stays left to right even in Arabic.
   return (
-    <div dir="ltr" data-wide className="contents">
+    <div dir="ltr" className="contents">
       <Suspense>
         <KvkAdmin />
       </Suspense>
