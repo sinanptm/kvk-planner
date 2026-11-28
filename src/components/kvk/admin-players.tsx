@@ -21,7 +21,6 @@ import {
   formatDuration,
   formatTruegold,
   searchPlayers,
-  slotRangeUtc,
   slotUtc,
   tcLabel,
   dayDate,
@@ -76,16 +75,18 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   const setInformed = useMutation(api.kvk.admin.setInformed);
   const informedCount = players.filter((p) => p.informed).length;
 
-  // Plain text for in-game chat or DMs: the player's turn on each day, or that they have none.
+  // Short plain text for in-game chat or DMs: the start time on each day the player picked times for
+  // (skipped days are left out), then a short reminder.
   const turnMessage = (p: (typeof players)[number]) =>
     [
-      "Your KvK appointment turns (UTC):",
-      ...DAY_KEYS.map((day) => {
+      "KvK turns (UTC)",
+      ...DAY_KEYS.filter((day) => p[SLOTS_KEY[day]].length > 0).map((day) => {
         const turn = turnOf(p.gameId, day);
         const date = dayDate(data.settings.startDate, day);
-        return `${DAYS[day].label}${date ? ` (${date})` : ""} · ${DAYS[day].title} (${DAYS[day].position}): ${turn ? slotRangeUtc(turn.slot) : p[SLOTS_KEY[day]].length === 0 ? "skipped (no turn needed)" : "no turn this time"}`;
+        return `${DAYS[day].label}${date ? ` (${date})` : ""}: ${turn ? slotUtc(turn.slot) : "no turn"}`;
       }),
-      "Please be online at the start of your turn.",
+      "",
+      "Please be online a few minutes before your turn. Good luck!",
     ].join("\n");
 
   const run = async (fn: () => Promise<unknown>, done: string) => {
